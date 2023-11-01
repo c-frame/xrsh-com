@@ -16,6 +16,8 @@ AFRAME.registerComponent('helloworld', {
       })
     })
 
+    console.log("hello world!")
+
   },
 
 });
