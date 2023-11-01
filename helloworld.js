@@ -8,7 +8,7 @@ AFRAME.registerComponent('helloworld', {
     let scene  = document.querySelector('a-scene').object3D
 
     // webxros events are optional, but can be listed here 
-    scene.addEventListener('tty', (tty) = > {
+    scene.addEventListener('tty', (tty) => {
       tty.write("hello terminal from XR")
       tty.on('stdout', (data) => {
         // react to data being spoken/typed into the terminal
