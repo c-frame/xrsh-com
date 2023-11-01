@@ -7,6 +7,8 @@ This is a library of useful AFRAME components which can be used in any AFRAME ap
 # Usage
 
 ```html
+<script src="https://cdn.jsdelivr.net/gh/coderofsalvation/webxros-apps/helloworld.js"/>
+
 <a-entity helloworld="foo:1" class="cubes" name="box">  
 ```
 
