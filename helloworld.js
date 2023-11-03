@@ -3,7 +3,7 @@ AFRAME.registerComponent('helloworld', {
 
   init: function () { 
 
-    let obj = this.object3D
+    let obj = this.el.object3D
 
     // entrypoint for single-file xrshell/THREE/AFRAME components 
     obj.addEventListener('xrshell', (opts) => {
