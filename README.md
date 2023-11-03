@@ -1,4 +1,4 @@
-# WebXROS apps
+# XRshell apps
 
 <img src='https://github.com/coderofsalvation/xrshell/raw/main/src/assets/logo.svg' width="25%"/>
 

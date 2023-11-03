@@ -3,8 +3,10 @@ AFRAME.registerComponent('helloworld', {
 
   init: function () { 
 
-    // entrypoint for single-file xrshell/AFRAME components 
-    this.addEventListener('xrshell', (opts) => {
+    let obj = this.object3D
+
+    // entrypoint for single-file xrshell/THREE/AFRAME components 
+    obj.addEventListener('xrshell', (opts) => {
       this.require =  AFRAME.components.xrshell.require  // available by adding <a-scene xrshell> 
 
       this.require({
@@ -20,7 +22,7 @@ AFRAME.registerComponent('helloworld', {
       // errors will show up in the javascript browser and XR terminal consoles.
     })
 
-    this.addEventListener('ISOterminal',       (term) => { // act when component gets mounted 
+    obj.addEventListener('ISOterminal',       (term) => { // act when component gets mounted 
       // 'term' is basically AFRAME.components.ISOterminal
       term.write('hello to XR linux terminal from AFRAME')
       term.on('stdout', (data) => {
@@ -29,7 +31,7 @@ AFRAME.registerComponent('helloworld', {
       })
     })
 
-    this.addEventListener('context-menu', (menu) => {
+    obj.addEventListener('context-menu', (menu) => {
       menu.add({
         name: 'edit',         // "everything must have an edit-button" ~ Fabien Benetou
         icon: 'gear',         // see https://jsonforms.io to see json-2-html forms                   
@@ -40,7 +42,6 @@ AFRAME.registerComponent('helloworld', {
           edit_spatial:   { type: 'function', cb: () => this.require({"spatial-edit":{required:true}})                }
         }
       })
-
     })
 
     console.log("hello world!")
