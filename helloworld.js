@@ -3,21 +3,21 @@ AFRAME.registerComponent('helloworld', {
 
   init: function () { 
 
-    // entrypoint for single-file webxros/AFRAME components 
-    this.addEventListener('webxros', (opts) => {
-      this.require({
+    // entrypoint for single-file xrshell/AFRAME components 
+    this.addEventListener('xrshell', (opts) => {
+      const require =  AFRAME.components.xrshell.require  // available by adding <a-scene xrshell> 
           "superclipboard":    { required: false, repo: "https://github.com/Utopiah/aframe-components"     },
-          "spatialeditor":     { required: false, repo: "https://github.com/coderofsalvation/webxros-apps" }, 
-          "jsonform":          { required: false, repo: "https://github.com/coderofsalvation/webxros-apps" }, 
+          "spatialeditor":     { required: false, repo: "https://github.com/coderofsalvation/xrshell-apps" }, 
+          "jsonform":          { required: false, repo: "https://github.com/coderofsalvation/xrshell-apps" }, 
           "speech-controls":   { required: false, url:  "https://rawgit.com/Utopiah/aframe-speech-controls-component/master/dist/aframe-speech-controls-component.min.js"},
           "ISOterminal":       { required: false } 
       })
       // the components above get saved cached/to the browser (IndexedDB) filesystem (so the ISOterminal can read/edit them as well in realtime)
+      // when a required component cannot be included, then this (helloworld) component will be removed and 
+      // errors will show up in the javascript browser and XR terminal consoles.
     })
 
-    this.addEventListener('microgesture-auth', (com)  => { // component was mounted
-    this.addEventListener('superclipboard',    (com)  => { // component was mounted
-    this.addEventListener('ISOterminal',       (term) => { 
+    this.addEventListener('ISOterminal',       (term) => { // act when component gets mounted 
       // 'term' is basically AFRAME.components.ISOterminal
       term.write('hello to XR linux terminal from AFRAME')
       term.on('stdout', (data) => {
