@@ -5,13 +5,14 @@ AFRAME.registerComponent('helloworld', {
 
     // entrypoint for single-file xrshell/AFRAME components 
     this.addEventListener('xrshell', (opts) => {
-      const require =  AFRAME.components.xrshell.require  // available by adding <a-scene xrshell> 
+      this.require =  AFRAME.components.xrshell.require  // available by adding <a-scene xrshell> 
 
-      require({
+      this.require({
           "superclipboard":    { required: false, repo: "https://github.com/Utopiah/aframe-components"     },
           "spatialeditor":     { required: false, repo: "https://github.com/coderofsalvation/xrshell-apps" }, 
           "jsonform":          { required: false, repo: "https://github.com/coderofsalvation/xrshell-apps" }, 
           "speech-controls":   { required: false, url:  "https://rawgit.com/Utopiah/aframe-speech-controls-component/master/dist/aframe-speech-controls-component.min.js"},
+          "context-menu":      { required: false },
           "ISOterminal":       { required: false } 
       })
       // the components above get saved cached/to the browser (IndexedDB) filesystem (so the ISOterminal can read/edit them as well in realtime)
@@ -28,17 +29,17 @@ AFRAME.registerComponent('helloworld', {
       })
     })
 
-    this.addEventListener('jsonform', (form) => {
-      form.add({
+    this.addEventListener('context-menu', (menu) => {
+      menu.add({
         name: 'edit',         // "everything must have an edit-button" ~ Fabien Benetou
         icon: 'gear',         // see https://jsonforms.io to see json-2-html forms                   
         type: 'object',       // json-2-webxr has nothing like it (yet) but offers uniform interfaces across components 
         properties:{           
-          enabled:            { type: 'boolean',  default: true, format: 'checkbox' } 
-          edit_terminal:      { type: 'function', cb: () => AFRAME.components.ISOterminal.exec('pico /com/helloworld.js') }
-          edit_spatialeditor: { type: 'function', cb: () => AFRAME.components.spatialeditor.edit('helloworld')            }
+          enabled:        { type: 'boolean',  default: true, format: 'checkbox' },
+          edit_terminal:  { type: 'function', cb: () => AFRAME.components.ISOterminal.exec('pico /com/helloworld.js') },
+          edit_spatial:   { type: 'function', cb: () => this.require({"spatial-edit":{required:true}})                }
         }
-      }
+      })
 
     })
 
