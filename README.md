@@ -1,6 +1,6 @@
 # WebXROS apps
 
-<img src='https://github.com/coderofsalvation/xrshell/raw/main/src/assets/xrshell.svg' width="25%"/>
+<img src='https://github.com/coderofsalvation/xrshell/raw/main/src/assets/logo.svg' width="25%"/>
 
 This is a library of useful AFRAME components which can be used in any AFRAME app, but also are exposed as 'apps' in [xrshell](https://github.com/coderofsalvation/xrshell):
 
