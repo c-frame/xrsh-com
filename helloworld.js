@@ -6,6 +6,8 @@ AFRAME.registerComponent('helloworld', {
     // entrypoint for single-file xrshell/AFRAME components 
     this.addEventListener('xrshell', (opts) => {
       const require =  AFRAME.components.xrshell.require  // available by adding <a-scene xrshell> 
+
+      require({
           "superclipboard":    { required: false, repo: "https://github.com/Utopiah/aframe-components"     },
           "spatialeditor":     { required: false, repo: "https://github.com/coderofsalvation/xrshell-apps" }, 
           "jsonform":          { required: false, repo: "https://github.com/coderofsalvation/xrshell-apps" }, 
