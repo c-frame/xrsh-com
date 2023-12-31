@@ -1,42 +1,36 @@
 AFRAME.registerComponent('helloworld', {
   schema: { 
-
+    foo: { type:"string"}
   },
+
   dependencies:{
-    "iso":          "https://rawgit.com/Utopiah/reponame/master/dist/file.min.js",  // fallback URL for xrsh in case component 
-    "xterm":        "https://rawgit.com/Utopiah/reponame/master/dist/file.min.js",  // was not loaded (in AFRAME.components)
-    "content-menu": "https://rawgit.com/Utopiah/reponame/master/dist/file.min.js",  // TIP: include branch/commit in URL to lock specify version
+    "html":   "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",  // html to AFRAME
+    "stylis": "https://unpkg.com/stylis@4.3.1/dist/umd/stylis.js"              // modern CSS (https://stylis.js.org)
   },
+
+  dom: {
+    scale:   3.5,
+    events:  ['click'],
+    html:    `<div id="hello"><button>hello world</button></div>`,
+    css:     `div{ #hello {position:relative;top:0;width:300px} }`
+  },
+
   events:{
-
-    "iso":   function(tty){// act when component gets mounted 
-      // 'term' is basically AFRAME.components.ISOterminal
-      tty.write('hello to tty ISO-os from AFRAME')
-      tty.on('stdout', (data) => {
-        // react to data being spoken/typed into the terminal
-        // (spatial prompting like 'open foo.gltf', 'component helloworld' e.g.)
-      })
-    },
-
-    "xterm":   function(xterm){// act when component gets mounted 
-      // 'term' is basically AFRAME.components.ISOterminal
-    },
-
-    "content-menu": function(menu){
-      menu.add({
-        name: 'edit',         // "everything must have an edit-button" ~ Fabien Benetou
-        icon: 'gear',         // see https://jsonforms.io to see json-2-html forms                   
-        type: 'object',       // json-2-webxr has nothing like it (yet) but offers uniform interfaces across components 
-        properties:{           
-          enabled:        { type: 'boolean',  default: true, format: 'checkbox' },
-          edit_terminal:  { type: 'function', cb: () => AFRAME.components.ISOterminal.exec('pico /com/helloworld.js') },
-          edit_spatial:   { type: 'function', cb: () => this.require({"spatial-edit":{required:true}})                }
-        }
-      })
-    }
+    "html":  function( ){ console.log("htmlmesh component mounted!")                 },   // html-component was added to this AFRAME entity
+    "title": function(e){ this.dom.el.querySelector("button").innerHTML = e.detail.v },   // this.data.title was changed
+    "click": function(e){ // a click was detected on this.dom.el or AFRAME entity
+      this.data.title = 'hello world '+(new Date().getTime()) 
+      console.dir(e.detail.target || e.target)  
+    },  
   },
 
-  init: function () {  },
+  init: function () {  
+    this.require( this.dependencies )
+    .then( () => {
+      document.body.appendChild(this.dom.el)
+      this.el.setAttribute("html",'html:#hello; cursor:#cursor')
+    })
+  },
 
   manifest: { // HTML5 manifest to identify app to xrsh
     "short_name": "Hello world",
@@ -56,18 +50,18 @@ AFRAME.registerComponent('helloworld', {
     "theme_color": "#3367D6",
     "shortcuts": [
       {
-        "name": "How are you today?",
+        "name": "What is the latest news?",
+        "cli":{
+          "usage":  "helloworld <type> [options]",
+          "example": "helloworld news",
+          "args":{
+            "--latest": {type:"string"}
+          }
+        },
         "short_name": "Today",
         "description": "View weather information for today",
         "url": "/today?source=pwa",
         "icons": [{ "src": "/images/today.png", "sizes": "192x192" }]
-      },
-      {
-        "name": "How's weather tomorrow?",
-        "short_name": "Tomorrow",
-        "description": "View weather information for tomorrow",
-        "url": "/tomorrow?source=pwa",
-        "icons": [{ "src": "/images/tomorrow.png", "sizes": "192x192" }]
       }
     ],
     "description": "Hello world information",
