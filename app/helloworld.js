@@ -10,18 +10,43 @@ AFRAME.registerComponent('helloworld', {
 
   dom: {
     scale:   3.5,
-    events:  ['click'],
-    html:    `<div id="hello"><button>hello world</button></div>`,
+    events:  ['click','input'],
+    html:    `<div id="hello" class="modal">
+                <button class="close">☓</button>
+                <b>Hello world</b>
+                <br><br>
+                <fieldset>
+                  <legend>Colour</legend>
+                  <input type="radio" id="color-red" name="color" value="red" checked><label for="color-red"> Red</label><br>
+                  <input type="radio" id="color-blue" name="color" value="blue"><label for="color-blue"> Blue</label><br>
+                </fieldset>
+                <fieldset>
+                  <legend>Material:</legend>
+                  <input id="material-wireframe" type="checkbox" name="wireframe"><label for="material-wireframe"> Wireframe</label><br>
+                </fieldset>
+                <fieldset>
+                  <legend>Size:</legend>
+                  <input type="range" min="0.1" max="2" value="1" step="0.01" id="myRange" style="background-color: transparent;">
+                </fieldset>
+                <button onclick="AFRAME.scenes[0].exitVR()" style="display: block;">Exit Immersive</button>
+              </div>`,
     css:     `div{ #hello {position:relative;top:0;width:300px} }`
   },
 
   events:{
-    "html":  function( ){ console.log("htmlmesh component mounted!")                 },   // html-component was added to this AFRAME entity
-    "title": function(e){ this.dom.el.querySelector("button").innerHTML = e.detail.v },   // this.data.title was changed
-    "click": function(e){ // a click was detected on this.dom.el or AFRAME entity
-      this.data.title = 'hello world '+(new Date().getTime()) 
-      console.dir(e.detail.target || e.target)  
+    html:  function( ){ console.log("htmlmesh component mounted!")                 },   // html-component was added to this AFRAME entity
+    title: function(e){ this.dom.el.querySelector("b").innerHTML = e.detail.v },   // this.data.title was changed
+    click: function(e){ // a click was detected on this.dom.el or AFRAME entity
+      if( !e.detail.target                     ) return
+      if( e.detail.target.className == 'close' ){
+        this.dom.el.remove()
+        this.el.removeAttribute("html")
+      }
     },  
+    input: function(e){
+      if( !e.detail.target                 ) return
+      if(  e.detail.target.id == 'myRange' ) this.data.title = e.detail.target.value // reactive demonstration
+    }
   },
 
   init: function () {  
