@@ -11,9 +11,13 @@ AFRAME.registerComponent('helloworld', {
   dom: {
     scale:   3.5,
     events:  ['click','input'],
-    html:    `<div id="hello" class="modal">
-                <button class="close">☓</button>
-                <b>Hello world</b>
+    html:    (me) => `
+              <div id="${me.el.uid}" class="modal hello">
+                <div class="top">
+                  <div class="title">Hello world</div>
+                  <button class="close">☓</button>
+                  <button class="fold">_</button>
+                </div>
                 <br><br>
                 <fieldset>
                   <legend>Colour</legend>
@@ -25,35 +29,36 @@ AFRAME.registerComponent('helloworld', {
                   <input id="material-wireframe" type="checkbox" name="wireframe"><label for="material-wireframe"> Wireframe</label><br>
                 </fieldset>
                 <fieldset>
-                  <legend>Size:</legend>
+                  <legend>Size: <span id="value"></span></legend>
                   <input type="range" min="0.1" max="2" value="1" step="0.01" id="myRange" style="background-color: transparent;">
                 </fieldset>
-                <button onclick="AFRAME.scenes[0].exitVR()" style="display: block;">Exit Immersive</button>
+                <button>hello</button>
               </div>`,
-    css:     `div{ #hello {position:relative;top:0;width:300px} }`
+    css:     `.modal.hello {
+                position:relative;top:0;width:200px
+                foo {  /* modern css supported via stylis */ }
+              }`
   },
 
   events:{
     html:  function( ){ console.log("htmlmesh component mounted!")                 },   // html-component was added to this AFRAME entity
-    title: function(e){ this.dom.el.querySelector("b").innerHTML = e.detail.v },   // this.data.title was changed
-    click: function(e){ // a click was detected on this.dom.el or AFRAME entity
-      if( !e.detail.target                     ) return
-      if( e.detail.target.className == 'close' ){
-        this.dom.el.remove()
-        this.el.removeAttribute("html")
-      }
+    click: function(e){ // a click was detected on this.el.dom or AFRAME entity
+      let el = e.detail.target || e.detail.srcElement
+      if( !el ) return
+      if( el.className.match("fold")  ) this.el.toggleFold()
+      if( el.className.match("close") ) this.el.close()
     },  
     input: function(e){
       if( !e.detail.target                 ) return
-      if(  e.detail.target.id == 'myRange' ) this.data.title = e.detail.target.value // reactive demonstration
-    }
+      if(  e.detail.target.id == 'myRange' ) this.data.value = e.detail.target.value // reactive demonstration
+    },
+    value: function(e){ this.el.dom.querySelector("#value").innerHTML = e.detail.v },   // this.data.title was changed
   },
 
   init: function () {  
     this.require( this.dependencies )
     .then( () => {
-      document.body.appendChild(this.dom.el)
-      this.el.setAttribute("html",'html:#hello; cursor:#cursor')
+      this.el.setAttribute("html",`html:#${this.el.uid}; cursor:#cursor`)
     })
   },
 

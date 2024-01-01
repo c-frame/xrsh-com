@@ -5,13 +5,14 @@ AFRAME.registerComponent('app', {
     "uri":{ type:"string"}
   },
   init: function() { 
-    this.require([ this.data.uri ])
-    .then( () => {
-      let id = this.data.uri.split("/").pop() // 'a/b/c/mycom.js' => 'mycom.js'
-      let component = id.split(".js").shift() // 'mycom.js' => 'mycom'
+    let id = this.data.uri.split("/").pop() // 'a/b/c/mycom.js' => 'mycom.js'
+    let component = id.split(".js").shift() // 'mycom.js' => 'mycom'
+    let mount = () => {
       let entity = document.createElement("a-entity")
       this.el.setAttribute(component,this.data)
-    })
+    }
+    if( AFRAME.components[component] || document.head.querySelector(`script#${id}`) ) mount()
+    else this.require([ this.data.uri ]).then( mount ).catch(console.error)
   },
 
 
@@ -68,30 +69,85 @@ AFRAME.AComponent.prototype.updateProperties = function(updateProperties){
   return function(){
     updateProperties.apply(this,arguments)
     if( this.dom && this.data){
-      let reactify = (el,aframe) => new Proxy(this.data,{
-        get(me,k,v)  { return me[k] },
-        set(me,k,v){
-          me[k] = v
-          aframe.emit(k,{el,k,v})
-        }
-      })
-      let el = document.createElement('div')
-      el.innerHTML = this.dom.html 
-      this.data = reactify( el, this.el )
-      this.dom.el = el.childNodes[0]
-      this.dom.events.map( (e) => this.dom.el.addEventListener(e, (ev) => this.el.emit(e,ev) ) )
-      // add css if any
-      if( this.dom.css && !document.head.querySelector(`style#${this.attrName}`) ){
-        document.head.innerHTML += `<style id="${this.attrName}">${this.dom.css}</style>`
+
+      tasks = {
+
+        generateUniqueId: () => {
+          this.el.uid = String(Math.random()).substr(2)
+          return tasks
+        },
+
+        ensureOverlay: () => {
+          let overlay = document.querySelector('#overlay')
+          if( !overlay ){
+            overlay = document.createElement('div')
+            overlay.id = "#overlay"
+            document.body.appendChild(overlay)
+            document.querySelector("a-scene").setAttribute("webxr","overlayElement:#overlay")
+          }
+          tasks.overlay = overlay
+          return tasks
+        },
+
+        createReactiveDOMElement: () => {
+          const reactify = (el,aframe) => new Proxy(this.data,{
+            get(me,k,v)  { return me[k] },
+            set(me,k,v){
+              me[k] = v
+              aframe.emit(k,{el,k,v})
+            }
+          })
+          this.el.dom = document.createElement('div')
+          this.el.dom.innerHTML = this.dom.html(this)
+          this.data = reactify( this.dom.el, this.el )
+          this.dom.events.map( (e) => this.el.dom.addEventListener(e, (ev) => this.el.emit(e,ev) ) )
+          return tasks
+        },
+
+        addCSS: () => {
+          if( this.dom.css && !document.head.querySelector(`style#${this.attrName}`) ){
+            document.head.innerHTML += `<style id="${this.attrName}">${this.dom.css}</style>`
+          }
+          return tasks
+        },
+
+        scaleDOMvsXR: () => {
+          if( this.dom.scale ) this.el.setAttribute('scale',`${this.dom.scale} ${this.dom.scale} ${this.dom.scale}`)
+          return tasks
+        },
+
+        addModalFunctions: () => {
+          this.el.close = () => {
+            this.el.dom.remove()
+            this.el.removeAttribute("html")
+          }
+          this.el.toggleFold = () => {
+            this.el.dom.querySelector(".modal").classList.toggle('fold')
+            this.el.dom.querySelector('.top .fold').innerText = this.el.dom.querySelector('.modal').className.match(/fold/) ? '▢' : '_'
+          }
+          return tasks
+        },
       }
-      if( this.dom.scale ) this.el.setAttribute('scale',`${this.dom.scale} ${this.dom.scale} ${this.dom.scale}`)
-      //('[helloworld]').object3D.children[0].material.map.magFilter = THREE.NearestFilter
+
+      tasks
+      .generateUniqueId()
+      .ensureOverlay()
+      .addCSS()
+      .createReactiveDOMElement()
+      .scaleDOMvsXR()
+      .addModalFunctions()
+      // finally lets add the bad boy to the DOM
+      tasks.overlay.appendChild(this.el.dom)
     }
   }
 }( AFRAME.AComponent.prototype.updateProperties)
 
 //
 // base CSS for XRSH apps 
+//
+// limitations / some guidelines for html-mesh compatibility:
+//   * no icon libraries (favicon e.g.)
+//   * 'border-radius: 2px 3px 4px 5px' (applies 2px to all corners)
 //
 document.head.innerHTML += `
   <style type="text/css">
@@ -116,6 +172,8 @@ document.head.innerHTML += `
       --xrsh-font-size-1: 14px;
       --xrsh-font-size-2: 17px;
       --xrsh-font-size-3: 21px;
+      --xrsh-modal-button-bg: #CCC;
+      --xrsh-modal-button-fg: #FFF;
     }
 
     a-scene{
@@ -137,21 +195,16 @@ document.head.innerHTML += `
       padding:15px;
       accent-color: var(--xrsh-light-primary);
     }
+
+    #overlay{
+      display: flex; /* tile modals */
+    }
              
     h1,h2,h3,h4,h5{
       color: var(--xrsh-gray);
     }
     h1      {  font-size: var(--xrsh-font-size-3); }
     h2,h3,h4{  font-size: var(--xrsh-font-size-2); }
-
-    .modal{
-      background: #f0f0f0;
-      padding: 20px 20px 10px 20px;
-      border-radius: 15px;
-      display: inline-block;
-      position:relative;
-      z-index:50;
-    }
 
     button,.btn,input[type=submit]{
       border-radius:7px;
@@ -160,7 +213,6 @@ document.head.innerHTML += `
       transition:0.3s;
       padding: 10px;
       font-weight: bold;
-      border-block: none;
       border: none;
       cursor:pointer;
     }
@@ -168,15 +220,74 @@ document.head.innerHTML += `
       filter: brightness(1.5);
     }
 
-    button.close{
-      background: transparent;
-      color: #000;
+    .modal{
+      background: #f0f0f0;
+      padding: 20px 20px 10px 20px;
+      border-radius: 15px;
       display: inline-block;
-      float: right;
+      position:relative;
+      z-index:50;
+      height:unset;
+      overflow:hidden;
+      margin-left:10px;
+    }
+
+    .modal.fold {
+      height:22px;  
+      overflow:hidden;
+    }
+
+    .modal .top{
+      background: var(--xrsh-light-primary);
+      border-radius:15px;
+      position: absolute;
+      z-index:1;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 25px;
+      padding: 13px 10px 1px 14px;
+      color: #FFF;
+    }
+
+    /* remove this to see why this is a workaround for border-radius bug */
+    .modal .top .title{
+      position: absolute;
+      background: var(--xrsh-light-primary);
+      display: block;
+      left: 0;
+      right: 0;
+      height: 27px;
+      padding: 0px 0px 0px 20px;
+      font-weight: bold;
+    }
+
+    .modal .top button{
+      padding: 5px 7px;
+      background: var(--xrsh-modal-button-bg);
+      color: var(--xrsh-modal-button-fg);
+      font-weight: bold;
+      float:right;
+    }
+    .modal .top button:hover{
+      filter: brightness(1.1);
+    }
+
+    .modal .top button.close{
+      background: transparent;
+      display: block;
       font-size: 20px;
       padding: 0;
-      transform: translate(-4px,-3px) scale(1.3,1);
-      margin-left: 20px;
+      transform: translate(-4px,-3px) scale(1.5,1);
+      margin-left: 6px;
+    }
+
+    .modal .top button.fold{
+      background: transparent;
+      border: none;
+      margin: 0;
+      margin-left: 30px;
+      transform: scale(1.2) translate(0px,-6px);
     }
 
     legend{
