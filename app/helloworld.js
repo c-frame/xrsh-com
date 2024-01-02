@@ -3,13 +3,16 @@ AFRAME.registerComponent('helloworld', {
     foo: { type:"string"}
   },
 
-  dependencies:{
+  requires:{
     "html":   "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",  // html to AFRAME
     "stylis": "https://unpkg.com/stylis@4.3.1/dist/umd/stylis.js"              // modern CSS (https://stylis.js.org)
   },
 
+  dependencies: ['windowmanager'],
+
   dom: {
     scale:   3.5,
+    modal:   true,
     events:  ['click','input'],
     html:    (me) => `
               <div id="${me.el.uid}" class="modal hello">
@@ -41,7 +44,10 @@ AFRAME.registerComponent('helloworld', {
   },
 
   events:{
-    html:  function( ){ console.log("htmlmesh component mounted!")                 },   // html-component was added to this AFRAME entity
+    html:  function( ){ 
+      console.log("html-mesh mounted")
+      this.el.setAttribute("html",`html:#${this.el.uid}; cursor:#cursor`)
+    },   // html-component was added to this AFRAME entity
     click: function(e){ // a click was detected on this.el.dom or AFRAME entity
       let el = e.detail.target || e.detail.srcElement
       if( !el ) return
@@ -53,13 +59,12 @@ AFRAME.registerComponent('helloworld', {
       if(  e.detail.target.id == 'myRange' ) this.data.value = e.detail.target.value // reactive demonstration
     },
     value: function(e){ this.el.dom.querySelector("#value").innerHTML = e.detail.v },   // this.data.title was changed
+    ready: function(){
+    }
   },
 
   init: function () {  
-    this.require( this.dependencies )
-    .then( () => {
-      this.el.setAttribute("html",`html:#${this.el.uid}; cursor:#cursor`)
-    })
+    this.require( this.requires )
   },
 
   manifest: { // HTML5 manifest to identify app to xrsh
