@@ -8,18 +8,13 @@ AFRAME.registerComponent('helloworld', {
     "stylis": "https://unpkg.com/stylis@4.3.1/dist/umd/stylis.js"              // modern CSS (https://stylis.js.org)
   },
 
-  dependencies: ['windowmanager'],
-
   dom: {
-    scale:   3.5,
-    modal:   true,
+    scale:   3,
     events:  ['click','input'],
     html:    (me) => `
               <div id="${me.el.uid}" class="modal hello">
                 <div class="top">
                   <div class="title">Hello world</div>
-                  <button class="close">☓</button>
-                  <button class="fold">_</button>
                 </div>
                 <br><br>
                 <fieldset>
@@ -38,33 +33,46 @@ AFRAME.registerComponent('helloworld', {
                 <button>hello</button>
               </div>`,
     css:     `.modal.hello {
-                position:relative;top:0;width:200px
-                foo {  /* modern css supported via stylis */ }
+                position:relative;
+                top:0;
+                width:200px;
+                .title { font-weight:bold; } /* modern nested buildless css thanks to stylis */
               }`
   },
 
   events:{
-    html:  function( ){ 
-      console.log("html-mesh mounted")
-      this.el.setAttribute("html",`html:#${this.el.uid}; cursor:#cursor`)
-    },   // html-component was added to this AFRAME entity
+
+    html:    function( ){ console.log("html-mesh requirement mounted") },
+    stylis:  function( ){ console.log("stylis    requirement mounted") },
+
+    DOMready: function(e){
+      // our reactive dom element has been added to the dom (DOMElement = this.el.dom)
+    },
+
     click: function(e){ // a click was detected on this.el.dom or AFRAME entity
       let el = e.detail.target || e.detail.srcElement
       if( !el ) return
       if( el.className.match("fold")  ) this.el.toggleFold()
       if( el.className.match("close") ) this.el.close()
     },  
+
     input: function(e){
       if( !e.detail.target                 ) return
       if(  e.detail.target.id == 'myRange' ) this.data.value = e.detail.target.value // reactive demonstration
     },
-    value: function(e){ this.el.dom.querySelector("#value").innerHTML = e.detail.v },   // this.data.title was changed
-    ready: function(){
-    }
+
+    value: function(e){ this.el.dom.querySelector("#value").innerHTML = e.detail.v },   // auto-emitted when this.data.value gets updated
+
   },
 
   init: function () {  
     this.require( this.requires )
+
+    this.scene.addEventListener('apps:2D', () => this.el.setAttribute('visible', false) )
+    this.scene.addEventListener('apps:XR', () => {
+      this.el.setAttribute('visible', true) 
+      this.el.setAttribute("html",`html:#${this.el.uid}; cursor:#cursor`)
+    })
   },
 
   manifest: { // HTML5 manifest to identify app to xrsh
