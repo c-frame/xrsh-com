@@ -142,6 +142,7 @@ document.head.innerHTML += `
       font-size:   var(--xrsh-font-size-1); 
       font-family: var(--xrsh-font-sans-serif);
       accent-color: var(--xrsh-light-primary);
+      line-height:22px;
     }
 
     #overlay{
