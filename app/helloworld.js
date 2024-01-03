@@ -4,8 +4,8 @@ AFRAME.registerComponent('helloworld', {
   },
 
   requires:{
-    "html":   "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",  // html to AFRAME
-    "stylis": "https://unpkg.com/stylis@4.3.1/dist/umd/stylis.js"              // modern CSS (https://stylis.js.org)
+    html:        "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",  // html to AFRAME
+    stylis:      "https://unpkg.com/stylis@4.3.1/dist/umd/stylis.js",             // modern CSS (https://stylis.js.org)
   },
 
   dom: {
@@ -67,7 +67,7 @@ AFRAME.registerComponent('helloworld', {
 
   init: function () {  
     this.require( this.requires )
-
+    
     this.scene.addEventListener('apps:2D', () => this.el.setAttribute('visible', false) )
     this.scene.addEventListener('apps:XR', () => {
       this.el.setAttribute('visible', true) 

@@ -7,8 +7,8 @@ AFRAME.registerComponent('apptiler', {
   },
 
   requires:{
-    "goldenlayout_css1": "https://unpkg.com/golden-layout@2.6.0/dist/css/goldenlayout-base.css",
-    "goldenlayout_css2": "https://unpkg.com/golden-layout@2.6.0/dist/css/themes/goldenlayout-dark-theme.css"
+    goldenlayout_css1: "https://unpkg.com/golden-layout@2.6.0/dist/css/goldenlayout-base.css",
+    goldenlayout_css2: "https://unpkg.com/golden-layout@2.6.0/dist/css/themes/goldenlayout-dark-theme.css",
   },
 
   dom: {
@@ -27,9 +27,12 @@ AFRAME.registerComponent('apptiler', {
       await this.initLayout(this)
       AFRAME.app.foreach( (opts) => {
         this.add( opts.component, opts.app.el.dom) 
-        if( opts.component != 'apptiler' ) opts.app.el.dom.querySelector('.modal').classList.add(['tile'])
+        if( opts.component != 'apptiler' ) opts.app.el.dom.classList.add(['tile'])
       })
       setTimeout( () => document.querySelector('#overlay').classList.add(['apptiler']), 100 )
+      // surf to entrypoint of other xrsh worlds 
+      //<script src="https://xrfragment.org/feat/multiparty/dist/xrfragment.aframe.js"></script>
+      //AFRAME.XRF.navigator.to("https://coderofsalvation.github.io/xrsh-media/assets/background.glb")
     },
 
   },
@@ -135,7 +138,7 @@ document.head.innerHTML += `
 
     body,
     html.a-fullscreen body{  
-      color:       var(--xrsh-dark-gray);
+      color:       var(--xrsh-light-gray);
       font-size:   var(--xrsh-font-size-1); 
       font-family: var(--xrsh-font-sans-serif);
       accent-color: var(--xrsh-light-primary);
@@ -151,10 +154,14 @@ document.head.innerHTML += `
     }
 
     h1,h2,h3,h4,h5{
-      color: var(--xrsh-gray);
+      color: var(--xrsh-light-gray);
     }
     h1      {  font-size: var(--xrsh-font-size-3); }
     h2,h3,h4{  font-size: var(--xrsh-font-size-2); }
+
+    a,a:visited,a:active{
+      color: var(--xrsh-light-primary);
+    }
 
     button,.btn,input[type=submit]{
       border-radius:7px;
@@ -273,6 +280,7 @@ document.head.innerHTML += `
       margin-right: 3px;
     }
     #windowmanager .lm_content{
+      overflow-y: auto;
       box-sizing:content-box;
       border:1px solid #444;
       background:transparent;

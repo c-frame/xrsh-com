@@ -262,4 +262,5 @@ document.addEventListener("DOMContentLoaded", (event) => {
     if( VRbtn ) document.body.appendChild(VRbtn) // move to body
     if( ARbtn ) document.body.appendChild(ARbtn) // so they will always be visible
   })
+
 })
