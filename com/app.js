@@ -167,6 +167,7 @@ AFRAME.AComponent.prototype.updateProperties = function(updateProperties){
         setupListeners: () => {
           this.scene.addEventListener('apps:2D', () => this.el.setAttribute('visible', false) )
           this.scene.addEventListener('apps:XR', () => {
+            console.log("JAXR")
             this.el.setAttribute('visible', true) 
             this.el.setAttribute("html",`html:#${this.el.uid}; cursor:#cursor`)
           })
@@ -250,9 +251,9 @@ document.head.innerHTML += `
 
 // draw a button so we can toggle apps between 2D / XR
 let toggle = (state) => {
-  state = state || document.body.className.match(/XR/)
-  document.body.classList[ state ? 'remove' : 'add'](['XR'])
-  AFRAME.scenes[0].emit( state ? 'apps:2D' : 'apps:XR') 
+  state = state || !document.body.className.match(/XR/)
+  document.body.classList[ state ? 'add' : 'remove'](['XR'])
+  AFRAME.scenes[0].emit( state ? 'apps:XR' : 'apps:2D') 
 }
 
 document.addEventListener("DOMContentLoaded", (event) => {
@@ -262,7 +263,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
   btn.addEventListener('click', (e) => toggle() )
   document.body.appendChild(btn)
 
-  document.querySelector('a-scene').addEventListener('enter-vr', () => toggle(true) )
+  document.querySelector('a-scene').addEventListener('enter-vr',() => toggle(true) )
   document.querySelector('a-scene').addEventListener('exit-vr', () => toggle(false) )
   document.querySelector('a-scene').addEventListener('loaded', () => {
     let VRbtn = document.querySelector('a-scene .a-enter-vr')
