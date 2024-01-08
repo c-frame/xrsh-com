@@ -53,33 +53,35 @@ AFRAME.registerComponent('app', {
     let deps = []
     if( !packages.map ) packages = Object.values(packages)
     packages.map( (package) => {
-      let id = package.split("/").pop()
-      // prevent duplicate requests
-      if( AFRAME.required[id] ) return
-      AFRAME.required[id] = true 
+      try{
+        let id = package.split("/").pop()
+        // prevent duplicate requests
+        if( AFRAME.required[id] ) return
+        AFRAME.required[id] = true 
 
-      if( !document.head.querySelector(`script#${id}`) ){
-        let {id,component,type} = this.parseAppURI(package)
-        let p = new Promise( (resolve,reject) => {
-          switch(type){
-            case "js":  let script = document.createElement("script")
-                        script.id  = id
-                        script.src = package
-                        script.onload  = () => resolve()
-                        script.onerror = (e) => reject(e)
-                        document.head.appendChild(script)
-                        break;
-            case "css": let link = document.createElement("link")
-                        link.id  = id
-                        link.href = package
-                        link.rel = 'stylesheet'
-                        document.head.appendChild(link)
-                        resolve()
-                        break;
-          }
-        })
-        deps.push(p)
-      }
+        if( !document.head.querySelector(`script#${id}`) ){
+          let {component,type} = this.parseAppURI(package)
+          let p = new Promise( (resolve,reject) => {
+            switch(type){
+              case "js":  let script = document.createElement("script")
+                          script.id  = id
+                          script.src = package
+                          script.onload  = () => resolve()
+                          script.onerror = (e) => reject(e)
+                          document.head.appendChild(script)
+                          break;
+              case "css": let link = document.createElement("link")
+                          link.id  = id
+                          link.href = package
+                          link.rel = 'stylesheet'
+                          document.head.appendChild(link)
+                          resolve()
+                          break;
+            }
+          })
+          deps.push(p)
+        }
+      }catch(e){ console.error(`package ${package} could not be retrieved..aborting :(`); throw e; }
     })
     Promise.all(deps).then( () => this.el.emit( readyEvent||'ready', packages) )
   }
@@ -106,14 +108,23 @@ AFRAME.AComponent.prototype.initComponent = function(initComponent){
 AFRAME.AComponent.prototype.updateProperties = function(updateProperties){
   return function(){
     updateProperties.apply(this,arguments)
-    if( this.dom && this.data && this.data.uri ){
+
+
+    const reactify = (el,aframe) => new Proxy(this.data,{
+      get(me,k,v)  { return me[k] 
+      },
+      set(me,k,v){
+        me[k] = v
+        aframe.emit(k,{el,k,v})
+      }
+    })
+
+    if( !this.data  ) return
+
+    // reactify components with dom-definition
+    if( this.data.uri && this.dom && !this.el.dom ){
 
       tasks = {
-
-        generateUniqueId: () => {
-          this.el.uid = String(Math.random()).substr(10)
-          return tasks
-        },
 
         ensureOverlay: () => {
           let overlay = document.querySelector('#overlay')
@@ -128,13 +139,6 @@ AFRAME.AComponent.prototype.updateProperties = function(updateProperties){
         },
 
         createReactiveDOMElement: () => {
-          const reactify = (el,aframe) => new Proxy(this.data,{
-            get(me,k,v)  { return me[k] },
-            set(me,k,v){
-              me[k] = v
-              aframe.emit(k,{el,k,v})
-            }
-          })
           this.el.dom = document.createElement('div')
           this.el.dom.className = this.parseAppURI(this.data.uri).component
           this.el.dom.innerHTML = this.dom.html(this)
@@ -155,35 +159,38 @@ AFRAME.AComponent.prototype.updateProperties = function(updateProperties){
           return tasks
         },
 
-        addModalFunctions: () => {
-          this.el.close = () => {
-            this.el.dom.remove()
-            this.el.removeAttribute("html")
-          }
+        requireDependencies: () => {
+          this.require( this.requires )
+          return tasks
+        },
+
+        setupListeners: () => {
+          this.scene.addEventListener('apps:2D', () => this.el.setAttribute('visible', false) )
+          this.scene.addEventListener('apps:XR', () => {
+            this.el.setAttribute('visible', true) 
+            this.el.setAttribute("html",`html:#${this.el.uid}; cursor:#cursor`)
+          })
           return tasks
         }
+
       }
 
       tasks
-      .generateUniqueId()
       .ensureOverlay()
       .addCSS()
       .createReactiveDOMElement()
       .scaleDOMvsXR()
-      .addModalFunctions()
+      .requireDependencies()
+      .setupListeners()
 
       tasks.overlay.appendChild(this.el.dom)
       this.el.emit('DOMready',{el: this.el.dom})
-    }
+
+    } 
+    // assign unique app id
+    if( !this.el.uid ) this.el.uid = '_'+String(Math.random()).substr(10)
   }
 }( AFRAME.AComponent.prototype.updateProperties)
-//
-// base CSS for XRSH apps 
-//
-// limitations / some guidelines for html-mesh compatibility:
-//   * no icon libraries (favicon e.g.)
-//   * 'border-radius: 2px 3px 4px 5px' (applies 2px to all corners)
-//
 
 document.head.innerHTML += `
   <style type="text/css">
@@ -247,10 +254,11 @@ let toggle = (state) => {
   document.body.classList[ state ? 'remove' : 'add'](['XR'])
   AFRAME.scenes[0].emit( state ? 'apps:2D' : 'apps:XR') 
 }
+
 document.addEventListener("DOMContentLoaded", (event) => {
   let btn       = document.createElement("button")
   btn.id        = "toggle_overlay"
-  btn.innerText = 'XRSH'
+  btn.innerHTML = "<i class='gg-stack'></i>"
   btn.addEventListener('click', (e) => toggle() )
   document.body.appendChild(btn)
 
@@ -262,5 +270,6 @@ document.addEventListener("DOMContentLoaded", (event) => {
     if( VRbtn ) document.body.appendChild(VRbtn) // move to body
     if( ARbtn ) document.body.appendChild(ARbtn) // so they will always be visible
   })
-
+  // toggle immersive with ESCAPE 
+  document.body.addEventListener('keydown', (e) => e.key == 'Escape' && toggle() ) 
 })

@@ -1,4 +1,4 @@
-AFRAME.registerComponent('manual', {
+AFRAME.registerComponent('helloworld-window', {
   schema: { 
     foo: { type:"string"}
   },
@@ -18,26 +18,11 @@ AFRAME.registerComponent('manual', {
     scale:   3,
     events:  ['click','keydown'],
     html:    (me) => `<div>
-
-                  <h1>Welcome to XRSHell</h1>
-                  <br>
-                  <!-- <img src="https://i.imgur.com/BW22wrb.png"/> -->
-                  <br><br>
-                  The <b>xrsh</b> (xrshell) brings the <a href="https://en.wikipedia.org/wiki/Free_and_open-source_software" target="_blank">FOSS</a>- and <a href="https://en.wikipedia.org/wiki/Linux" target="_blank">Linux</a>-soul to <a href="https://en.wikipedia.org/wiki/WebXR" target="_blank">WebXR</a>, promoting the use of (interactive text) terminal and user-provided operating systems inside WebXR.
-                  <br><br>Technically, <b>xrsh</b> is a bundle of freshly created re-usable FOSS WebXR components.<br>These provide a common filesystem interface for interacting with WebXR, offering the well-known linux/unix toolchain including a commandline to invoke, store, edit and run WebXR utilities - regardless of their implementation.
-                  <br><br>Think of it as termux for the VR/AR headset browser, which can be used to e.g. livecode (using terminal auto-completion!) for XR component (registries).                
-
-                  <br>
-                  <ul>
-                    <li><a href="https://forgejo.isvery.ninja/xrsh" target="_blank">source xrsh</a></li>
-                    <li><a href="https://forgejo.isvery.ninja/xrsh-apps" target="_blank">source xrsh apps</a></li>
-                    <li><a href="https://forgejo.isvery.ninja/xrsh-media" target="_blank">roadmap meeting recordings</a></li>
-                  </ul>
-
+                        <div class="pad"> ${me.data.foo} <b>${me.data.myvalue}</b></span>
                       </div>`,
-    css:     `.manual {
+    css:     `.helloworld-window {
                 div {
-                  padding:11px;
+                  .pad { padding:11px; }
                 }
               }
               `,
@@ -60,9 +45,9 @@ AFRAME.registerComponent('manual', {
     ready: function(e){
 
       setTimeout( () => {
-        new WinBox("XRSH manual",{ 
-          width:300,
-          height:300,
+        new WinBox("Hello World",{ 
+          width: 250,
+          height: 150,
           x:"center",
           y:"center",
           id:  this.el.uid, // important hint for html-mesh  

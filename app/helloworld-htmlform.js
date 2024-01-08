@@ -1,4 +1,4 @@
-AFRAME.registerComponent('manual', {
+AFRAME.registerComponent('helloworld-htmlform', {
   schema: { 
     foo: { type:"string"}
   },
@@ -16,26 +16,24 @@ AFRAME.registerComponent('manual', {
 
   dom: {
     scale:   3,
-    events:  ['click','keydown'],
-    html:    (me) => `<div>
-
-                  <h1>Welcome to XRSHell</h1>
-                  <br>
-                  <!-- <img src="https://i.imgur.com/BW22wrb.png"/> -->
-                  <br><br>
-                  The <b>xrsh</b> (xrshell) brings the <a href="https://en.wikipedia.org/wiki/Free_and_open-source_software" target="_blank">FOSS</a>- and <a href="https://en.wikipedia.org/wiki/Linux" target="_blank">Linux</a>-soul to <a href="https://en.wikipedia.org/wiki/WebXR" target="_blank">WebXR</a>, promoting the use of (interactive text) terminal and user-provided operating systems inside WebXR.
-                  <br><br>Technically, <b>xrsh</b> is a bundle of freshly created re-usable FOSS WebXR components.<br>These provide a common filesystem interface for interacting with WebXR, offering the well-known linux/unix toolchain including a commandline to invoke, store, edit and run WebXR utilities - regardless of their implementation.
-                  <br><br>Think of it as termux for the VR/AR headset browser, which can be used to e.g. livecode (using terminal auto-completion!) for XR component (registries).                
-
-                  <br>
-                  <ul>
-                    <li><a href="https://forgejo.isvery.ninja/xrsh" target="_blank">source xrsh</a></li>
-                    <li><a href="https://forgejo.isvery.ninja/xrsh-apps" target="_blank">source xrsh apps</a></li>
-                    <li><a href="https://forgejo.isvery.ninja/xrsh-media" target="_blank">roadmap meeting recordings</a></li>
-                  </ul>
-
+    events:  ['click','input'],
+    html:    (me) => `<div class="light">
+                        <fieldset>
+                          <legend>Colour</legend>
+                          <input type="radio" id="color-red" name="color" value="red" checked><label for="color-red"> Red</label><br>
+                          <input type="radio" id="color-blue" name="color" value="blue"><label for="color-blue"> Blue</label><br>
+                        </fieldset>
+                        <fieldset>
+                          <legend>Material:</legend>
+                          <input id="material-wireframe" type="checkbox" name="wireframe"><label for="material-wireframe"> Wireframe</label><br>
+                        </fieldset>
+                        <fieldset>
+                          <legend>Size: <span id="myvalue"></span></legend>
+                          <input type="range" min="0.1" max="2" value="1" step="0.01" id="myRange" style="background-color: transparent;">
+                        </fieldset>
+                        <button>hello</button>
                       </div>`,
-    css:     `.manual {
+    css:     `.helloworld-htmlform {
                 div {
                   padding:11px;
                 }
@@ -50,33 +48,38 @@ AFRAME.registerComponent('manual', {
     stylis:   function( ){ console.log("stylis    requirement mounted") },
 
     // combined AFRAME+DOM reactive events
-    click:   function(e){ }, // 
-    keydown: function(e){ }, // 
+    click: function(e){ }, // 
+    input: function(e){
+      if( !e.detail.target                 ) return
+      if(  e.detail.target.id == 'myRange' ) this.data.myvalue = e.detail.target.value // reactive demonstration
+    },
 
     // reactive events for this.data updates 
-    myvalue: function(e){ this.el.dom.querySelector('b').innerText = this.data.myvalue },
+    myvalue: function(e){ this.el.dom.querySelector('#myvalue').innerText = this.data.myvalue },
 
     // requires are loaded
     ready: function(e){
-
       setTimeout( () => {
-        new WinBox("XRSH manual",{ 
-          width:300,
-          height:300,
-          x:"center",
-          y:"center",
+        new WinBox("Hello World",{ 
+          width: 250,
+          height: 315,
+          minwidth:250,
+          maxwidth:250,
+          maxheight:315,
+          minheight:315,
+          x: 100,
+          y: 100,
           id:  this.el.uid, // important hint for html-mesh  
           root: document.querySelector("#overlay"),
           mount: this.el.dom 
         });
-      }, 500 )
+      },500) /*FIXME*/
 
     },
 
     DOMready: function( ){ 
       console.log("this.el.dom has been added to DOM")
       this.data.myvalue = 1
-      setInterval( () => this.data.myvalue++, 100 )
     }
 
   },

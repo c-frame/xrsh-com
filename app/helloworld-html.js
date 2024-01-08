@@ -1,21 +1,51 @@
-AFRAME.registerComponent('helloworld', {
+AFRAME.registerComponent('helloworld-html', {
   schema: { 
     foo: { type:"string"}
   },
 
   init: function () {  
-    this.el.setAttribute("geometry","primitive: octahedron")
+
   },
 
   requires:{
-    // somecomponent:        "https://unpkg.com/some-aframe-component/mycom.min.js"
+    html:        "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",  // html to AFRAME
+  },
+
+  dom: {
+    scale:   3,
+    events:  ['click'],
+    html:    (me) => `<div>
+                        <div class="pad"> helloworld-html: ${me.data.foo} <b>${me.data.myvalue}</b></span>
+                      </div>`,
+
+    css:     `.helloworld-html {
+                color: var(--xrsh-dark-gray); /* see index.css */
+              }
+              `,
   },
 
   events:{
 
     // component events
-    somecomponent: function( ){ console.log("component requirement mounted") },
-    ready:         function(e){ console.log("requires are loaded") },
+    html:     function( ){ console.log("html-mesh requirement mounted") },
+    ready:    function(e){ console.log("requires are loaded") },
+
+    // combined AFRAME+DOM reactive events
+    keydown: function(e){ }, // 
+    click:    function(e){ 
+      console.dir(e)
+    }, // 
+
+    // reactive events for this.data updates 
+    myvalue: function(e){ this.el.dom.querySelector('b').innerText = this.data.myvalue },
+
+
+    DOMready: function( ){ 
+      console.log("this.el.dom has been added to DOM")
+      this.el.dom.children[0].id = this.el.uid  // important hint for html-mesh
+      this.data.myvalue = 1
+      setInterval( () => this.data.myvalue++, 100 )
+    }
 
   },
 
