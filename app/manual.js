@@ -4,14 +4,14 @@ AFRAME.registerComponent('manual', {
   },
 
   init: function () {  
-
+      //AFRAME.XRF.navigator.to("https://coderofsalvation.github.io/xrsh-media/assets/background.glb")
   },
 
   requires:{
-    html:        "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",  // html to AFRAME
-    winboxjs:    "https://unpkg.com/winbox@0.2.82/dist/winbox.bundle.min.js",     // deadsimple windows: https://nextapps-de.github.io/winbox
-    winboxcss:   "https://unpkg.com/winbox@0.2.82/dist/css/winbox.min.css",       // deadsimple windows: https://nextapps-de.github.io/winbox
-    stylis:      "https://unpkg.com/stylis@4.3.1/dist/umd/stylis.js",             // modern CSS (https://stylis.js.org)
+    html:        "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",     // html to AFRAME
+    winboxjs:    "https://unpkg.com/winbox@0.2.82/dist/winbox.bundle.min.js",        // deadsimple windows: https://nextapps-de.github.io/winbox
+    winboxcss:   "https://unpkg.com/winbox@0.2.82/dist/css/winbox.min.css",          // deadsimple windows: https://nextapps-de.github.io/winbox
+    xrfragments: "https://xrfragment.org/dist/xrfragment.aframe.js",
   },
 
   dom: {
@@ -71,6 +71,8 @@ AFRAME.registerComponent('manual', {
         });
       }, 500 )
 
+      this.el.setAttribute("xrf","https://coderofsalvation.github.io/xrsh-media/assets/background.glb")
+      // navigate with: AFRAME.XRF.navigator.to("https://xrfragment.org/index.glb")
     },
 
     DOMready: function( ){ 
