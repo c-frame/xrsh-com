@@ -9,6 +9,17 @@ AFRAME.registerComponent('spatialize', {
     document.querySelector('a-scene').addEventListener('exit-vr', () => this.toggle(false) )
     // toggle immersive with ESCAPE 
     document.body.addEventListener('keydown', (e) => e.key == 'Escape' && this.toggle() ) 
+
+    document.head.innerHTML += `<style type="text/css">
+      .XR #toggle_overlay{
+        background: transparent;
+        color: #3aacff;
+      }
+
+      .XR #overlay{
+        visibility: hidden;
+      }
+    </style>`
   },
 
   requires:{
@@ -31,7 +42,8 @@ AFRAME.registerComponent('spatialize', {
     state = state || !document.body.className.match(/XR/)
     document.body.classList[ state ? 'add' : 'remove'](['XR'])
     AFRAME.scenes[0].emit( state ? 'apps:XR' : 'apps:2D') 
-    this.btn.classList.toggle('enable')
+    this.btn.querySelector('img').src = state ? this.manifest.icons[0].src_2D
+                                              : this.manifest.icons[0].src
   },
 
   manifest: { // HTML5 manifest to identify app to xrsh
@@ -39,7 +51,8 @@ AFRAME.registerComponent('spatialize', {
     "name": "spatialize",
     "icons": [
       {
-        "src": "https://css.gg/stack.svg",
+        "src": "https://css.gg/display-grid.svg",
+        "src_2D":    "https://css.gg/stack.svg",
         "type": "image/svg+xml",
         "sizes": "512x512"
       }
@@ -66,7 +79,7 @@ AFRAME.registerComponent('spatialize', {
         "icons": [{ "src": "/images/today.png", "sizes": "192x192" }]
       }
     ],
-    "description": "Hello world information",
+    "description": "use ESC-key to toggle between 2D / 3D",
     "screenshots": [
       {
         "src": "/images/screenshot1.png",

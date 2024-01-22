@@ -37,7 +37,7 @@ AFRAME.registerComponent('launcher', {
     scale:   3,
     events:  ['click'],
     html:    (me) => `<div>
-                        <div class="iconmenu"></div>
+                        <div id="iconmenu"></div>
                       </div>`,
 
     css:     `#iconmenu {
@@ -53,6 +53,7 @@ AFRAME.registerComponent('launcher', {
                 padding-bottom: 72px;
                 box-sizing: border-box;
                 pointer-events: none;
+                visibility: visible !important;
               }
               #iconmenu > button {
                 pointer-events:all;
@@ -84,9 +85,8 @@ AFRAME.registerComponent('launcher', {
                 padding: 5px;
                 border-radius: 0px;
               }
-              #iconmenu > button > img:hover,
-              #iconmenu > button.enable > img {
-                border:2px solid #444;
+              #iconmenu > button > img:hover{
+                background: #AAA;
                 transition:0.gg3s;
                 border-radius: 50%;
               }`
@@ -110,24 +110,21 @@ AFRAME.registerComponent('launcher', {
     clearTimeout(this.timeout)
     this.timeout = setTimeout( () => {
       AFRAME.app.foreach( (app) => {
-        console.dir(app)
         if( !app.manifest ) return 
 
-        console.log("--rendering button")
-        return
+        console.log(app.data.uri+" "+app.data.order)
+
         let btn = app.btn = document.createElement('button')
         if( app.manifest.icons?.length > 0){
           let img = document.createElement('img') 
           img.src = app.manifest.icons[0].src
-          img.alt = app.manifest.name
+          img.title = app.manifest.name + ": " + app.manifest.description
           btn.appendChild(img)
         }else btn.innerText = app.manifest.short_name
-        btn.addEventListener('click', () => {
-          app.el.emit('launcher',app)
-        })
+        btn.addEventListener('click', () => app.el.emit('launcher',app) )
         this.el.dom.querySelector('#iconmenu').appendChild(btn)
       })
-    },200)
+    },100)
   },
 
   manifest: { // HTML5 manifest to identify app to xrsh

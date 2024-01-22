@@ -3,19 +3,36 @@
 AFRAME.required    = {}
 AFRAME.app         = new Proxy({
 
+  order:0,
+
   add(component, entity){ 
+    // categorize by component to prevent similar apps loading duplicate dependencies simultaniously
     this[component] = this[component] || []
     this[component].push(entity)
+    entity.data.order = entity.data.order || this.count() 
+  },
+  count(){
+    let n = 0
+    this.foreach( () => n++ )
+    return n
   },
   foreach(cb){
+    const isArray = (e) => e.push
+    let arr = []
     for( let i in this ){
-      if( typeof this[i] != 'function' ) this[i].map( (app) => cb({app,component:i}) )
+      if( isArray(this[i]) ) this[i].map( (app) => arr.push(app.el.app) )
     }
+    arr.sort( (a,b) => a.data.order > b.data.order )
+       .map( cb )
   }
 },{
   get(me,k)  { return me[k] },
   set(me,k,v){ me[k] = v    }
 })
+
+/*
+ * This is the abstract 'app' component
+ */
 
 AFRAME.registerComponent('app', {
   schema:{
@@ -57,7 +74,6 @@ AFRAME.registerComponent('app', {
       type:      String(uri).split(".").pop()                       // 'mycom.js' => 'js'
     }
   },
-
   // usage: require(["./app/foo.js"])
   //        require({foo: "https://foo.com/foo.js"})
   require: AFRAME.AComponent.prototype.require = function(packages,readyEvent){
@@ -101,13 +117,17 @@ AFRAME.registerComponent('app', {
 
 })
 
-// monkeypatching initComponent will trigger events when components 
-// are initialized (that way apps can react to attached components) 
-// basically, in both situations: 
-//   <a-entity foo="a:1"/> 
-//   <a-entity app="uri: myapp.js"/>   <!-- myapp.js calls this.require(['foo.js']) -->
-//   
-// event 'foo' will be triggered as both entities (in)directly require component 'foo'
+/*
+ * Here are monkeypatched AFRAME component prototype functions
+ *
+ *  monkeypatching initComponent will trigger events when components 
+ *  are initialized (that way apps can react to attached components) 
+ *  basically, in both situations: 
+ *    <a-entity foo="a:1"/> 
+ *    <a-entity app="uri: myapp.js"/>   <!-- myapp.js calls this.require(['foo.js']) -->
+ *    
+ *  event 'foo' will be triggered as both entities (in)directly require component 'foo'
+ */
 
 AFRAME.AComponent.prototype.initComponent = function(initComponent){
   return function(){
@@ -122,7 +142,7 @@ AFRAME.AComponent.prototype.updateProperties = function(updateProperties){
   return function(){
     updateProperties.apply(this,arguments)
 
-    if( !this.data || !this.data.uri  ) return // only deal with apps
+    if( !this.data || !this.data.uri || this.isApp  ) return // only deal with apps (once)
 
     // ensure overlay
     let overlay = document.querySelector('#overlay')
@@ -131,22 +151,22 @@ AFRAME.AComponent.prototype.updateProperties = function(updateProperties){
       overlay.id = "overlay"
       document.body.appendChild(overlay)
       document.querySelector("a-scene").setAttribute("webxr","overlayElement:#overlay")
-      let menu = document.createElement('div')
-      menu.id = 'iconmenu'
-      document.body.appendChild(menu)
+//      let menu = document.createElement('div')
+//      menu.id = 'iconmenu'
+//      document.body.appendChild(menu)
     }
 
-    // add menu button
-    if( this.manifest && this.manifest.icons ){
-      let btn = document.createElement('button')
-      btn.app = this
-      if( this.manifest.icons.length ){
-        btn.innerHTML = `<img src="${this.manifest.icons[0].src}"/>`
-      }else btn.innerText = this.manifest.short_name
-      btn.setAttribute("alt", this.manifest.name )
-      btn.addEventListener('click', (e) => this.el.emit('launcher',{}) )
-      document.querySelector("#iconmenu").appendChild(btn)
-    }
+//    // add menu button
+//    if( this.manifest && this.manifest.icons ){
+//      let btn = document.createElement('button')
+//      btn.app = this
+//      if( this.manifest.icons.length ){
+//        btn.innerHTML = `<img src="${this.manifest.icons[0].src}"/>`
+//      }else btn.innerText = this.manifest.short_name
+//      btn.setAttribute("alt", this.manifest.name )
+//      btn.addEventListener('click', (e) => this.el.emit('launcher',{}) )
+//      document.querySelector("#iconmenu").appendChild(btn)
+//    }
 
     // reactify components with dom-definition
     if( this.data.uri && this.dom && !this.el.dom ){
@@ -220,9 +240,12 @@ AFRAME.AComponent.prototype.updateProperties = function(updateProperties){
     // assign unique app id
     if( !this.el.uid ) this.el.uid = '_'+String(Math.random()).substr(10)
 
-    // fetch requires
     if( this.requires ) this.require( this.requires, 'requires:ready' )
     else this.el.emit('requires:ready')
+
+    // mark app as being initialized
+    this.isApp  = true
+    this.el.app = this
   }
 }( AFRAME.AComponent.prototype.updateProperties)
 
@@ -249,62 +272,5 @@ document.head.innerHTML += `
     #overlay.hide{
       z-index:-10;
     }
-
-    #toggle_overlay{
-      display:none;
-      position: fixed;
-      right: 20px;
-      bottom: 73px;
-      width: 58px;
-      text-align: center;
-      height: 40px;
-      padding: 0;
-      z-index: 100;
-      border: 3px solid #3aacff;
-      border-radius:11px;
-      transition:0.3s;
-      padding: 0px;
-      font-weight: bold;
-      cursor:pointer;
-      font-family:sans-serif;
-      font-size:15px;
-      color: #FFF;  
-      background: #3aacff;
-      transition:0.5s;
-    }
-    .XR #toggle_overlay{
-      background: transparent;
-      color: #3aacff;
-    }
-
-    .XR #overlay{
-      visibility: hidden;
-    }
   </style>
 `
-
-// draw a button so we can toggle apps between 2D / XR
-let toggle = (state) => {
-  state = state || !document.body.className.match(/XR/)
-  document.body.classList[ state ? 'add' : 'remove'](['XR'])
-  AFRAME.scenes[0].emit( state ? 'apps:XR' : 'apps:2D') 
-}
-
-document.addEventListener("DOMContentLoaded", (event) => {
-  let btn       = document.createElement("button")
-  btn.id        = "toggle_overlay"
-  btn.innerHTML = "<i class='gg-stack'></i>"
-  btn.addEventListener('click', (e) => toggle() )
-  document.body.appendChild(btn)
-
-  document.querySelector('a-scene').addEventListener('enter-vr',() => toggle(true) )
-  document.querySelector('a-scene').addEventListener('exit-vr', () => toggle(false) )
-  document.querySelector('a-scene').addEventListener('loaded', () => {
-    let VRbtn = document.querySelector('a-scene .a-enter-vr')
-    let ARbtn = document.querySelector('a-scene .a-enter-ar')
-    if( VRbtn ) document.body.appendChild(VRbtn) // move to body
-    if( ARbtn ) document.body.appendChild(ARbtn) // so they will always be visible
-  })
-  // toggle immersive with ESCAPE 
-  document.body.addEventListener('keydown', (e) => e.key == 'Escape' && toggle() ) 
-})
