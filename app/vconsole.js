@@ -1,54 +1,42 @@
-AFRAME.registerComponent('helloworld-html', {
+AFRAME.registerComponent('vconsole', {
   schema: { 
     foo: { type:"string"}
   },
 
   init: function () {  
-
-    this.el.addEventListener('ready', () => this.el.dom.style.display = 'none' )
+      //AFRAME.XRF.navigator.to("https://coderofsalvation.github.io/xrsh-media/assets/background.glb")
+    document.head.innerHTML += `
+      <style type="text/css">
+        .vc-mask   { display: none !important }
+        .vc-switch { display: none !important }
+        .vc-panel  {
+          right:unset !important;
+          width:100%;
+          max-width:600px;
+          z-index:100 !important;
+        }
+      </style>
+    `
   },
 
   requires:{
-    html:        "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",  // html to AFRAME
-  },
-
-  dom: {
-    scale:   3,
-    events:  ['click'],
-    html:    (me) => `<div>
-                        <div class="pad"> helloworld-html: ${me.data.foo} <b>${me.data.myvalue}</b></span>
-                      </div>`,
-
-    css:     `.helloworld-html {
-                color: var(--xrsh-light-gray); /* see index.css */
-              }`,
+    vconsole:        "https://unpkg.com/vconsole@latest/dist/vconsole.min.js"
   },
 
   events:{
 
-    // combined AFRAME+DOM reactive events
-    keydown: function(e){ }, // 
-    click:    function(e){ 
-      console.dir(e)
-    }, // 
-
-    // reactive events for this.data updates 
-    myvalue: function(e){ this.el.dom.querySelector('b').innerText = this.data.myvalue },
-
-
-    ready: function( ){ 
-      this.el.dom.style.display = 'none'
-      console.log("this.el.dom has been added to DOM")
-      this.el.dom.children[0].id = this.el.uid  // important hint for html-mesh
-      this.data.myvalue = 1
-      setInterval( () => this.data.myvalue++, 100 )
+    // requires are loaded
+    ready: function(e){
+      this.vConsole = new window.VConsole() 
+      document.querySelector('.vc-mask').remove()
+      document.querySelector('.vc-switch').remove()
     },
 
-    launcher:  function(){ 
-      this.el.dom.style.display = ''
-      console.log("launcher") 
+    launcher: function(){
+      let panel = document.querySelector('.vc-panel') 
+      if( panel.style.display == 'none' ) this.vConsole.show()
+      else this.vConsole.hide()
     },
-
   },
 
   manifest: { // HTML5 manifest to identify app to xrsh
@@ -56,7 +44,7 @@ AFRAME.registerComponent('helloworld-html', {
     "name": "Hello world",
     "icons": [
       {
-        "src": "https://css.gg/browser.svg",
+        "src": "https://css.gg/border-bottom.svg",
         "type": "image/svg+xml",
         "sizes": "512x512"
       }

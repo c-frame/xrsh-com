@@ -1,62 +1,45 @@
-AFRAME.registerComponent('helloworld-html', {
+AFRAME.registerComponent('spatialize', {
   schema: { 
     foo: { type:"string"}
   },
 
-  init: function () {  
+  init: function () {
 
-    this.el.addEventListener('ready', () => this.el.dom.style.display = 'none' )
+    document.querySelector('a-scene').addEventListener('enter-vr',() => this.toggle(true) )
+    document.querySelector('a-scene').addEventListener('exit-vr', () => this.toggle(false) )
+    // toggle immersive with ESCAPE 
+    document.body.addEventListener('keydown', (e) => e.key == 'Escape' && this.toggle() ) 
   },
 
   requires:{
-    html:        "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",  // html to AFRAME
-  },
-
-  dom: {
-    scale:   3,
-    events:  ['click'],
-    html:    (me) => `<div>
-                        <div class="pad"> helloworld-html: ${me.data.foo} <b>${me.data.myvalue}</b></span>
-                      </div>`,
-
-    css:     `.helloworld-html {
-                color: var(--xrsh-light-gray); /* see index.css */
-              }`,
+    // somecomponent:        "https://unpkg.com/some-aframe-component/mycom.min.js"
   },
 
   events:{
 
-    // combined AFRAME+DOM reactive events
-    keydown: function(e){ }, // 
-    click:    function(e){ 
-      console.dir(e)
-    }, // 
-
-    // reactive events for this.data updates 
-    myvalue: function(e){ this.el.dom.querySelector('b').innerText = this.data.myvalue },
-
-
-    ready: function( ){ 
-      this.el.dom.style.display = 'none'
-      console.log("this.el.dom has been added to DOM")
-      this.el.dom.children[0].id = this.el.uid  // important hint for html-mesh
-      this.data.myvalue = 1
-      setInterval( () => this.data.myvalue++, 100 )
+    // component events
+    ready:         function(e){
+      this.btn.style.background = 'var(--xrsh-primary)'
     },
 
-    launcher:  function(){ 
-      this.el.dom.style.display = ''
-      console.log("launcher") 
-    },
+    launcher:      function(e){ this.toggle() },
 
   },
 
+  // draw a button so we can toggle apps between 2D / XR
+  toggle: function(state){
+    state = state || !document.body.className.match(/XR/)
+    document.body.classList[ state ? 'add' : 'remove'](['XR'])
+    AFRAME.scenes[0].emit( state ? 'apps:XR' : 'apps:2D') 
+    this.btn.classList.toggle('enable')
+  },
+
   manifest: { // HTML5 manifest to identify app to xrsh
-    "short_name": "Hello world",
-    "name": "Hello world",
+    "short_name": "spatialize",
+    "name": "spatialize",
     "icons": [
       {
-        "src": "https://css.gg/browser.svg",
+        "src": "https://css.gg/stack.svg",
         "type": "image/svg+xml",
         "sizes": "512x512"
       }

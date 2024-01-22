@@ -1,4 +1,4 @@
-AFRAME.registerComponent('helloworld-window', {
+AFRAME.registerComponent('isoterminal', {
   schema: { 
     foo: { type:"string"}
   },
@@ -15,17 +15,13 @@ AFRAME.registerComponent('helloworld-window', {
     scale:   3,
     events:  ['click','keydown'],
     html:    (me) => `<div>
-                        <div class="pad"> ${me.data.foo} <b>${me.data.myvalue}</b></span>
+                        <div class="pad">to be implemented</span>
                       </div>`,
 
     css:     `.helloworld-window div.pad { padding:11px; }`
   },
 
   events:{
-
-    // component events
-    html:     function( ){ console.log("html-mesh requirement mounted") },
-    stylis:   function( ){ console.log("stylis    requirement mounted") },
 
     // combined AFRAME+DOM reactive events
     click:   function(e){ }, // 
@@ -36,22 +32,22 @@ AFRAME.registerComponent('helloworld-window', {
 
     ready: function( ){ 
       this.el.dom.style.display = 'none'
-      console.log("this.el.dom has been added to DOM")
-      this.data.myvalue = 1
-      setInterval( () => this.data.myvalue++, 100 )
     },
 
     launcher:  function(){
-      console.log("this.el.dom has been added to DOM")
-      new WinBox("Hello World",{ 
-        width: 250,
-        height: 150,
+      new WinBox( this.manifest.iso + ' ' + this.manifest.name, { 
+        width: '70%',
+        height: '80%',
         x:"center",
         y:"center",
         id:  this.el.uid, // important hint for html-mesh  
         root: document.querySelector("#overlay"),
         mount: this.el.dom,
-        onclose: () => { this.el.dom.style.display = 'none'; return false; }
+        onclose: () => { 
+          if( !confirm('do you want to kill this virtual machine and all its processes?') ) return true 
+          this.el.dom.style.display = 'none'
+          return false
+        }
       });
       this.el.dom.style.display = ''
     },
@@ -59,11 +55,12 @@ AFRAME.registerComponent('helloworld-window', {
   },
 
   manifest: { // HTML5 manifest to identify app to xrsh
-    "short_name": "Hello world",
-    "name": "Hello world",
+    "iso": "linux-x64-4.15.iso",
+    "short_name": "ISOTerm",
+    "name": "terminal",
     "icons": [
       {
-        "src": "https://css.gg/browser.svg",
+        "src": "https://css.gg/terminal.svg",
         "type": "image/svg+xml",
         "sizes": "512x512"
       }

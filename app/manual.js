@@ -4,14 +4,14 @@ AFRAME.registerComponent('manual', {
   },
 
   init: function () {  
-      //AFRAME.XRF.navigator.to("https://coderofsalvation.github.io/xrsh-media/assets/background.glb")
+    // requires are loaded
+    this.el.addEventListener('ready', () => this.el.dom.style.display = 'none' )
   },
 
   requires:{
     html:        "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",     // html to AFRAME
     winboxjs:    "https://unpkg.com/winbox@0.2.82/dist/winbox.bundle.min.js",        // deadsimple windows: https://nextapps-de.github.io/winbox
     winboxcss:   "https://unpkg.com/winbox@0.2.82/dist/css/winbox.min.css",          // deadsimple windows: https://nextapps-de.github.io/winbox
-    xrfragments: "https://xrfragment.org/dist/xrfragment.aframe.js",
   },
 
   dom: {
@@ -35,19 +35,13 @@ AFRAME.registerComponent('manual', {
                   </ul>
 
                       </div>`,
-    css:     `.manual {
-                div {
-                  padding:11px;
-                }
-              }
-              `,
+    css:     `.manual > div { padding:11px }`
   },
 
   events:{
 
     // component events
     html:     function( ){ console.log("html-mesh requirement mounted") },
-    stylis:   function( ){ console.log("stylis    requirement mounted") },
 
     // combined AFRAME+DOM reactive events
     click:   function(e){ }, // 
@@ -56,26 +50,24 @@ AFRAME.registerComponent('manual', {
     // reactive events for this.data updates 
     myvalue: function(e){ this.el.dom.querySelector('b').innerText = this.data.myvalue },
 
-    // requires are loaded
-    ready: function(e){
-
-      setTimeout( () => {
-        new WinBox("XRSH manual",{ 
-          width:300,
-          height:300,
-          x:"center",
-          y:"center",
-          id:  this.el.uid, // important hint for html-mesh  
-          root: document.querySelector("#overlay"),
-          mount: this.el.dom 
-        });
-      }, 500 )
-
-      this.el.setAttribute("xrf","https://coderofsalvation.github.io/xrsh-media/assets/background.glb")
+    launcher:  function(){
+      new WinBox( this.manifest.name, { 
+        width: '70%',
+        height: '70%',
+        x:"center",
+        y:"center",
+        id:  this.el.uid, // important hint for html-mesh  
+        root: document.querySelector("#overlay"),
+        mount: this.el.dom,
+        onclose: () => { this.el.dom.style.display = 'none'; return false; }
+      });
+      this.el.dom.style.display = ''
+      this.el.setAttribute("xrf", document.location.search || "https://coderofsalvation.github.io/xrsh-media/assets/background.glb")
       // navigate with: AFRAME.XRF.navigator.to("https://xrfragment.org/index.glb")
     },
 
     DOMready: function( ){ 
+      this.el.dom.style.display = 'none'
       console.log("this.el.dom has been added to DOM")
       this.data.myvalue = 1
       setInterval( () => this.data.myvalue++, 100 )
@@ -84,11 +76,11 @@ AFRAME.registerComponent('manual', {
   },
 
   manifest: { // HTML5 manifest to identify app to xrsh
-    "short_name": "Hello world",
-    "name": "Hello world",
+    "short_name": "XRSH Manual",
+    "name": "XRSH Manual",
     "icons": [
       {
-        "src": "/images/icons-vector.svg",
+        "src": "https://css.gg/coffee.svg",
         "type": "image/svg+xml",
         "sizes": "512x512"
       }

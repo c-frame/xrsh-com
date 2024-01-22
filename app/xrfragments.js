@@ -1,45 +1,33 @@
-AFRAME.registerComponent('helloworld', {
+AFRAME.registerComponent('xrfragments', {
   schema: { 
-    foo: { type:"string"}
+    url: { type:"string"}
   },
 
-  init: function () {
-    this.el.object3D.visible = false
-    this.el.setAttribute("geometry","primitive: octahedron")
-    this.interval = setInterval( () => { 
-        this.data.myvalue = ((this.data.myvalue||1.0) + 0.25) % 1
-    }, 400 )
+  init: function () {  
   },
 
   requires:{
-    // somecomponent:        "https://unpkg.com/some-aframe-component/mycom.min.js"
+    xrfragments: "https://xrfragment.org/dist/xrfragment.aframe.js",
   },
 
   events:{
 
-    // component events
-    somecomponent: function( ){ console.log("component requirement mounted") },
-    ready:         function(e){ console.log("requires are loaded") },
-
-    launcher:      function(e){ 
-      this.el.object3D.visible = !this.el.object3D.visible 
+    // requires are loaded
+    ready: function(e){
+      this.el.setAttribute("xrf","https://coderofsalvation.github.io/xrsh-media/assets/background.glb")
     },
 
-    // reactive this.data value demo 
-    myvalue:function( ){ this.el.object3D.children[0].scale.y = this.data.myvalue }
+    launcher:  function(){
+      let url = prompt('enter URL to glb/fbx/json/obj/usdz asset', 'https://xrfragment.org/index.glb')
+      if( url ) AFRAME.XRF.navigator.to(url)
+    }
 
   },
 
   manifest: { // HTML5 manifest to identify app to xrsh
-    "short_name": "Hello world",
-    "name": "Hello world",
-    "icons": [
-      {
-        "src": "https://css.gg/shape-hexagon.svg",
-        "type": "image/svg+xml",
-        "sizes": "512x512"
-      }
-    ],
+    "short_name": "XRF",
+    "name": "XR Fragment URL",
+    "icons": [ ],
     "id": "/?source=pwa",
     "start_url": "/?source=pwa",
     "background_color": "#3367D6",

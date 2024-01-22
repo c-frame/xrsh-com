@@ -3,15 +3,12 @@ AFRAME.registerComponent('helloworld-htmlform', {
     foo: { type:"string"}
   },
 
-  init: function () {  
-
-  },
+  init: function () {},
 
   requires:{
     html:        "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",  // html to AFRAME
     winboxjs:    "https://unpkg.com/winbox@0.2.82/dist/winbox.bundle.min.js",     // deadsimple windows: https://nextapps-de.github.io/winbox
     winboxcss:   "https://unpkg.com/winbox@0.2.82/dist/css/winbox.min.css",       // deadsimple windows: https://nextapps-de.github.io/winbox
-    stylis:      "https://unpkg.com/stylis@4.3.1/dist/umd/stylis.js",             // modern CSS (https://stylis.js.org)
   },
 
   dom: {
@@ -33,19 +30,15 @@ AFRAME.registerComponent('helloworld-htmlform', {
                         </fieldset>
                         <button>hello</button>
                       </div>`,
-    css:     `.helloworld-htmlform {
-                div {
-                  padding:11px;
-                }
-              }
-              `,
+
+    css:     `.helloworld-htmlform > div { padding:11px; }`
+
   },
 
   events:{
 
     // component events
     html:     function( ){ console.log("html-mesh requirement mounted") },
-    stylis:   function( ){ console.log("stylis    requirement mounted") },
 
     // combined AFRAME+DOM reactive events
     click: function(e){ }, // 
@@ -57,27 +50,26 @@ AFRAME.registerComponent('helloworld-htmlform', {
     // reactive events for this.data updates 
     myvalue: function(e){ this.el.dom.querySelector('#myvalue').innerText = this.data.myvalue },
 
-    // requires are loaded
-    ready: function(e){
-      setTimeout( () => {
-        new WinBox("Hello World",{ 
-          width: 250,
-          height: 315,
-          minwidth:250,
-          maxwidth:250,
-          maxheight:315,
-          minheight:315,
-          x: 100,
-          y: 100,
-          id:  this.el.uid, // important hint for html-mesh  
-          root: document.querySelector("#overlay"),
-          mount: this.el.dom 
-        });
-      },500) /*FIXME*/
-
+    launcher:  function(){
+      this.el.dom.style.display = ''
+      new WinBox("Hello World",{ 
+        width: 250,
+        height: 315,
+        minwidth:250,
+        maxwidth:250,
+        maxheight:315,
+        minheight:315,
+        x: 100,
+        y: 100,
+        id:  this.el.uid, // important hint for html-mesh  
+        root: document.querySelector("#overlay"),
+        mount: this.el.dom,
+        onclose: () => { this.el.dom.style.display = 'none'; return false; }
+      });
     },
 
-    DOMready: function( ){ 
+    ready: function( ){ 
+      this.el.dom.style.display = 'none'
       console.log("this.el.dom has been added to DOM")
       this.data.myvalue = 1
     }
@@ -89,7 +81,7 @@ AFRAME.registerComponent('helloworld-htmlform', {
     "name": "Hello world",
     "icons": [
       {
-        "src": "/images/icons-vector.svg",
+        "src": "https://css.gg/browser.svg",
         "type": "image/svg+xml",
         "sizes": "512x512"
       }
