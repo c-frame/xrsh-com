@@ -12,7 +12,7 @@ AFRAME.registerComponent('helloworld-htmlform', {
   },
 
   dom: {
-    scale:   3,
+    scale:   1,
     events:  ['click','input'],
     html:    (me) => `<div class="light">
                         <fieldset>

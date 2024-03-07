@@ -13,7 +13,7 @@ AFRAME.registerComponent('helloworld-html', {
   },
 
   dom: {
-    scale:   3,
+    scale:   1,
     events:  ['click'],
     html:    (me) => `<div>
                         <div class="pad"> helloworld-html: ${me.data.foo} <b>${me.data.myvalue}</b></span>

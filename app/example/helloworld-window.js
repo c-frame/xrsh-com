@@ -12,7 +12,7 @@ AFRAME.registerComponent('helloworld-window', {
   },
 
   dom: {
-    scale:   3,
+    scale:   1,
     events:  ['click','keydown'],
     html:    (me) => `<div>
                         <div class="pad"> ${me.data.foo} <b>${me.data.myvalue}</b></span>
@@ -25,7 +25,6 @@ AFRAME.registerComponent('helloworld-window', {
 
     // component events
     html:     function( ){ console.log("html-mesh requirement mounted") },
-    stylis:   function( ){ console.log("stylis    requirement mounted") },
 
     // combined AFRAME+DOM reactive events
     click:   function(e){ }, // 
