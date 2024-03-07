@@ -15,6 +15,13 @@ AFRAME.registerComponent('xrfragments', {
     // requires are loaded
     ready: function(e){
       this.el.setAttribute("xrf","https://coderofsalvation.github.io/xrsh-media/assets/background.glb")
+
+      let ARbutton = document.querySelector('.a-enter-ar-button')
+      if( ARbutton ){  
+        ARbutton.addEventListener('click', () => {
+          AFRAME.XRF.reset() 
+        })
+      }
     },
 
     launcher:  function(){
