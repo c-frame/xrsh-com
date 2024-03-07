@@ -5,11 +5,13 @@ AFRAME.app         = new Proxy({
 
   order:0,
 
-  add(component, entity){ 
+  components: {},       // component-strings in this array are automatically
+                        // added to each app
+  add(component, entity){
     // categorize by component to prevent similar apps loading duplicate dependencies simultaniously
     this[component] = this[component] || []
     this[component].push(entity)
-    entity.data.order = entity.data.order || this.count() 
+    entity.data.order = entity.data.order || this.count()
   },
   count(){
     let n = 0
@@ -34,7 +36,7 @@ AFRAME.app         = new Proxy({
  * This is the abstract 'app' component
  */
 
-AFRAME.registerComponent('app', {
+appComponent = {
   schema:{
     "uri":{ type:"string"}
   },
@@ -43,8 +45,12 @@ AFRAME.registerComponent('app', {
     "app:ready": function(){
       let {id,component,type} = this.parseAppURI(this.data.uri)
       AFRAME.app[component].map( (app) => {
-        if( !app.el.getAttribute(component) ) app.el.setAttribute(component,app.data)
-      }) 
+        if( !app.el.getAttribute(component) ){
+          if( AFRAME.components[ component ] ){
+            app.el.setAttribute(component,app.data)
+          }else console.warn(`${component} was not fully downloaded yet (${app.data.uri})`)
+        }
+      })
     },
     "requires:ready": function(){
       let {id,component,type} = this.parseAppURI(this.data.uri)
@@ -55,16 +61,16 @@ AFRAME.registerComponent('app', {
           app.el.emit('ready')
           app.readyFired = true
         },400) // big js scripts need some parsing time
-      }) 
+      })
     },
   },
 
-  init: function() { 
+  init: function() {
     let {id,component,type} = this.parseAppURI(this.data.uri)
     let sel = `script#${component}`
     if( AFRAME.app[component] || AFRAME.components[component] || document.head.querySelector(sel) ) return AFRAME.app.add(component,this)
     AFRAME.app.add(component,this)
-    this.require([ this.data.uri ], 'app:ready') 
+    this.require([ this.data.uri ], 'app:ready')
   },
 
   parseAppURI: AFRAME.AComponent.prototype.parseAppURI = function(uri){
@@ -84,7 +90,7 @@ AFRAME.registerComponent('app', {
         let id = package.split("/").pop()
         // prevent duplicate requests
         if( AFRAME.required[id] ) return
-        AFRAME.required[id] = true 
+        AFRAME.required[id] = true
 
         if( !document.head.querySelector(`script#${id}`) ){
           let {component,type} = this.parseAppURI(package)
@@ -111,21 +117,24 @@ AFRAME.registerComponent('app', {
       }catch(e){ console.error(`package ${package} could not be retrieved..aborting :(`); throw e; }
     })
     Promise.all(deps).then( () => {
-      this.el.emit( readyEvent || 'requireReady', packages) 
+      this.el.emit( readyEvent || 'requireReady', packages)
     })
   }
 
-})
+}
+
+AFRAME.registerComponent('app', appComponent)
+AFRAME.registerComponent('com', appComponent)
 
 /*
  * Here are monkeypatched AFRAME component prototype functions
  *
- *  monkeypatching initComponent will trigger events when components 
- *  are initialized (that way apps can react to attached components) 
- *  basically, in both situations: 
- *    <a-entity foo="a:1"/> 
+ *  monkeypatching initComponent will trigger events when components
+ *  are initialized (that way apps can react to attached components)
+ *  basically, in both situations:
+ *    <a-entity foo="a:1"/>
  *    <a-entity app="uri: myapp.js"/>   <!-- myapp.js calls this.require(['foo.js']) -->
- *    
+ *
  *  event 'foo' will be triggered as both entities (in)directly require component 'foo'
  */
 
@@ -151,22 +160,16 @@ AFRAME.AComponent.prototype.updateProperties = function(updateProperties){
       overlay.id = "overlay"
       document.body.appendChild(overlay)
       document.querySelector("a-scene").setAttribute("webxr","overlayElement:#overlay")
-//      let menu = document.createElement('div')
-//      menu.id = 'iconmenu'
-//      document.body.appendChild(menu)
     }
 
-//    // add menu button
-//    if( this.manifest && this.manifest.icons ){
-//      let btn = document.createElement('button')
-//      btn.app = this
-//      if( this.manifest.icons.length ){
-//        btn.innerHTML = `<img src="${this.manifest.icons[0].src}"/>`
-//      }else btn.innerText = this.manifest.short_name
-//      btn.setAttribute("alt", this.manifest.name )
-//      btn.addEventListener('click', (e) => this.el.emit('launcher',{}) )
-//      document.querySelector("#iconmenu").appendChild(btn)
-//    }
+    const reactify = (el,aframe) => new Proxy(this.data,{
+      get(me,k,v)  { return me[k]
+      },
+      set(me,k,v){
+        me[k] = v
+        aframe.emit(k,{el,k,v})
+      }
+    })
 
     // reactify components with dom-definition
     if( this.data.uri && this.dom && !this.el.dom ){
@@ -174,14 +177,6 @@ AFRAME.AComponent.prototype.updateProperties = function(updateProperties){
       tasks = {
 
         createReactiveDOMElement: () => {
-          const reactify = (el,aframe) => new Proxy(this.data,{
-            get(me,k,v)  { return me[k] 
-            },
-            set(me,k,v){
-              me[k] = v
-              aframe.emit(k,{el,k,v})
-            }
-          })
           this.el.dom = document.createElement('div')
           this.el.dom.className = this.parseAppURI(this.data.uri).component
           this.el.dom.innerHTML = this.dom.html(this)
@@ -206,9 +201,16 @@ AFRAME.AComponent.prototype.updateProperties = function(updateProperties){
         setupListeners: () => {
           this.scene.addEventListener('apps:2D', () => this.el.setAttribute('visible', false) )
           this.scene.addEventListener('apps:XR', () => {
-            this.el.setAttribute('visible', true) 
+            this.el.setAttribute('visible', true)
             this.el.setAttribute("html",`html:#${this.el.uid}; cursor:#cursor`)
           })
+          return tasks
+        },
+
+        initAutoComponents: () => {
+          for ( let i in AFRAME.app.components ) {
+            this.el.setAttribute( i, AFRAME.app.components[i] )
+          }
           return tasks
         },
 
@@ -232,16 +234,24 @@ AFRAME.AComponent.prototype.updateProperties = function(updateProperties){
       .scaleDOMvsXR()
       .triggerKeyboardForInputs()
       .setupListeners()
+      .initAutoComponents()
 
       document.querySelector('#overlay').appendChild(this.el.dom)
       this.el.emit('DOMready',{el: this.el.dom})
 
-    } 
+    }else this.data = reactify( this.el, this.el )
+
     // assign unique app id
     if( !this.el.uid ) this.el.uid = '_'+String(Math.random()).substr(10)
 
-    if( this.requires ) this.require( this.requires, 'requires:ready' )
-    else this.el.emit('requires:ready')
+    // require coms
+    let requires = {}
+    for ( let i in AFRAME.app.components  ) {
+      if( !AFRAME.components[i] ) requires[i] = AFRAME.app.components[i]
+    }
+    if( this.requires ) requires = {...requires, ...this.requires }
+    if( Object.values(requires).length ) this.require( requires, 'requires:ready' )
+    else this.el.emit('requires:ready' )
 
     // mark app as being initialized
     this.isApp  = true
