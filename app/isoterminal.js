@@ -1,9 +1,13 @@
 AFRAME.registerComponent('isoterminal', {
   schema: { 
-    foo: { type:"string"}
+    cols: { type: 'number', default: 80 },
+    rows: { type: 'number', default: 25 },
+    transparent: { type:'boolean', default:false } // need good gpu
   },
 
-  init: function(){},
+  init: function(){ 
+    this.el.object3D.visible = false
+  },
 
   requires:{
     html:        "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",  // html to AFRAME
@@ -17,11 +21,54 @@ AFRAME.registerComponent('isoterminal', {
   dom: {
     scale:   3,
     events:  ['click','keydown'],
-    html:    (me) => `<div>
-                        <div class="pad">to be implemented</span>
-                      </div>`,
+    html:    (me) => `<div></div>`,
 
-    css:     `.helloworld-window div.pad { padding:11px; }`
+    css:     `.isoterminal{
+                width:512px;
+                height:256px;
+                overflow:hidden;
+              }`
+  },
+
+  createTerminal: function(){
+    this.el.object3D.visible = true
+  
+    const term = this.term = new Terminal({
+      allowTransparency: this.data.transparent,
+      cursorBlink: true,
+      disableStdin: false,
+      rows: this.data.rows,
+      cols: this.data.cols,
+      fontSize: 64
+    })
+
+    term.open(this.el.dom)
+    this.canvas = this.el.dom.querySelector('.xterm-text-layer')
+    this.canvas.id = 'terminal-' + (terminalInstance++)
+    this.canvasContext = this.canvas.getContext('2d')
+
+    this.cursorCanvas = this.el.dom.querySelector('.xterm-cursor-layer')
+
+    this.el.setAttribute('material', 'transparent', this.data.transparent )
+    this.el.setAttribute('material', 'src', '#' + this.canvas.id)
+
+    term.on('refresh', () => {
+      const material = this.el.getObject3D('mesh').material
+      if (!material.map) return
+      this.canvasContext.drawImage(this.cursorCanvas, 0,0)
+      material.map.needsUpdate = true
+    })
+
+    term.on('data', (data) => {
+      this.el.emit('xterm-data', data)
+    })
+
+    this.el.addEventListener('click', () => {
+      term.focus()
+    })
+
+    const message = 'Hello from \x1B[1;3;31mWebVR\x1B[0m !\r\n$ '  
+    term.write(message)
   },
 
   events:{
@@ -39,45 +86,24 @@ AFRAME.registerComponent('isoterminal', {
 
     launcher:  function(){
       this.el.dom.style.display = ''
-      this.el.innerHTML += `
-        <a-curvedimage
-          class="terminal"
-          xterm-shell
-          theta-length="60"
-          radius="6"
-          height="4"
-          rotation="0 150 0"
-          position="0 2 -2"
-        ></a-curvedimage>
-      `
-      setTimeout( () => {
-        let el = this.el.querySelector('a-curvedimage')
 
-        el.object3D.children[0].material.transparent = false
+      new WinBox( this.manifest.iso + ' ' + this.manifest.name, { 
+        width: '512px',
+        height: '256px',
+        x:"center",
+        y:"center",
+        id:  this.el.uid, // important hint for html-mesh  
+        root: document.querySelector("#overlay"),
+        mount: this.el.dom,
+        onclose: () => { 
+          if( !confirm('do you want to kill this virtual machine and all its processes?') ) return true 
+          this.el.dom.style.display = 'none'
+          return false
+        }
+      });
 
-        const message = 'Hello from \x1B[1;3;31mWebVR\x1B[0m !\r\n$ '
-        const xterm = el.components['xterm']
-        xterm.write(message)
+      this.createTerminal()
 
-        this.el.addEventListener('xterm-data', ({detail}) => {
-          console.log('Got input from terminal', detail)
-        })
-
-        //new WinBox( this.manifest.iso + ' ' + this.manifest.name, { 
-        //  width: '70%',
-        //  height: '80%',
-        //  x:"center",
-        //  y:"center",
-        //  id:  this.el.uid, // important hint for html-mesh  
-        //  root: document.querySelector("#overlay"),
-        //  mount: this.el.dom,
-        //  onclose: () => { 
-        //    if( !confirm('do you want to kill this virtual machine and all its processes?') ) return true 
-        //    this.el.dom.style.display = 'none'
-        //    return false
-        //  }
-        //});
-      },500)
     },
 
   },
