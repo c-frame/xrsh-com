@@ -18,7 +18,7 @@ AFRAME.registerComponent('helloworld-window', {
                         <div class="pad"> ${me.data.foo} <b>${me.data.myvalue}</b></span>
                       </div>`,
 
-    css:     `.helloworld-window div.pad { padding:11px; }`
+    css:    (me) =>  `.helloworld-window div.pad { padding:11px; }`
   },
 
   events:{

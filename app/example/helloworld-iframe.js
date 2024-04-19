@@ -18,7 +18,7 @@ AFRAME.registerComponent('helloworld-iframe', {
                         <iframe src=""></iframe>
                       </div>`,
 
-    css:     `
+    css:     (me) => `
       .XR #overlay .winbox.iframe{ visibility: visible; } /* don't hide in XR mode */
       .winbox.iframe iframe      { background:#FFF;     }
     `

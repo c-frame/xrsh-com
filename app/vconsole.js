@@ -33,6 +33,7 @@ AFRAME.registerComponent('vconsole', {
     },
 
     launcher: function(){
+      if( !this.vConsole ) return 
       let panel = document.querySelector('.vc-panel') 
       if( panel.style.display == 'none' ) this.vConsole.show()
       else this.vConsole.hide()

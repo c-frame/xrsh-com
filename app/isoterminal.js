@@ -1,18 +1,18 @@
 AFRAME.registerComponent('isoterminal', {
-  schema: { 
-    cols: { type: 'number', default: 80 },
-    rows: { type: 'number', default: 25 },
+  schema: {
+    cols: { type: 'number', default: 120 },
+    rows: { type: 'number', default: 50 },
     transparent: { type:'boolean', default:false } // need good gpu
   },
 
-  init: function(){ 
+  init: function(){
     this.el.object3D.visible = false
   },
 
   requires:{
     html:        "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",  // html to AFRAME
     winboxjs:    "https://unpkg.com/winbox@0.2.82/dist/winbox.bundle.min.js",     // deadsimple windows: https://nextapps-de.github.io/winbox
-    winboxcss:   "https://unpkg.com/winbox@0.2.82/dist/css/winbox.min.css",       // 
+    winboxcss:   "https://unpkg.com/winbox@0.2.82/dist/css/winbox.min.css",       //
     xtermcss:    "https://unpkg.com/xterm@3.12.0/dist/xterm.css",
     xtermjs:     "https://unpkg.com/xterm@3.12.0/dist/xterm.js",
     axterm:      "https://unpkg.com/aframe-xterm-component/aframe-xterm-component.js"
@@ -23,23 +23,21 @@ AFRAME.registerComponent('isoterminal', {
     events:  ['click','keydown'],
     html:    (me) => `<div></div>`,
 
-    css:     `.isoterminal{
-                width:512px;
-                height:256px;
+    css:     (me) => `.isoterminal{
                 overflow:hidden;
               }`
   },
 
   createTerminal: function(){
     this.el.object3D.visible = true
-  
+
     const term = this.term = new Terminal({
       allowTransparency: this.data.transparent,
       cursorBlink: true,
       disableStdin: false,
       rows: this.data.rows,
       cols: this.data.cols,
-      fontSize: 64
+      fontSize: 16
     })
 
     term.open(this.el.dom)
@@ -49,14 +47,10 @@ AFRAME.registerComponent('isoterminal', {
 
     this.cursorCanvas = this.el.dom.querySelector('.xterm-cursor-layer')
 
-    this.el.setAttribute('material', 'transparent', this.data.transparent )
-    this.el.setAttribute('material', 'src', '#' + this.canvas.id)
+    //this.el.setAttribute('material', `transparent: ${this.data.transparent?'true':'false'}; src: #${this.canvas.id}` )
 
     term.on('refresh', () => {
-      const material = this.el.getObject3D('mesh').material
-      if (!material.map) return
-      this.canvasContext.drawImage(this.cursorCanvas, 0,0)
-      material.map.needsUpdate = true
+      console.log("refresh")
     })
 
     term.on('data', (data) => {
@@ -67,42 +61,41 @@ AFRAME.registerComponent('isoterminal', {
       term.focus()
     })
 
-    const message = 'Hello from \x1B[1;3;31mWebVR\x1B[0m !\r\n$ '  
+    const message = 'Hello from \x1B[1;3;31mWebVR\x1B[0m !\r\n$ '
     term.write(message)
   },
 
   events:{
 
     // combined AFRAME+DOM reactive events
-    click:   function(e){ }, // 
-    keydown: function(e){ }, // 
+    click:   function(e){ }, //
+    keydown: function(e){ }, //
 
-    // reactive events for this.data updates 
+    // reactive events for this.data updates
     myvalue: function(e){ this.el.dom.querySelector('b').innerText = this.data.myvalue },
 
-    ready: function( ){ 
+    ready: function( ){
       this.el.dom.style.display = 'none'
     },
 
     launcher:  function(){
       this.el.dom.style.display = ''
+      this.createTerminal()
 
-      new WinBox( this.manifest.iso + ' ' + this.manifest.name, { 
-        width: '512px',
-        height: '256px',
+      new WinBox( this.manifest.iso + ' ' + this.manifest.name, {
+        width: window.innerWidth*0.8, 
+        height: window.innerHeight*0.8,
         x:"center",
         y:"center",
-        id:  this.el.uid, // important hint for html-mesh  
+        id:  this.el.uid, // important hint for html-mesh
         root: document.querySelector("#overlay"),
         mount: this.el.dom,
-        onclose: () => { 
-          if( !confirm('do you want to kill this virtual machine and all its processes?') ) return true 
+        onclose: () => {
+          if( !confirm('do you want to kill this virtual machine and all its processes?') ) return true
           this.el.dom.style.display = 'none'
           return false
         }
       });
-
-      this.createTerminal()
 
     },
 
@@ -151,7 +144,7 @@ AFRAME.registerComponent('isoterminal', {
       }
     ],
     "help":`
-Helloworld application 
+Helloworld application
 
 This is a help file which describes the application.
 It will be rendered thru troika text, and will contain

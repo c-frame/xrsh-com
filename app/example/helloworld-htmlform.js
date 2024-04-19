@@ -31,7 +31,7 @@ AFRAME.registerComponent('helloworld-htmlform', {
                         <button>hello</button>
                       </div>`,
 
-    css:     `.helloworld-htmlform > div { padding:11px; }`
+    css:     (me) => `.helloworld-htmlform > div { padding:11px; }`
 
   },
 

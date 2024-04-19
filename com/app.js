@@ -188,7 +188,7 @@ AFRAME.AComponent.prototype.updateProperties = function(updateProperties){
 
         addCSS: () => {
           if( this.dom.css && !document.head.querySelector(`style#${this.attrName}`) ){
-            document.head.innerHTML += `<style id="${this.attrName}">${this.dom.css}</style>`
+            document.head.innerHTML += `<style id="${this.attrName}">${this.dom.css(this)}</style>`
           }
           return tasks
         },

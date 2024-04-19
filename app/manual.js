@@ -35,7 +35,7 @@ AFRAME.registerComponent('manual', {
                   </ul>
 
                       </div>`,
-    css:     `.manual > div { padding:11px }`
+    css:     (me) => `.manual > div { padding:11px }`
   },
 
   events:{

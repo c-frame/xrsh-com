@@ -19,7 +19,7 @@ AFRAME.registerComponent('helloworld-html', {
                         <div class="pad"> helloworld-html: ${me.data.foo} <b>${me.data.myvalue}</b></span>
                       </div>`,
 
-    css:     `.helloworld-html {
+    css:     (me) => `.helloworld-html {
                 color: var(--xrsh-light-gray); /* see index.css */
               }`,
   },

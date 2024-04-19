@@ -1,5 +1,5 @@
 AFRAME.registerComponent('spatialize', {
-  schema: { 
+  schema: {
     foo: { type:"string"}
   },
 
@@ -7,8 +7,8 @@ AFRAME.registerComponent('spatialize', {
 
     document.querySelector('a-scene').addEventListener('enter-vr',() => this.toggle(true) )
     document.querySelector('a-scene').addEventListener('exit-vr', () => this.toggle(false) )
-    // toggle immersive with ESCAPE 
-    document.body.addEventListener('keydown', (e) => e.key == 'Escape' && this.toggle() ) 
+    // toggle immersive with ESCAPE
+    document.body.addEventListener('keydown', (e) => e.key == 'Escape' && this.toggle() )
 
     document.head.innerHTML += `<style type="text/css">
       .XR #toggle_overlay{
@@ -20,6 +20,14 @@ AFRAME.registerComponent('spatialize', {
         visibility: hidden;
       }
     </style>`
+
+    this.el.sceneEl.addEventListener('launched',(e) => {
+      console.dir(e)
+      let appEl = e.detail.el.dom 
+      if( appEl.style.display != 'none' && appEl.innerHTML ){
+        this.btn.style.display = '' // show button
+      }
+    })
   },
 
   requires:{
@@ -30,7 +38,9 @@ AFRAME.registerComponent('spatialize', {
 
     // component events
     ready:         function(e){
+      this.btn.style.display = 'none'
       this.btn.style.background = 'var(--xrsh-primary)'
+      this.btn.style.color      = '#FFF'
     },
 
     launcher:      function(e){ this.toggle() },
@@ -41,28 +51,21 @@ AFRAME.registerComponent('spatialize', {
   toggle: function(state){
     state = state || !document.body.className.match(/XR/)
     document.body.classList[ state ? 'add' : 'remove'](['XR'])
-    AFRAME.scenes[0].emit( state ? 'apps:XR' : 'apps:2D') 
-    this.btn.querySelector('img').src = state ? this.manifest.icons[0].src_2D
-                                              : this.manifest.icons[0].src
+    AFRAME.scenes[0].emit( state ? 'apps:XR' : 'apps:2D')
+    this.btn.innerHTML = state ? "<s>2D</s>" : "2D"
   },
 
   manifest: { // HTML5 manifest to identify app to xrsh
-    "short_name": "spatialize",
+    "short_name": "2D",
     "name": "spatialize",
-    "icons": [
-      {
-        "src": "https://css.gg/display-grid.svg",
-        "src_2D":    "https://css.gg/stack.svg",
-        "type": "image/svg+xml",
-        "sizes": "512x512"
-      }
-    ],
+    "icons": [],
     "id": "/?source=pwa",
     "start_url": "/?source=pwa",
     "background_color": "#3367D6",
     "display": "standalone",
     "scope": "/",
     "theme_color": "#3367D6",
+    "category":"system",
     "shortcuts": [
       {
         "name": "What is the latest news?",
@@ -89,7 +92,7 @@ AFRAME.registerComponent('spatialize', {
       }
     ],
     "help":`
-Helloworld application 
+Helloworld application
 
 This is a help file which describes the application.
 It will be rendered thru troika text, and will contain
