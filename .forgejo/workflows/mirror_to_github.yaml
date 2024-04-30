@@ -10,8 +10,13 @@ jobs:
         with:
           fetch-depth: 0
       - run: mkdir ~/.ssh
+      - run: "echo \"${{ secrets.SSHKEY_APPS }}\" > ~/.ssh/id_rsa_apps" 
       - run: "echo \"${{ secrets.SSHKEY }}\" > ~/.ssh/id_rsa" 
       - run: ssh-keyscan github.com >> ~/.ssh/known_hosts   # see https://gist.github.com/vikpe/34454d69fe03a9617f2b009cc3ba200b
       - run: chmod 600 -R ~/.ssh
       - run: git remote add github git@github.com:coderofsalvation/xrsh-apps 
       - run: git push github main
+      - run: git clone git@github.com:coderofsalvation/xrsh # now push empty commit to deploy website
+      - run: cd xrsh
+      - run: git commit --allow-empty -m "website deploy triggered via xrsh-apps repo commit"
+      - run: git push origin main
