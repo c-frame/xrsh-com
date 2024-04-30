@@ -18,5 +18,7 @@ jobs:
       - run: git clone git@github.com:coderofsalvation/xrsh # now push empty commit to deploy website
       - run: "echo \"${{ secrets.SSHKEY }}\" > ~/.ssh/id_rsa" 
       - run: cd xrsh
+      - run: git config --global user.email "ci@forgejo.isvery.ninja"
+      - run: git config --global user.name "CI@forgejo"
       - run: git commit --allow-empty -m "website deploy triggered via xrsh-apps repo commit"
       - run: git push origin main
