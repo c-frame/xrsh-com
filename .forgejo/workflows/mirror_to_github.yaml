@@ -1,0 +1,17 @@
+on:
+  push:
+    branches:
+      - main
+jobs:
+  mirror_to_github:
+    runs-on: docker
+    steps:
+      - uses: https://code.forgejo.org/actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - run: mkdir ~/.ssh
+      - run: "echo \"${{ secrets.SSHKEY }}\" > ~/.ssh/id_rsa" 
+      - run: ssh-keyscan github.com >> ~/.ssh/known_hosts   # see https://gist.github.com/vikpe/34454d69fe03a9617f2b009cc3ba200b
+      - run: chmod 600 -R ~/.ssh
+      - run: git remote add github git@github.com:coderofsalvation/xrsh-apps 
+      - run: git push github main
