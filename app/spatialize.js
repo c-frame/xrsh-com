@@ -24,7 +24,7 @@ AFRAME.registerComponent('spatialize', {
     this.el.sceneEl.addEventListener('launched',(e) => {
       console.dir(e)
       let appEl = e.detail.el.dom 
-      if( appEl.style.display != 'none' && appEl.innerHTML ){
+      if( appEl.style && appEl.style.display != 'none' && appEl.innerHTML ){
         this.btn.style.display = '' // show button
       }
     })
@@ -38,7 +38,7 @@ AFRAME.registerComponent('spatialize', {
 
     // component events
     ready:         function(e){
-      this.btn.style.display = 'none'
+      //this.btn.style.display = 'none'
       this.btn.style.background = 'var(--xrsh-primary)'
       this.btn.style.color      = '#FFF'
     },

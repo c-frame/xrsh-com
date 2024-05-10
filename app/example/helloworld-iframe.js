@@ -1,6 +1,6 @@
 AFRAME.registerComponent('helloworld-iframe', {
   schema: { 
-    foo: { type:"string"}
+    url: { type:"string"}
   },
 
   init: function(){},
@@ -36,16 +36,18 @@ AFRAME.registerComponent('helloworld-iframe', {
     // reactive events for this.data updates 
     myvalue: function(e){ /*this.el.dom.querySelector('b').innerText = this.data.myvalue*/ },
 
+    init: function(){
+      alert("ja")
+    },
+
     ready: function( ){ 
       this.el.dom.style.display = 'none'
       console.log("this.el.dom has been added to DOM")
-      this.data.myvalue = 1
-      setInterval( () => this.data.myvalue++, 100 )
     },
 
     launcher:  function(){
       console.log("this.el.dom iframe has been added to DOM")
-      let URL = prompt('enter URL to display','https://fabien.benetou.fr/Wiki/Wiki')
+      let URL = this.data.url || prompt('enter URL to display','https://fabien.benetou.fr/Wiki/Wiki')
       if( !URL ) return
       this.el.dom.querySelector('iframe').src = URL
       new WinBox("Hello World",{ 
