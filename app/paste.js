@@ -24,8 +24,13 @@ AFRAME.registerComponent('paste', {
       .then( (base64) => {
         let mimetype  = base64.replace(/;base64,.*/,'')
           console.log(base64.substr(0,100))
-        //let base64str = base64.replace(/.*;base64,/,'')
-        alert(`\nYES!\n\n${mimetype} file received!\n\n(TODO: render it)`)
+        let data = base64.replace(/.*;base64,/,'')
+        if( data.match(/<a-/) ){
+          let el = document.createElement('a-entity')
+          el.innerHTML = data
+          AFRAME.scenes[0].appendChild(el)
+          console.log(data)
+        }
       })
     },
 
