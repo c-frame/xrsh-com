@@ -31,6 +31,8 @@ AFRAME.registerComponent('launcher', {
 
   requires:{
     html:        "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",  // html to AFRAME
+    'hand-menu':        "./com/control/hand-menu.js",
+    'hand-menu-button': "./com/control/hand-menu-button.js",
   },
 
   dom: {
@@ -108,6 +110,7 @@ AFRAME.registerComponent('launcher', {
 
     ready: function( ){
       this.el.dom.children[0].id = this.el.uid  // important hint for html-mesh
+      document.querySelector('#left-hand').setAttribute('hand-menu','')
     },
 
   },

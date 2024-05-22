@@ -24,7 +24,7 @@ AFRAME.registerComponent('spatialize', {
     this.el.sceneEl.addEventListener('launched',(e) => {
       console.dir(e)
       let appEl = e.detail.el.dom 
-      if( appEl.style && appEl.style.display != 'none' && appEl.innerHTML ){
+      if( appEl && appEl.style && appEl.style.display != 'none' && appEl.innerHTML ){
         this.btn.style.display = '' // show button
       }
     })
