@@ -9,20 +9,11 @@ AFRAME.registerComponent('save', {
     //this.el.innerHTML = ` `
   },
 
-  requires:{
-    // somecomponent:        "https://unpkg.com/some-aframe-component/mycom.min.js"
-  },
-
   events:{
-
-    // component events
-    somecomponent: function( ){ console.log("component requirement mounted") },
-    ready:         function(e){ console.log("requires are loaded") },
 
     launcher:      function(e){ 
       this.save()
     },
-
 
   },
 

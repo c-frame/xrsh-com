@@ -3,12 +3,10 @@ AFRAME.registerComponent('helloworld-window', {
     foo: { type:"string"}
   },
 
-  init: function(){},
+  dependencies: ['dom'],
 
-  requires:{
-    html:        "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",  // html to AFRAME
-    winboxjs:    "https://unpkg.com/winbox@0.2.82/dist/winbox.bundle.min.js",     // deadsimple windows: https://nextapps-de.github.io/winbox
-    winboxcss:   "https://unpkg.com/winbox@0.2.82/dist/css/winbox.min.css",       // 
+  init: function(){
+    this.el.object3D.visible = false
   },
 
   dom: {
@@ -23,9 +21,6 @@ AFRAME.registerComponent('helloworld-window', {
 
   events:{
 
-    // component events
-    html:     function( ){ console.log("html-mesh requirement mounted") },
-
     // combined AFRAME+DOM reactive events
     click:   function(e){ }, // 
     keydown: function(e){ }, // 
@@ -33,14 +28,16 @@ AFRAME.registerComponent('helloworld-window', {
     // reactive events for this.data updates 
     myvalue: function(e){ this.el.dom.querySelector('b').innerText = this.data.myvalue },
 
-    ready: function( ){ 
+    launcher: async function(){
       this.el.dom.style.display = 'none'
-      console.log("this.el.dom has been added to DOM")
+      await AFRAME.utils.require({
+        dom:         "./com/dom.js",                                                  // interpret .dom object
+        html:        "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",  // html to AFRAME
+        winboxjs:    "https://unpkg.com/winbox@0.2.82/dist/winbox.bundle.min.js",     // deadsimple windows: https://nextapps-de.github.io/winbox
+        winboxcss:   "https://unpkg.com/winbox@0.2.82/dist/css/winbox.min.css",       // 
+      })
       this.data.myvalue = 1
       setInterval( () => this.data.myvalue++, 100 )
-    },
-
-    launcher:  function(){
       console.log("this.el.dom has been added to DOM")
       new WinBox("Hello World",{ 
         width: 250,
@@ -58,8 +55,8 @@ AFRAME.registerComponent('helloworld-window', {
   },
 
   manifest: { // HTML5 manifest to identify app to xrsh
-    "short_name": "Hello world",
-    "name": "Hello world",
+    "short_name": "Hello world window",
+    "name": "Hello world window",
     "icons": [
       {
         "src": "https://css.gg/browser.svg",

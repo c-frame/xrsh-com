@@ -3,30 +3,33 @@ AFRAME.registerComponent('xrfragments', {
     url: { type:"string"}
   },
 
-  init: function () {  
-  },
+  dependencies:['dom'],
 
-  requires:{
-    xrfragments: "https://xrfragment.org/dist/xrfragment.aframe.js",
+  init: function () {  
   },
 
   events:{
 
-    // requires are loaded
-    ready: function(e){
-      this.el.setAttribute("xrf","https://coderofsalvation.github.io/xrsh-media/assets/background.glb")
-
-      let ARbutton = document.querySelector('.a-enter-ar-button')
-      if( ARbutton ){  
-        ARbutton.addEventListener('click', () => {
-          AFRAME.XRF.reset() 
-        })
-      }
-    },
-
-    launcher:  function(){
+    launcher: async function(){
       let url = prompt('enter URL to glb/fbx/json/obj/usdz asset', 'https://xrfragment.org/index.glb')
-      if( url ) AFRAME.XRF.navigator.to(url)
+      if( !url ) return
+      await AFRAME.utils.require({
+        xrfragments: "https://xrfragment.org/dist/xrfragment.aframe.js",
+      }) 
+
+      // remove objects which are marked to be removed from scene (with noxrf)
+      let els = [...document.querySelectorAll('[noxrf]') ]
+      els.map( (el) => el.remove() )
+
+      if( !this.el.getAttribute("xrf") ){
+        this.el.setAttribute("xrf", url )
+        let ARbutton = document.querySelector('.a-enter-ar-button')
+        if( ARbutton ){  
+          ARbutton.addEventListener('click', () => {
+            AFRAME.XRF.reset() 
+          })
+        }
+      }else AFRAME.XRF.navigator.to(url)
     }
 
   },

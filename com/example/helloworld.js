@@ -1,7 +1,10 @@
 AFRAME.registerComponent('helloworld', {
   schema: { 
-    foo: { type:"string"}
+    wireframe: { type:"boolean", "default":false},
+    foo: {type:"string","default":"foo"}
   },
+
+  dependencies:['dom'],
 
   init: function () {
     this.el.object3D.visible = false
@@ -12,22 +15,15 @@ AFRAME.registerComponent('helloworld', {
        <a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D"></a-cylinder>
        <a-entity position="0 1.8 -3" scale="10 10 10" text="value: ${this.data.foo}; align:center; color:#888"></a-entity>
     `
-
-    this.interval     = setInterval( () => this.data.wireframe = !this.data.wireframe, 500  )
-  },
-
-  requires:{
-    // somecomponent:        "https://unpkg.com/some-aframe-component/mycom.min.js"
   },
 
   events:{
 
-    // component events
-    somecomponent: function( ){ console.log("component requirement mounted") },
-    ready:         function(e){ console.log("requires are loaded") },
-
     launcher:      function(e){ 
       this.el.object3D.visible = !this.el.object3D.visible 
+      this.interval            = setInterval( () => {
+        this.data.wireframe = !this.data.wireframe
+      }, 500  )
     },
 
     // reactive this.data value demo 

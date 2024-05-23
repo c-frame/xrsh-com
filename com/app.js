@@ -148,7 +148,7 @@ AFRAME.AComponent.prototype.initComponent = function(initComponent){
 
 
 AFRAME.AComponent.prototype.updateProperties = function(updateProperties){
-  return function(){
+  let setupApp = function(){
     updateProperties.apply(this,arguments)
 
     if( !this.data || !this.data.uri || this.isApp  ) return // only deal with apps (once)
@@ -179,7 +179,7 @@ AFRAME.AComponent.prototype.updateProperties = function(updateProperties){
         createReactiveDOMElement: () => {
           this.el.dom = document.createElement('div')
           this.el.dom.className = this.parseAppURI(this.data.uri).component
-          this.el.dom.innerHTML = this.dom.html(this)
+          this.el.dom.innerHTML = this.com.dom.html(this)
           this.el.dom.style.display = 'none'
           this.data = reactify( this.dom.el, this.el )
           this.dom.events.map( (e) => this.el.dom.addEventListener(e, (ev) => this.el.emit(e,ev) ) )
@@ -256,6 +256,9 @@ AFRAME.AComponent.prototype.updateProperties = function(updateProperties){
     // mark app as being initialized
     this.isApp  = true
     this.el.app = this
+  }
+  return function(){
+    try{ setupApp.apply(this,arguments) }catch(e){ console.error(e) }
   }
 }( AFRAME.AComponent.prototype.updateProperties)
 

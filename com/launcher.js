@@ -18,30 +18,29 @@
 
 AFRAME.registerComponent('launcher', {
   schema: {
-    foo: { type:"string"}
+    attach: { type:"selector"}
   },
 
-  init: function () {
+  dependencies:['dom'],
+
+  init: async function () {
     this.data.apps = []
 
-    AFRAME.scenes.map( (scene) => {
-      scene.addEventListener('app:ready', (e) => this.render(e.detail) )
+    await AFRAME.utils.require({
+      html:      "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",  // html to AFRAME
+      dom:       "./com/dom.js",
+      svgfile:   "https://7dir.github.io/aframe-svgfile-component/aframe-svgfile-component.min.js",
     })
-  },
 
-  requires:{
-    html:        "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",  // html to AFRAME
-    'hand-menu':        "./com/control/hand-menu.js",
-    'hand-menu-button': "./com/control/hand-menu-button.js",
+    this.el.setAttribute("dom","")
+    this.render()
+    this.el.sceneEl.addEventListener('enter-vr', (e) => this.render() )
   },
 
   dom: {
     scale:   3,
     events:  ['click'],
-    html:    (me) => `<div>
-                        <div id="iconmenu"></div>
-                      </div>`,
-
+    html:    (me) => `<div id="iconmenu">loading components..</div>`,
     css:     (me) => `#iconmenu {
                 z-index: 1000;
                 display: flex;
@@ -102,47 +101,67 @@ AFRAME.registerComponent('launcher', {
 
   events:{
 
-    // combined AFRAME+DOM reactive events
-    click:    function(e){
-      console.dir(e)
-    }, //
-
-
-    ready: function( ){
-      this.el.dom.children[0].id = this.el.uid  // important hint for html-mesh
-      document.querySelector('#left-hand').setAttribute('hand-menu','')
-    },
-
   },
 
-  render: function(app){
-    clearTimeout(this.timeout)
-    this.timeout = setTimeout( () => {
-      const drawButton = (app) => {
-        if( !app.manifest ) return
-        console.log(app.data.uri+" "+app.data.order)
-        let btn = app.btn = document.createElement('button')
-        if( app.manifest.icons?.length > 0){
-          let img = document.createElement('img')
-          img.src = app.manifest.icons[0].src
-          img.title = app.manifest.name + ": " + app.manifest.description
-          btn.appendChild(img)
-        }else btn.innerText = app.manifest.short_name
-        btn.addEventListener('click', () => {
-          app.el.emit('launcher',app) 
-          app.el.sceneEl.emit('launched',app)
-        })
-        this.el.dom.querySelector('#iconmenu').appendChild(btn)
+  render: async function(){
+    if( !this.el.dom ) return // too early (dom.js component not ready)
+
+    let inVR     = this.sceneEl && this.sceneEl.renderer.xr.isPresenting
+    let items    = [...this.el.children]
+    let requires = [] 
+    let i        = 0
+    let colors   = [
+      '#4C73FE',
+      '#554CFE',
+      '#864CFE',
+      '#B44CFE',
+      '#E24CFE',
+      '#FE4CD3'
+    ]
+
+    const add2D = (launchCom,el,manifest,aentity) => {
+      let btn    = document.createElement('button')
+      btn.innerHTML = `${ manifest?.icons?.length > 0  
+                             ? `<img src='${manifest.icons[0].src}' title='${manifest.name}: ${manifest.description}'/>` 
+                             : `${manifest.short_name}`
+                      }`
+      btn.addEventListener('click', () => el.emit('launcher',{}) )
+      this.el.dom.appendChild(btn)
+    }
+
+    const add3D = (launchCom,el,manifest) => {
+      let aentity = document.createElement('a-entity')
+      let atext   = document.createElement('a-entity')
+      aentity.setAttribute("mixin","menuitem")
+      aentity.setAttribute("position",`${i++ * 0.2} 0 0`)
+      if( !aentity.getAttribute("material")){
+        aentity.setAttribute('material',`side: double; color: ${colors[ i % colors.length]}`)
       }
+      atext.setAttribute("text",`value: ${manifest.short_name}; align: baseline; anchor: align; align:center; wrapCount:7`)
+      atext.setAttribute("scale","0.1 0.1 0.1")
+      atext.setAttribute("position","0 0 0.0")
+      aentity.appendChild(atext)
+      this.el.appendChild(aentity)
+      return aentity
+    }
 
-      const drawCategory = (app,c) => app.manifest &&
-                                      app.manifest.short_name != "launcher" &&
-                                      app.manifest.category == c ? drawButton(app) : false
+    // finally render them!
+    this.el.dom.innerHTML = '' // clear
+    this.system.components.map( (c) => {
+      const launchComponentKey = c.getAttributeNames().pop()
+      const launchCom          = c.components[ launchComponentKey ]
+      if( !launchCom ) return console.warn(`could not find component '${launchComponentKey}' (forgot to include script-tag?)`)
+      const manifest           = launchCom.manifest
+      if( manifest ){
+        add2D(launchCom,c,manifest, add3D(launchCom,c,manifest) )
+      }
+    })
 
-      AFRAME.app.foreach( (app) => drawCategory(app,undefined) )
-      AFRAME.app.foreach( (app) => drawCategory(app,"system") )
+    if( this.data.attach ){
+      this.el.object3D.visible = inVR ? true : false
+     // if( inVR ) this.data.attach.appendChild(this.el)
+    }
 
-    },100)
   },
 
   manifest: { // HTML5 manifest to identify app to xrsh
@@ -199,3 +218,37 @@ in above's case "\nHelloworld application\n" will qualify as header.
 
 });
 
+
+AFRAME.registerSystem('launcher',{
+
+  init: function(){
+    this.components = []
+    // observer HTML changes in <a-scene>
+    observer = new MutationObserver( (a,b) => this.getLaunchables(a,b) )
+    observer.observe( this.sceneEl, {characterData: false, childList: true, attributes: false});
+  },
+
+  getLaunchables: function(mutationsList,observer){
+    let searchEvent = 'launcher'
+    let els         = [...this.sceneEl.getElementsByTagName("*")]
+
+    this.components = els.filter( (el) => {
+      let hasEvent = false
+      if( el.components ){
+        for( let i in el.components ){
+          if( el.components[i].events && el.components[i].events[searchEvent] ){
+            hasEvent = true
+          }
+        } 
+      }
+      return hasEvent ? el : null 
+    })
+    this.updateLauncher()
+  },
+
+  updateLauncher: function(){
+    let launcher = document.querySelector('[launcher]')
+    if( launcher ) launcher.components['launcher'].render()
+  }
+
+})
