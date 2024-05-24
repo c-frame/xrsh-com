@@ -1,19 +1,22 @@
 AFRAME.registerComponent('helloworld', {
   schema: { 
     wireframe: { type:"boolean", "default":false},
-    foo: {type:"string","default":"foo"}
+    text: {type:"string","default":"hello world"}
   },
 
-  dependencies:['dom'],
+  dependencies: ['data2event'],
 
-  init: function () {
+  init: async function() {
     this.el.object3D.visible = false
+
+    await AFRAME.utils.require(this.dependencies)
+    this.el.setAttribute("data2event","")
 
     this.el.innerHTML = `
        <a-box position="-1 0.5 -3" rotation="0 45 0" color="#4CC3D9"></a-box>
        <a-sphere position="0 1.25 -5" radius="1.25" color="#EF2D5E"></a-sphere>
        <a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D"></a-cylinder>
-       <a-entity position="0 1.8 -3" scale="10 10 10" text="value: ${this.data.foo}; align:center; color:#888"></a-entity>
+       <a-entity position="0 1.8 -3" scale="10 10 10" text="value: ${this.data.text}; align:center; color:#888"></a-entity>
     `
   },
 
@@ -21,6 +24,7 @@ AFRAME.registerComponent('helloworld', {
 
     launcher:      function(e){ 
       this.el.object3D.visible = !this.el.object3D.visible 
+      clearInterval(this.interval)
       this.interval            = setInterval( () => {
         this.data.wireframe = !this.data.wireframe
       }, 500  )

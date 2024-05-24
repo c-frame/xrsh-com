@@ -18,23 +18,54 @@
 
 AFRAME.registerComponent('launcher', {
   schema: {
-    attach: { type:"selector"}
+    attach: { type:"selector"},
+    padding: { type:"number","default":0.15},
+    fingerTip: {type:"selector"},
+    fingerDistance: {type:"number", "default":0.25},
+    rescale: {type:"number","default":0.4},
+    open: { type:"boolean", "default":true},
+    colors: { type:"array", "default": [
+      '#4C73FE',
+      '#554CFE',
+      '#864CFE',
+      '#B44CFE',
+      '#E24CFE',
+      '#FE4CD3',
+      '#333333',
+    ]},
+    paused: { type:"boolean","default":false},
+    cols:   { type:"number", "default": 5 }
   },
 
   dependencies:['dom'],
 
   init: async function () {
-    this.data.apps = []
+    this.worldPosition = new THREE.Vector3()
 
     await AFRAME.utils.require({
-      html:      "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",  // html to AFRAME
-      dom:       "./com/dom.js",
-      svgfile:   "https://7dir.github.io/aframe-svgfile-component/aframe-svgfile-component.min.js",
+      html:        "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",  // html to AFRAME
+      dom:         "./com/dom.js",
+      data_events: "./com/data2event.js"
     })
 
     this.el.setAttribute("dom","")
     this.render()
-    this.el.sceneEl.addEventListener('enter-vr', (e) => this.render() )
+
+    if( this.data.attach ){
+      this.el.object3D.visible = false
+      if( this.isHand(this.data.attach) ){
+        this.data.attach.addEventListener('model-loaded', () => this.attachMenu() )
+        // add button
+        this.menubutton = this.createMenuButton()
+        this.menubutton.object3D.visible = false
+        this.data.attach.appendChild( this.menubutton )
+      }else this.data.attach.appendChild(this.el)
+    }
+
+  },
+
+  isHand: (el) => {
+    return el.getAttributeNames().filter( (n) => n.match(/^hand-tracking/) ? n : null ).length ? true : false
   },
 
   dom: {
@@ -100,26 +131,40 @@ AFRAME.registerComponent('launcher', {
   },
 
   events:{
+    open: function(){
+      this.preventAccidentalButtonPresses()
+      if( this.data.open ){
+        this.el.setAttribute("animation",`dur: 200; property: scale; from: 0 0 1; to: ${this.data.rescale} ${this.data.rescale} ${this.data.rescale}`)
+        this.menubutton.object3D.visible = false
+      }else{
+        this.el.setAttribute("animation",`dur: 200; property: scale; from: ${this.data.rescale} ${this.data.rescale} ${this.data.rescale}; to: 0 0 1`)
+        this.menubutton.object3D.visible = true
+      }
+    }
+  },
 
+  preventAccidentalButtonPresses: function(){
+    this.data.paused = true
+    setTimeout( () => this.data.paused = false, 500 ) // prevent menubutton press collide with animated buttons
+  },
+
+  createMenuButton: function(colo){
+    let aentity = document.createElement('a-entity')
+    aentity.setAttribute("mixin","menubutton")
+    aentity.addEventListener('obbcollisionstarted', this.onpress )
+    aentity.addEventListener('obbcollisionended', this.onreleased )
+    return aentity
   },
 
   render: async function(){
     if( !this.el.dom ) return // too early (dom.js component not ready)
 
-    let inVR     = this.sceneEl && this.sceneEl.renderer.xr.isPresenting
     let items    = [...this.el.children]
     let requires = [] 
-    let i        = 0
-    let colors   = [
-      '#4C73FE',
-      '#554CFE',
-      '#864CFE',
-      '#B44CFE',
-      '#E24CFE',
-      '#FE4CD3'
-    ]
-
-    const add2D = (launchCom,el,manifest,aentity) => {
+    let i        = 0 
+    let j        = 0
+    let colors   = this.data.colors 
+    const add2D = (launchCom,el,manifest) => {
       let btn    = document.createElement('button')
       btn.innerHTML = `${ manifest?.icons?.length > 0  
                              ? `<img src='${manifest.icons[0].src}' title='${manifest.name}: ${manifest.description}'/>` 
@@ -132,36 +177,105 @@ AFRAME.registerComponent('launcher', {
     const add3D = (launchCom,el,manifest) => {
       let aentity = document.createElement('a-entity')
       let atext   = document.createElement('a-entity')
+      let padding = this.data.padding
+      if( (i % this.data.cols) == 0 ) j++
       aentity.setAttribute("mixin","menuitem")
-      aentity.setAttribute("position",`${i++ * 0.2} 0 0`)
+      aentity.setAttribute("position",`${padding+(i++ % this.data.cols) * padding} ${j*padding} 0`)
       if( !aentity.getAttribute("material")){
         aentity.setAttribute('material',`side: double; color: ${colors[ i % colors.length]}`)
       }
+      aentity.addEventListener('obbcollisionstarted', this.onpress )
+      aentity.addEventListener('obbcollisionended', this.onreleased )
       atext.setAttribute("text",`value: ${manifest.short_name}; align: baseline; anchor: align; align:center; wrapCount:7`)
       atext.setAttribute("scale","0.1 0.1 0.1")
-      atext.setAttribute("position","0 0 0.0")
       aentity.appendChild(atext)
       this.el.appendChild(aentity)
+      aentity.launchCom = launchCom
       return aentity
     }
 
     // finally render them!
     this.el.dom.innerHTML = '' // clear
     this.system.components.map( (c) => {
-      const launchComponentKey = c.getAttributeNames().pop()
+      const launchComponentKey = c.getAttributeNames().shift()
       const launchCom          = c.components[ launchComponentKey ]
       if( !launchCom ) return console.warn(`could not find component '${launchComponentKey}' (forgot to include script-tag?)`)
       const manifest           = launchCom.manifest
       if( manifest ){
-        add2D(launchCom,c,manifest, add3D(launchCom,c,manifest) )
+        add2D(launchCom,c,manifest)
+        add3D(launchCom,c,manifest)
       }
     })
 
-    if( this.data.attach ){
-      this.el.object3D.visible = inVR ? true : false
-     // if( inVR ) this.data.attach.appendChild(this.el)
-    }
+  },
 
+  onpress: function(e){
+    const launcher = document.querySelector('[launcher]').components.launcher
+    if( launcher.data.paused                           ) return // prevent accidental pressed due to animation
+    if( e.detail.withEl.computedMixinStr == 'menuitem' ) return // dont react to menuitems touching eachother
+
+    // if user press menu button toggle menu
+    if( launcher && e.srcElement.computedMixinStr == 'menubutton' ){
+      return launcher.data.open = !launcher.data.open
+    }
+    if( launcher && !launcher.data.open ) return // dont process menuitems when menu is closed
+    let el = e.srcElement
+    if(!el) return
+    el.object3D.traverse( (o) => {
+      if( o.material && o.material.color ){
+        if( !o.material.colorOriginal ) o.material.colorOriginal = o.material.color.clone() 
+        o.material.color.r *= 0.3
+        o.material.color.g *= 0.3
+        o.material.color.b *= 0.3
+      }
+    })
+    if( el.launchCom ){
+      console.log("launcher.js: launching "+el.launchCom.el.getAttributeNames().shift())
+      launcher.preventAccidentalButtonPresses()
+      el.launchCom.el.emit('launcher') // launch component!
+    }
+  },
+
+  onreleased: function(e){
+    if( e.detail.withEl.computedMixinStr == 'menuitem' ) return // dont react to menuitems touching eachother
+    let el = e.srcElement
+    el.object3D.traverse( (o) => {
+      if( o.material && o.material.color ){
+        if( o.material.colorOriginal ) o.material.color = o.material.colorOriginal.clone() 
+      }
+    })
+  },
+
+  attachMenu: function(){
+    if( this.el.parentNode != this.data.attach ){
+      this.el.object3D.visible = true
+      let armature = this.data.attach.object3D.getObjectByName('Armature') 
+      if( !armature ) return console.warn('cannot find armature')
+      this.data.attach.object3D.children[0].add(this.el.object3D)
+      this.el.object3D.scale.x = this.data.rescale
+      this.el.object3D.scale.y = this.data.rescale
+      this.el.object3D.scale.z = this.data.rescale
+
+      // add obb-collider to index finger-tip
+      let aentity = document.createElement('a-entity')
+      trackedObject3DVariable = 'parentNode.components.hand-tracking-controls.bones.9';
+      this.data.fingerTip.appendChild(aentity)
+      aentity.setAttribute('obb-collider', {trackedObject3D: trackedObject3DVariable, size: 0.015});
+
+      if( this.isHand(this.data.attach) ){
+        // shortly show and hide menu into palm (hint user)
+        setTimeout( () => { this.data.open = false }, 1500 )
+      }
+    }
+  },
+
+  tick: function(){
+    if( this.data.open ){
+      let indexTipPosition = document.querySelector('#right-hand[hand-tracking-controls]').components['hand-tracking-controls'].indexTipPosition
+      this.el.object3D.getWorldPosition(this.worldPosition)
+      const lookingAtPalm = this.data.attach.components['hand-tracking-controls'].wristObject3D.rotation.z > 2.0 
+      if( !lookingAtPalm ){ this.data.open = false }
+    }
   },
 
   manifest: { // HTML5 manifest to identify app to xrsh
@@ -223,7 +337,7 @@ AFRAME.registerSystem('launcher',{
 
   init: function(){
     this.components = []
-    // observer HTML changes in <a-scene>
+    // observe HTML changes in <a-scene>
     observer = new MutationObserver( (a,b) => this.getLaunchables(a,b) )
     observer.observe( this.sceneEl, {characterData: false, childList: true, attributes: false});
   },

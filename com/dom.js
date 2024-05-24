@@ -42,7 +42,11 @@ AFRAME.registerComponent('dom',{
         this.com = c
       }
     })
-    if( !this.dom ) return console.warn('dom.js did not find a .dom object inside components')
+    if( !this.dom || !this.com){
+      return console.warn('dom.js did not find a .dom object inside component')
+    }
+
+    console.dir(this.dom)
 
     this
     .ensureOverlay()
@@ -56,14 +60,14 @@ AFRAME.registerComponent('dom',{
     this.el.emit('DOMready',{el: this.el.dom})
   },
 
-  ensureOverlay(){
+  ensureOverlay: function(){
     // ensure overlay
     let overlay = document.querySelector('#overlay')
     if( !overlay ){
       overlay = document.createElement('div')
       overlay.id = "overlay"
       document.body.appendChild(overlay)
-      document.querySelector("a-scene").setAttribute("webxr","overlayElement:#overlay")
+      //  sceneEl.setAttribute("webxr","overlayElement:#overlay")
     }
     return this
   },
@@ -85,6 +89,7 @@ AFRAME.registerComponent('dom',{
     this.el.dom = document.createElement('div')
     this.el.dom.innerHTML = this.dom.html(this)
     this.el.dom.className = this.dom.attrName 
+    console.dir(this.com.data)
     this.com.data = this.reactify( this.el, this.com.data )
     if( this.dom.events ) this.dom.events.map( (e) => this.el.dom.addEventListener(e, (ev) => this.el.emit(e,ev) ) )
     this.el.dom = this.el.dom.children[0]
