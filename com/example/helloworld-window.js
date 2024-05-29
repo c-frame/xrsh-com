@@ -5,8 +5,9 @@ AFRAME.registerComponent('helloworld-window', {
 
   dependencies: ['dom'],
 
-  init: function(){
+  init: async function(){
     this.el.object3D.visible = false
+
   },
 
   dom: {
@@ -29,16 +30,20 @@ AFRAME.registerComponent('helloworld-window', {
     myvalue: function(e){ this.el.dom.querySelector('b').innerText = this.data.myvalue },
 
     launcher: async function(){
-      this.el.dom.style.display = 'none'
-      await AFRAME.utils.require({
+      let s = await AFRAME.utils.require({
         dom:         "./com/dom.js",                                                  // interpret .dom object
         html:        "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",  // html to AFRAME
         winboxjs:    "https://unpkg.com/winbox@0.2.82/dist/winbox.bundle.min.js",     // deadsimple windows: https://nextapps-de.github.io/winbox
         winboxcss:   "https://unpkg.com/winbox@0.2.82/dist/css/winbox.min.css",       // 
       })
+      console.dir(s)
+      this.el.setAttribute("dom","")
+      this.el.setAttribute("data2event","")
+      this.el.setAttribute("html","")
+      this.el.dom.style.display = 'none'
       this.data.myvalue = 1
+      return
       setInterval( () => this.data.myvalue++, 100 )
-      console.log("this.el.dom has been added to DOM")
       new WinBox("Hello World",{ 
         width: 250,
         height: 150,

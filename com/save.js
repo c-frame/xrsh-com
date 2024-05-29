@@ -75,8 +75,8 @@ AFRAME.registerComponent('save', {
   },
 
   manifest: { // HTML5 manifest to identify app to xrsh
-    "short_name": "Hello world",
-    "name": "Hello world",
+    "short_name": "Save",
+    "name": "Save",
     "icons": [
       {
         "src": "https://css.gg/arrow-down-r.svg",
@@ -106,7 +106,7 @@ AFRAME.registerComponent('save', {
         "icons": [{ "src": "/images/today.png", "sizes": "192x192" }]
       }
     ],
-    "description": "Hello world information",
+    "description": "Export the current XRSH(ell) as a standalone HTML file",
     "screenshots": [
       {
         "src": "/images/screenshot1.png",

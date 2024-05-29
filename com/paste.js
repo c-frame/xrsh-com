@@ -19,17 +19,28 @@ AFRAME.registerComponent('paste', {
     ready:         function(e){ console.log("requires are loaded") },
 
     launcher:      function(e){ 
-      navigator.clipboard.readText()
-      .then( (base64) => {
-        let mimetype  = base64.replace(/;base64,.*/,'')
-        let data = base64.replace(/.*;base64,/,'')
-        let type = this.textHeuristic(data)
-        console.log("type="+type)
-        switch( this.textHeuristic(data) ){
-          case "aframe":    this.insertAFRAME(data); break;
-          default:          this.insertText(data); break;
-        }
-        this.count += 1
+      const paste = () => {
+        navigator.clipboard.readText()
+        .then( (base64) => {
+          let mimetype  = base64.replace(/;base64,.*/,'')
+          let data = base64.replace(/.*;base64,/,'')
+          let type = this.textHeuristic(data)
+          console.log("type="+type)
+          switch( this.textHeuristic(data) ){
+            case "aframe":    this.insertAFRAME(data); break;
+            default:          this.insertText(data); break;
+          }
+          this.count += 1
+        })
+      }
+
+      navigator.permissions.query({ name: 'clipboard-read' })
+      .then( (permission) => {
+        if( permission.state != 'granted' ){
+          this.el.sceneEl.exitVR()
+          setTimeout( () => paste(), 500 )
+          return
+        }else paste()
       })
     },
 
@@ -144,7 +155,7 @@ AFRAME.registerComponent('paste', {
         "icons": [{ "src": "/images/today.png", "sizes": "192x192" }]
       }
     ],
-    "description": "Hello world information",
+    "description": "Paste the clipboard",
     "screenshots": [
       {
         "src": "/images/screenshot1.png",

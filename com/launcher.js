@@ -45,7 +45,7 @@ AFRAME.registerComponent('launcher', {
     await AFRAME.utils.require({
       html:        "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",  // html to AFRAME
       dom:         "./com/dom.js",
-      data_events: "./com/data2event.js"
+      data2events: "./com/data2event.js"
     })
 
     this.el.setAttribute("dom","")
