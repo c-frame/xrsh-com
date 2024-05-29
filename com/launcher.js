@@ -49,6 +49,7 @@ AFRAME.registerComponent('launcher', {
     })
 
     this.el.setAttribute("dom","")
+    this.el.setAttribute("noxd","ignore") // hint to XD.js that we manage ourselve concerning 2D/3D switching
     this.render()
 
     if( this.data.attach ){
@@ -81,7 +82,7 @@ AFRAME.registerComponent('launcher', {
                 overflow:hidden;
                 position: fixed;
                 right: 162px;
-                bottom: 0px;
+                bottom: 10px;
                 left:20px;
                 background: transparent;
                 padding-bottom: 54px;
@@ -345,13 +346,14 @@ AFRAME.registerSystem('launcher',{
   getLaunchables: function(mutationsList,observer){
     let searchEvent = 'launcher'
     let els         = [...this.sceneEl.getElementsByTagName("*")]
+    let seen        = {}
 
     this.components = els.filter( (el) => {
       let hasEvent = false
       if( el.components ){
         for( let i in el.components ){
-          if( el.components[i].events && el.components[i].events[searchEvent] ){
-            hasEvent = true
+          if( el.components[i].events && el.components[i].events[searchEvent] && !seen[i] ){
+            hasEvent = seen[i] = true
           }
         } 
       }

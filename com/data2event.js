@@ -24,7 +24,9 @@ AFRAME.registerComponent('data2event',{
     setTimeout( () => {
       for( let i in this.el.components ){
         let com = this.el.components[i]
-        com.data = this.reactify( this.el, com.data)
+        if( typeof com.data == 'object' ){
+          com.data = this.reactify( this.el, com.data)
+        }
       }
     },50)
   },

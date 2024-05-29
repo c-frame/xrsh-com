@@ -1,20 +1,23 @@
 AFRAME.registerComponent('helloworld-window', {
   schema: { 
-    foo: { type:"string"}
+    foo: { type:"string", "default":"foo"}
   },
 
-  dependencies: ['dom'],
-
-  init: async function(){
-    this.el.object3D.visible = false
-
+  requires:     {
+    dom:         "./com/dom.js",                                                  // interpret .dom object
+    xd:          "./com/dom.js",                                                  // allow switching between 2D/3D 
+    html:        "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",  // html to AFRAME
+    winboxjs:    "https://unpkg.com/winbox@0.2.82/dist/winbox.bundle.min.js",     // deadsimple windows: https://nextapps-de.github.io/winbox
+    winboxcss:   "https://unpkg.com/winbox@0.2.82/dist/css/winbox.min.css",       // 
   },
+
+  init: function(){ },
 
   dom: {
-    scale:   1,
+    scale:   3,
     events:  ['click','keydown'],
     html:    (me) => `<div>
-                        <div class="pad"> ${me.data.foo} <b>${me.data.myvalue}</b></span>
+                        <div class="pad"> <span>${me.data.foo}</span> <b>${me.data.myvalue}</b></span>
                       </div>`,
 
     css:    (me) =>  `.helloworld-window div.pad { padding:11px; }`
@@ -26,41 +29,53 @@ AFRAME.registerComponent('helloworld-window', {
     click:   function(e){ }, // 
     keydown: function(e){ }, // 
 
-    // reactive events for this.data updates 
-    myvalue: function(e){ this.el.dom.querySelector('b').innerText = this.data.myvalue },
+    // reactive events for this.data updates (data2event.js)
+    myvalue: function(e){ this.el.dom.querySelector('b').innerText    = this.data.myvalue },
+    foo:     function(e){ this.el.dom.querySelector('span').innerText = this.data.foo },
 
     launcher: async function(){
-      let s = await AFRAME.utils.require({
-        dom:         "./com/dom.js",                                                  // interpret .dom object
-        html:        "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",  // html to AFRAME
-        winboxjs:    "https://unpkg.com/winbox@0.2.82/dist/winbox.bundle.min.js",     // deadsimple windows: https://nextapps-de.github.io/winbox
-        winboxcss:   "https://unpkg.com/winbox@0.2.82/dist/css/winbox.min.css",       // 
-      })
-      console.dir(s)
-      this.el.setAttribute("dom","")
-      this.el.setAttribute("data2event","")
-      this.el.setAttribute("html","")
-      this.el.dom.style.display = 'none'
-      this.data.myvalue = 1
-      return
-      setInterval( () => this.data.myvalue++, 100 )
-      new WinBox("Hello World",{ 
-        width: 250,
-        height: 150,
-        x:"center",
-        y:"center",
-        id:  this.el.uid, // important hint for html-mesh  
-        root: document.querySelector("#overlay"),
-        mount: this.el.dom,
-        onclose: () => { this.el.dom.style.display = 'none'; return false; }
-      });
-      this.el.dom.style.display = ''
+      let s = await AFRAME.utils.require(this.requires)
+
+      // instance this component
+      const instance = this.el.cloneNode(false)
+      this.el.sceneEl.appendChild( instance )
+      instance.setAttribute("dom",       "")
+      instance.setAttribute("visible",  AFRAME.utils.XD() == '3D' ? 'true' : 'false' )
+      instance.setAttribute("position", AFRAME.utils.XD.getPositionInFrontOfCamera(1.39) )
+      instance.object3D.quaternion.copy( AFRAME.scenes[0].camera.quaternion ) // face towards camera
+
+      const setupWindow = () => {
+        const com = instance.components['helloworld-window']
+        instance.dom.style.display = 'none'
+
+        new WinBox("Hello World",{ 
+          width: 250,
+          height: 150,
+          x:"center",
+          y:"center",
+          id:  instance.uid, // important hint for html-mesh  
+          root: document.querySelector("#overlay"),
+          mount: instance.dom,
+          onclose: () => { instance.dom.style.display = 'none'; return false; },
+          oncreate: () => instance.setAttribute("html",`html:#${instance.uid}; cursor:#cursor`)
+        });
+        instance.dom.style.display = '' // show
+
+        // data2event demo
+        instance.setAttribute("data2event","")
+        com.data.myvalue = 1
+        com.data.foo     = `instance ${instance.uid}: `
+        setInterval( () => com.data.myvalue++, 200 )
+      }
+
+      setTimeout( () => setupWindow(), 10 ) // give new components time to init
+
     },
 
   },
 
   manifest: { // HTML5 manifest to identify app to xrsh
-    "short_name": "Hello world window",
+    "short_name": "window",
     "name": "Hello world window",
     "icons": [
       {

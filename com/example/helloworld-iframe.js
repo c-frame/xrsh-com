@@ -12,7 +12,7 @@ AFRAME.registerComponent('helloworld-iframe', {
   },
 
   dom: {
-    scale:   1,
+    scale:   3,
     events:  ['click','keydown'],
     html:    (me) => `<div>
                         <iframe src=""></iframe>
@@ -26,49 +26,60 @@ AFRAME.registerComponent('helloworld-iframe', {
 
   events:{
 
-    // component events
-    html:     function( ){ console.log("html-mesh requirement mounted") },
-
     // combined AFRAME+DOM reactive events
     click:   function(e){ }, // 
     keydown: function(e){ }, // 
 
-    // reactive events for this.data updates 
-    myvalue: function(e){ /*this.el.dom.querySelector('b').innerText = this.data.myvalue*/ },
-
-    init: function(){
-      alert("ja")
+    // reactive updates (data2event.js)
+    url: function(e){ 
+      this.el.dom.querySelector('iframe').src = this.data.url
+      console.dir(this.el.dom.querySelector('iframe'))
     },
 
-    ready: function( ){ 
-      this.el.dom.style.display = 'none'
-      console.log("this.el.dom has been added to DOM")
-    },
-
-    launcher:  function(){
-      console.log("this.el.dom iframe has been added to DOM")
+    launcher: async function(){
       let URL = this.data.url || prompt('enter URL to display','https://fabien.benetou.fr/Wiki/Wiki')
       if( !URL ) return
-      this.el.dom.querySelector('iframe').src = URL
-      new WinBox("Hello World",{ 
-        width: 250,
-        height: 150,
-        class:["iframe"],
-        x:"center",
-        y:"center",
-        id:  this.el.uid, // important hint for html-mesh  
-        root: document.querySelector("#overlay"),
-        mount: this.el.dom,
-        onclose: () => { this.el.dom.style.display = 'none'; return false; }
-      });
-      this.el.dom.style.display = ''
+
+      let s = await AFRAME.utils.require(this.requires)
+
+      // instance this component
+      const instance = this.el.cloneNode(false)
+      this.el.sceneEl.appendChild( instance )
+      instance.setAttribute("dom",       "")
+      instance.setAttribute("data2event","")
+      instance.setAttribute("visible",  AFRAME.utils.XD() == '3D' ? 'true' : 'false' )
+      instance.setAttribute("position", AFRAME.utils.XD.getPositionInFrontOfCamera(1.39) )
+      instance.object3D.quaternion.copy( AFRAME.scenes[0].camera.quaternion ) // face towards camera
+
+      const setupWindow = () => {
+        const com = instance.components['helloworld-iframe']
+        instance.dom.style.display = 'none'
+        new WinBox("Hello World",{ 
+          width: 250,
+          height: 150,
+          class:["iframe"],
+          x:"center",
+          y:"center",
+          id:  instance.uid, // important hint for html-mesh  
+          root: document.querySelector("#overlay"),
+          mount: instance.dom,
+          onclose: () => { instance.dom.style.display = 'none'; return false; },
+          oncreate: () => {
+            com.data.url = URL
+            instance.setAttribute("html",`html:#${instance.uid}; cursor:#cursor`)
+          }
+        });
+        instance.dom.style.display = ''
+      }
+
+      setTimeout( () => setupWindow(), 10 ) // give new components time to init
     },
 
   },
 
   manifest: { // HTML5 manifest to identify app to xrsh
-    "short_name": "Hello world",
-    "name": "Hello world",
+    "short_name": "Iframe",
+    "name": "Hello world IFRAME window",
     "icons": [
       {
         "src": "https://css.gg/browse.svg",

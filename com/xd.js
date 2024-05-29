@@ -1,12 +1,16 @@
-AFRAME.registerComponent('spatialize', {
+AFRAME.registerComponent('xd', {
   schema: {
     foo: { type:"string"}
   },
 
   init: function () {
+    if( Object.keys(this.el.components).length > 1 ) return // we collect a-entities which wish to be toggled in this.showElements()
 
-    document.querySelector('a-scene').addEventListener('enter-vr',() => this.toggle(true) )
-    document.querySelector('a-scene').addEventListener('exit-vr', () => this.toggle(false) )
+    this.el.sceneEl.addEventListener('enter-vr',() => this.toggle(true) )
+    this.el.sceneEl.addEventListener('exit-vr', () => this.toggle(false) )
+    this.el.sceneEl.addEventListener('2D', () => this.showElements(false) )
+    this.el.sceneEl.addEventListener('3D', () => this.showElements(true) )
+
     // toggle immersive with ESCAPE
     document.body.addEventListener('keydown', (e) => e.key == 'Escape' && this.toggle() )
 
@@ -21,43 +25,25 @@ AFRAME.registerComponent('spatialize', {
       }
     </style>`
 
-    this.el.sceneEl.addEventListener('launched',(e) => {
-      console.dir(e)
-      let appEl = e.detail.el.dom 
-      if( appEl && appEl.style && appEl.style.display != 'none' && appEl.innerHTML ){
-        this.btn.style.display = '' // show button
-      }
-    })
+    this.events.launcher = () => this.toggle()
   },
 
-  requires:{
-    // somecomponent:        "https://unpkg.com/some-aframe-component/mycom.min.js"
-  },
-
-  events:{
-
-    // component events
-    ready:         function(e){
-      //this.btn.style.display = 'none'
-      this.btn.style.background = 'var(--xrsh-primary)'
-      this.btn.style.color      = '#FFF'
-    },
-
-    launcher:      function(e){ this.toggle() },
-
+  showElements: function(state){
+    let els = [...document.querySelectorAll('[xd]')]
+    els     = els.filter( (el) => el != this.el ? el : null ) // filter out self
+    els.map( (el) => el.setAttribute("visible", state ? "true" : false  ) )
   },
 
   // draw a button so we can toggle apps between 2D / XR
   toggle: function(state){
     state = state || !document.body.className.match(/XR/)
     document.body.classList[ state ? 'add' : 'remove'](['XR'])
-    AFRAME.scenes[0].emit( state ? 'apps:XR' : 'apps:2D')
-    this.btn.innerHTML = state ? "<s>2D</s>" : "2D"
+    AFRAME.scenes[0].emit( state ? '3D' : '2D')
   },
 
   manifest: { // HTML5 manifest to identify app to xrsh
-    "short_name": "2D",
-    "name": "spatialize",
+    "short_name": "XD",
+    "name": "2D/3D switcher",
     "icons": [],
     "id": "/?source=pwa",
     "start_url": "/?source=pwa",
@@ -103,3 +89,23 @@ in above's case "\nHelloworld application\n" will qualify as header.
 
 });
 
+AFRAME.utils.XD = function(){
+  return document.body.classList.contains('XR') ? '3D' : '2D'
+}
+
+
+AFRAME.utils.XD.getPositionInFrontOfCamera = function(distance){
+  const camera = AFRAME.scenes[0].camera;
+  let pos = new THREE.Vector3()
+  let direction = new THREE.Vector3();
+  // Get camera's forward direction (without rotation)
+  camera.getWorldDirection(direction);
+  camera.getWorldPosition(pos)
+  direction.normalize();
+  // Scale the direction by 1 meter
+  if( !distance ) distance = 1.5
+  direction.multiplyScalar(distance);
+  // Add the camera's position to the scaled direction to get the target point
+  pos.add(direction);
+  return pos
+}

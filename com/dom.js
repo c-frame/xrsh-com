@@ -46,15 +46,13 @@ AFRAME.registerComponent('dom',{
       return console.warn('dom.js did not find a .dom object inside component')
     }
 
-    console.dir(this.dom)
-
     this
     .ensureOverlay()
     .addCSS()
     .createReactiveDOMElement()
+    .assignUniqueID()
     .scaleDOMvsXR()
     .triggerKeyboardForInputs()
-    .setupListeners()
 
     document.querySelector('#overlay').appendChild(this.el.dom)
     this.el.emit('DOMready',{el: this.el.dom})
@@ -89,10 +87,15 @@ AFRAME.registerComponent('dom',{
     this.el.dom = document.createElement('div')
     this.el.dom.innerHTML = this.dom.html(this)
     this.el.dom.className = this.dom.attrName 
-    console.dir(this.com.data)
     this.com.data = this.reactify( this.el, this.com.data )
     if( this.dom.events ) this.dom.events.map( (e) => this.el.dom.addEventListener(e, (ev) => this.el.emit(e,ev) ) )
     this.el.dom = this.el.dom.children[0]
+    return this
+  },
+
+  assignUniqueID: function(){
+    // assign unique app id so it's easy to reference (by html-mesh component e.g.)
+    if( !this.el.uid ) this.el.uid = '_'+String(Math.random()).substr(10)
     return this
   },
 
@@ -105,15 +108,6 @@ AFRAME.registerComponent('dom',{
 
   scaleDOMvsXR: function(){
     if( this.dom.scale ) this.el.setAttribute('scale',`${this.dom.scale} ${this.dom.scale} ${this.dom.scale}`)
-    return this
-  },
-
-  setupListeners: function(){
-    this.el.sceneEl.addEventListener('apps:2D', () => this.el.setAttribute('visible', false) )
-    this.el.sceneEl.addEventListener('apps:XR', () => {
-      this.el.setAttribute('visible', true)
-      this.el.setAttribute("html",`html:#${this.el.uid}; cursor:#cursor`)
-    })
     return this
   },
 

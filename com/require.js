@@ -25,8 +25,11 @@ AFRAME.utils.require = function(arr_or_obj,opts){
   packagesArr.map( (package) => {
     try{
       package = package.match(/\./) ? package : AFRAME.utils.require.baseURL+package+".js"
-      let id = Object.keys(arr_or_obj)[i]
-      if( id == i ) id = parseURI(package).component 
+      let id = Object.keys(arr_or_obj)[i++]
+      if( id.match(/^[0-9]/) ){ // if AFRAME component.dependency -array was passed
+        id = parseURI(package).component 
+      }
+
       // prevent duplicate requests
       if( AFRAME.required[id] ) return // already loaded before
       AFRAME.required[id] = true
@@ -55,9 +58,9 @@ AFRAME.utils.require = function(arr_or_obj,opts){
       }
     }catch(e){ 
       console.error(`package ${package} could not be retrieved..aborting :(`); 
+      console.dir(e)
       if( opts.halt ) throw e; 
     }
-    i++
   })
   return Promise.all(deps)
 }

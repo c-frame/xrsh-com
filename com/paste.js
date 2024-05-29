@@ -108,7 +108,7 @@ AFRAME.registerComponent('paste', {
     return osbutton
   },
 
-  getPositionInFrontOfCamera: function(){
+  getPositionInFrontOfCamera: function(distance){
     const camera = this.el.sceneEl.camera;
     let pos = new THREE.Vector3()
     let direction = new THREE.Vector3();
@@ -117,7 +117,8 @@ AFRAME.registerComponent('paste', {
     camera.getWorldPosition(pos)
     direction.normalize();
     // Scale the direction by 1 meter
-    direction.multiplyScalar(1.5);
+    if( !distance ) distance = 1.5
+    direction.multiplyScalar(distance);
     // Add the camera's position to the scaled direction to get the target point
     pos.add(direction);
     return pos
