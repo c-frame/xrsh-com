@@ -14,7 +14,7 @@ AFRAME.registerComponent('helloworld-window', {
   init: function(){ },
 
   dom: {
-    scale:   3,
+    scale:   0.8,
     events:  ['click','keydown'],
     html:    (me) => `<div>
                         <div class="pad"> <span>${me.data.foo}</span> <b>${me.data.myvalue}</b></span>
@@ -39,9 +39,11 @@ AFRAME.registerComponent('helloworld-window', {
       // instance this component
       const instance = this.el.cloneNode(false)
       this.el.sceneEl.appendChild( instance )
-      instance.setAttribute("dom",       "")
+      instance.setAttribute("dom",      "")
+      instance.setAttribute("xd",       "")  // allows flipping between DOM/WebGL when toggling XD-button
       instance.setAttribute("visible",  AFRAME.utils.XD() == '3D' ? 'true' : 'false' )
-      instance.setAttribute("position", AFRAME.utils.XD.getPositionInFrontOfCamera(1.39) )
+      instance.setAttribute("position", AFRAME.utils.XD.getPositionInFrontOfCamera(0.5) )
+      instance.setAttribute("grabbable","")
       instance.object3D.quaternion.copy( AFRAME.scenes[0].camera.quaternion ) // face towards camera
 
       const setupWindow = () => {
@@ -61,11 +63,15 @@ AFRAME.registerComponent('helloworld-window', {
         });
         instance.dom.style.display = '' // show
 
+        // hint grabbable's obb-collider to track the window-object 
+        instance.components['obb-collider'].data.trackedObject3D = 'components.html.el.object3D.children.0'
+        instance.components['obb-collider'].update() 
+
         // data2event demo
-        instance.setAttribute("data2event","")
-        com.data.myvalue = 1
-        com.data.foo     = `instance ${instance.uid}: `
-        setInterval( () => com.data.myvalue++, 200 )
+        //instance.setAttribute("data2event","")
+        //com.data.myvalue = 1
+        //com.data.foo     = `instance ${instance.uid}: `
+        //setInterval( () => com.data.myvalue++, 500 )
       }
 
       setTimeout( () => setupWindow(), 10 ) // give new components time to init

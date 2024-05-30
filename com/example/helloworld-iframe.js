@@ -14,13 +14,26 @@ AFRAME.registerComponent('helloworld-iframe', {
   dom: {
     scale:   3,
     events:  ['click','keydown'],
-    html:    (me) => `<div>
+    html:    (me) => `<div class="relative">
+                        <span id="warning">
+                          <b>Unfortunately,</b><br><br>
+                          The browser does not allow IFRAME rendering<br>
+                          in immersive mode (for security reasons).<br><br>
+                        </span>  
                         <iframe src=""></iframe>
                       </div>`,
 
     css:     (me) => `
-      .XR #overlay .winbox.iframe{ visibility: visible; } /* don't hide in XR mode */
-      .winbox.iframe iframe      { background:#FFF;     }
+      .XR #overlay .winbox.iframe{ 
+        visibility: visible; 
+        position:relative;
+      } /* don't hide in XR mode */
+      .winbox.iframe > .wb-body  { background:#FFF !important; 
+                                   overflow-y: hidden;
+                                   overflow-x: hidden;
+                                 }
+      .winbox.iframe iframe      { z-index:10;    }
+      .winbox.iframe #warning    { position:absolute; z-index:9; top:100px; left:20px; width:100%; height:50px; color:black; display:none; }
     `
   },
 
@@ -40,6 +53,10 @@ AFRAME.registerComponent('helloworld-iframe', {
       let URL = this.data.url || prompt('enter URL to display','https://fabien.benetou.fr/Wiki/Wiki')
       if( !URL ) return
 
+      this.createWindow()
+    },
+
+    createWindow: function(){
       let s = await AFRAME.utils.require(this.requires)
 
       // instance this component
@@ -51,12 +68,16 @@ AFRAME.registerComponent('helloworld-iframe', {
       instance.setAttribute("position", AFRAME.utils.XD.getPositionInFrontOfCamera(1.39) )
       instance.object3D.quaternion.copy( AFRAME.scenes[0].camera.quaternion ) // face towards camera
 
+      this.el.sceneEl.addEventListener('3D', () => {
+        instance.dom.querySelector('#warning').style.display = 'block' // show warning
+      })
+
       const setupWindow = () => {
         const com = instance.components['helloworld-iframe']
         instance.dom.style.display = 'none'
-        new WinBox("Hello World",{ 
-          width: 250,
-          height: 150,
+        new WinBox( this.manifest.short_name+" "+URL,{ 
+          width: Math.round(window.innerWidth*0.6),
+          height: Math.round(window.innerHeight*0.6),
           class:["iframe"],
           x:"center",
           y:"center",

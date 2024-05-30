@@ -234,6 +234,7 @@ AFRAME.registerComponent('launcher', {
       console.log("launcher.js: launching "+el.launchCom.el.getAttributeNames().shift())
       launcher.preventAccidentalButtonPresses()
       el.launchCom.el.emit('launcher') // launch component!
+      this.data.open = false // close to prevent infinite loop of clicks when leaving immersive mode
     }
   },
 
@@ -360,6 +361,7 @@ AFRAME.registerSystem('launcher',{
       return hasEvent ? el : null 
     })
     this.updateLauncher()
+    return seen
   },
 
   updateLauncher: function(){

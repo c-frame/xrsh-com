@@ -100,8 +100,8 @@ AFRAME.registerComponent('dom',{
   },
 
   addCSS: function(){
-    if( this.dom.css && !document.head.querySelector(`style#${this.attrName}`) ){
-      document.head.innerHTML += `<style id="${this.attrName}">${this.dom.css(this)}</style>`
+    if( this.dom.css && !document.head.querySelector(`style#${this.com.attrName}`) ){
+      document.head.innerHTML += `<style id="${this.com.attrName}">${this.dom.css(this)}</style>`
     }
     return this
   },

@@ -3,8 +3,6 @@ AFRAME.registerComponent('xrfragments', {
     url: { type:"string"}
   },
 
-  dependencies:['dom'],
-
   init: function () {  
   },
 
