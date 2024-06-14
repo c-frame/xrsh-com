@@ -68,10 +68,10 @@ AFRAME.registerComponent('helloworld-window', {
         instance.components['obb-collider'].update() 
 
         // data2event demo
-        //instance.setAttribute("data2event","")
-        //com.data.myvalue = 1
-        //com.data.foo     = `instance ${instance.uid}: `
-        //setInterval( () => com.data.myvalue++, 500 )
+        instance.setAttribute("data2event","")
+        com.data.myvalue = 1
+        com.data.foo     = `instance ${instance.uid}: `
+        setInterval( () => com.data.myvalue++, 500 )
       }
 
       setTimeout( () => setupWindow(), 10 ) // give new components time to init

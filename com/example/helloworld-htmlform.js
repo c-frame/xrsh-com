@@ -14,7 +14,7 @@ AFRAME.registerComponent('helloworld-htmlform', {
   dom: {
     scale:   1,
     events:  ['click','input'],
-    html:    (me) => `<div class="light">
+    html:    (me) => `<div class="htmlform">
                         <fieldset>
                           <legend>Colour</legend>
                           <input type="radio" id="color-red" name="color" value="red" checked><label for="color-red"> Red</label><br>
@@ -25,13 +25,13 @@ AFRAME.registerComponent('helloworld-htmlform', {
                           <input id="material-wireframe" type="checkbox" name="wireframe"><label for="material-wireframe"> Wireframe</label><br>
                         </fieldset>
                         <fieldset>
-                          <legend>Size: <span id="myvalue"></span></legend>
+                          <legend>Size</legend>
                           <input type="range" min="0.1" max="2" value="1" step="0.01" id="myRange" style="background-color: transparent;">
                         </fieldset>
-                        <button>hello</button>
+                        <button>hello <span id="myvalue"></span></button>
                       </div>`,
 
-    css:     (me) => `.helloworld-htmlform > div { padding:11px; }`
+    css:     (me) => `.htmlform { padding:11px; }`
 
   },
 
@@ -50,22 +50,47 @@ AFRAME.registerComponent('helloworld-htmlform', {
     // reactive events for this.data updates 
     myvalue: function(e){ this.el.dom.querySelector('#myvalue').innerText = this.data.myvalue },
 
-    launcher:  function(){
-      this.el.dom.style.display = ''
-      new WinBox("Hello World",{ 
-        width: 250,
-        height: 315,
-        minwidth:250,
-        maxwidth:250,
-        maxheight:315,
-        minheight:315,
-        x: 100,
-        y: 100,
-        id:  this.el.uid, // important hint for html-mesh  
-        root: document.querySelector("#overlay"),
-        mount: this.el.dom,
-        onclose: () => { this.el.dom.style.display = 'none'; return false; }
-      });
+    launcher: async function(){
+      let s = await AFRAME.utils.require(this.requires)
+
+      // instance this component
+      const instance = this.el.cloneNode(false)
+      this.el.sceneEl.appendChild( instance )
+      instance.setAttribute("dom",      "")
+      instance.setAttribute("xd",       "")  // allows flipping between DOM/WebGL when toggling XD-button
+      instance.setAttribute("visible",  AFRAME.utils.XD() == '3D' ? 'true' : 'false' )
+      instance.setAttribute("position", AFRAME.utils.XD.getPositionInFrontOfCamera(0.5) )
+      instance.setAttribute("grabbable","")
+      instance.object3D.quaternion.copy( AFRAME.scenes[0].camera.quaternion ) // face towards camera
+
+      const setupWindow = () => {
+        const com = instance.components['helloworld-htmlform']
+        instance.dom.style.display = 'none'
+        new WinBox("Hello World",{ 
+          width: 250,
+          height: 340,
+          x:"center",
+          y:"center",
+          id:  instance.uid, // important hint for html-mesh  
+          root: document.querySelector("#overlay"),
+          mount: instance.dom,
+          onclose: () => { instance.dom.style.display = 'none'; return false; },
+          oncreate: () => instance.setAttribute("html",`html:#${instance.uid}; cursor:#cursor`)
+        });
+        instance.dom.style.display = AFRAME.utils.XD() == '3D' ? 'none' : '' // show/hide
+
+        // hint grabbable's obb-collider to track the window-object 
+        instance.components['obb-collider'].data.trackedObject3D = 'components.html.el.object3D.children.0'
+        instance.components['obb-collider'].update() 
+
+        // data2event demo
+        instance.setAttribute("data2event","")
+        com.data.myvalue = 1
+        com.data.foo     = `instance ${instance.uid}: `
+        setInterval( () => com.data.myvalue++, 500 )
+      }
+
+      setTimeout( () => setupWindow(), 10 ) // give new components time to init
     },
 
     ready: function( ){ 
@@ -77,8 +102,8 @@ AFRAME.registerComponent('helloworld-htmlform', {
   },
 
   manifest: { // HTML5 manifest to identify app to xrsh
-    "short_name": "Hello world",
-    "name": "Hello world",
+    "short_name": "Hello world htmlform",
+    "name": "Hello world htmlform",
     "icons": [
       {
         "src": "https://css.gg/browser.svg",
@@ -108,7 +133,7 @@ AFRAME.registerComponent('helloworld-htmlform', {
         "icons": [{ "src": "/images/today.png", "sizes": "192x192" }]
       }
     ],
-    "description": "Hello world information",
+    "description": "Hello world htmlform",
     "screenshots": [
       {
         "src": "/images/screenshot1.png",

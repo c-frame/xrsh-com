@@ -15,6 +15,8 @@ AFRAME.registerComponent('add', {
 
   events:{
     launcher: function(){
+      let launcher = this.el.sceneEl.querySelector('[launcher]').components['launcher']
+
       if( this.el.sceneEl.renderer.xr.isPresenting ){
         this.el.sceneEl.exitVR() // *FIXME* we need a gui 
       }

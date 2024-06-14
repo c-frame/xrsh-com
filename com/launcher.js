@@ -157,10 +157,9 @@ AFRAME.registerComponent('launcher', {
     return aentity
   },
 
-  render: async function(){
+  render: async function(els){
     if( !this.el.dom ) return // too early (dom.js component not ready)
 
-    let items    = [...this.el.children]
     let requires = [] 
     let i        = 0 
     let j        = 0
@@ -197,7 +196,8 @@ AFRAME.registerComponent('launcher', {
 
     // finally render them!
     this.el.dom.innerHTML = '' // clear
-    this.system.components.map( (c) => {
+    els = els || this.system.components
+    els.map( (c) => {
       const launchComponentKey = c.getAttributeNames().shift()
       const launchCom          = c.components[ launchComponentKey ]
       if( !launchCom ) return console.warn(`could not find component '${launchComponentKey}' (forgot to include script-tag?)`)
@@ -216,8 +216,8 @@ AFRAME.registerComponent('launcher', {
     if( e.detail.withEl.computedMixinStr == 'menuitem' ) return // dont react to menuitems touching eachother
 
     // if user press menu button toggle menu
-    if( launcher && e.srcElement.computedMixinStr == 'menubutton' ){
-      return launcher.data.open = !launcher.data.open
+    if( launcher && !launcher.data.open && e.srcElement.computedMixinStr == 'menubutton' ){
+      return (launcher.data.open = true)
     }
     if( launcher && !launcher.data.open ) return // dont process menuitems when menu is closed
     let el = e.srcElement
