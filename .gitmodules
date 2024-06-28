@@ -1,0 +1,4 @@
+[submodule "com/isoterminal/browser-vm"]
+	path = com/isoterminal/browser-vm
+	url = git@github.com:coderofsalvation/browser-vm
+  branch = dev

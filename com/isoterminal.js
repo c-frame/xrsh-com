@@ -15,7 +15,8 @@ AFRAME.registerComponent('isoterminal', {
     winboxcss:   "https://unpkg.com/winbox@0.2.82/dist/css/winbox.min.css",       //
     xtermcss:    "https://unpkg.com/xterm@3.12.0/dist/xterm.css",
     xtermjs:     "https://unpkg.com/xterm@3.12.0/dist/xterm.js",
-    axterm:      "https://unpkg.com/aframe-xterm-component/aframe-xterm-component.js"
+    v86:         "com/isoterminal/libv86.js"
+    //axterm:      "https://unpkg.com/aframe-xterm-component/aframe-xterm-component.js"
   },
 
   dom: {
@@ -28,7 +29,8 @@ AFRAME.registerComponent('isoterminal', {
               }`
   },
 
-  createTerminal: async function(dom){
+  createTerminal: async function(instance){
+    const dom = instance.dom
     let s = await AFRAME.utils.require(this.requires)
     //this.el.object3D.visible = true
 
@@ -40,11 +42,10 @@ AFRAME.registerComponent('isoterminal', {
       cols: this.data.cols,
       fontSize: 16
     })
-    debugger
 
     term.open(dom)
     this.canvas = dom.querySelector('.xterm-text-layer')
-    this.canvas.id = 'terminal-' + (terminalInstance++)
+    this.canvas.id = 'terminal-' + instance.uid 
     this.canvasContext = this.canvas.getContext('2d')
 
     this.cursorCanvas = dom.querySelector('.xterm-cursor-layer')
@@ -65,6 +66,28 @@ AFRAME.registerComponent('isoterminal', {
 
     const message = 'Hello from \x1B[1;3;31mWebVR\x1B[0m !\r\n$ '
     term.write(message)
+
+    this.runISO()
+  },
+
+  runISO: function(){
+    console.dir(this.canvas)
+    var emulator = window.emulator = new V86({
+      wasm_path: "com/isoterminal/v86.wasm",
+      memory_size: 32 * 1024 * 1024,
+      vga_memory_size: 2 * 1024 * 1024,
+      screen_container: this.canvas, 
+      bios: {
+        url: "com/isoterminal/bios/seabios.bin",
+      },
+      vga_bios: {
+        url: "com/isoterminal/bios/vgabios.bin",
+      },
+      cdrom: {
+        url: "com/isoterminal/xrsh.iso",
+      },
+      autostart: true,
+    });
   },
 
   events:{
@@ -93,12 +116,12 @@ AFRAME.registerComponent('isoterminal', {
       instance.object3D.quaternion.copy( AFRAME.scenes[0].camera.quaternion ) // face towards camera
 
       const setupWindow = () => {
-        this.createTerminal(instance.dom)
+        this.createTerminal(instance)
         const com = instance.components['isoterminal']
         instance.dom.style.display = 'none'
         new WinBox("Hello World",{ 
-          width: window.innerWidth*0.8, 
-          height: window.innerHeight*0.8,
+          width: window.innerWidth*0.5, 
+          height: window.innerHeight*0.5,
           x:"center",
           y:"center",
           id:  instance.uid, // important hint for html-mesh  
