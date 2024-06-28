@@ -16,6 +16,14 @@
  * | `launcher`   | an app | when pressing an app icon, `launcher` event will be send to the respective app                     |
  */
 
+AFRAME.registerComponent('launch', { // use this component to auto-launch component
+  init: function(){ 
+    this.el.sceneEl.addEventListener('loaded', () => {
+      setTimeout( () => this.el.emit('launcher',{}), 1000 )
+    })
+  }
+})
+
 AFRAME.registerComponent('launcher', {
   schema: {
     attach: { type:"selector"},

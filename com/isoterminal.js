@@ -1,7 +1,8 @@
 AFRAME.registerComponent('isoterminal', {
   schema: {
+    iso:  { type:"string", "default":"com/isoterminal/xrsh.iso" },
     cols: { type: 'number', default: 120 },
-    rows: { type: 'number', default: 50 },
+    rows: { type: 'number', default: 30 },
     transparent: { type:'boolean', default:false } // need good gpu
   },
 
@@ -22,16 +23,29 @@ AFRAME.registerComponent('isoterminal', {
   dom: {
     scale:   3,
     events:  ['click','keydown'],
-    html:    (me) => `<div></div>`,
+    html:    (me) => `<div class="isoterminal">
+                        <div style="white-space: pre; font: 14px monospace; line-height: 14px"></div>
+                        <canvas/>
+                      </div>`,
 
     css:     (me) => `.isoterminal{
-                overflow:hidden;
-              }`
+                        background:#000;
+                        padding:15px;
+                        /*overflow:hidden; */
+                      }
+                      .isoterminal *{
+                         white-space: pre;
+                         font-size: 14px;
+                         font-family: Liberation Mono,DejaVu Sans Mono,Courier New,monospace;
+                         display: block;
+                      }
+                      .terminal{
+                        padding:15px;
+                      }`
   },
 
   createTerminal: async function(instance){
     const dom = instance.dom
-    let s = await AFRAME.utils.require(this.requires)
     //this.el.object3D.visible = true
 
     const term = this.term = new Terminal({
@@ -45,7 +59,7 @@ AFRAME.registerComponent('isoterminal', {
 
     term.open(dom)
     this.canvas = dom.querySelector('.xterm-text-layer')
-    this.canvas.id = 'terminal-' + instance.uid 
+    this.canvas.id = 'terminal-' + instance.uid
     this.canvasContext = this.canvas.getContext('2d')
 
     this.cursorCanvas = dom.querySelector('.xterm-cursor-layer')
@@ -57,6 +71,7 @@ AFRAME.registerComponent('isoterminal', {
     })
 
     term.on('data', (data) => {
+      console.log(data)
       this.el.emit('xterm-data', data)
     })
 
@@ -68,24 +83,36 @@ AFRAME.registerComponent('isoterminal', {
     term.write(message)
 
     this.runISO()
+    return {width: this.canvas.width, height: this.canvas.height }
   },
 
-  runISO: function(){
-    console.dir(this.canvas)
+  runISO: function(dom){
     var emulator = window.emulator = new V86({
-      wasm_path: "com/isoterminal/v86.wasm",
-      memory_size: 32 * 1024 * 1024,
-      vga_memory_size: 2 * 1024 * 1024,
-      screen_container: this.canvas, 
+      wasm_path:        "com/isoterminal/v86.wasm",
+      memory_size:      32 * 1024 * 1024,
+      vga_memory_size:  2 * 1024 * 1024,
+      screen_container: dom, //this.canvas.parentElement,
       bios: {
         url: "com/isoterminal/bios/seabios.bin",
       },
       vga_bios: {
         url: "com/isoterminal/bios/vgabios.bin",
       },
+      network_relay_url: "wss://relay.widgetry.org/",
       cdrom: {
-        url: "com/isoterminal/xrsh.iso",
+        url: this.data.iso,
       },
+      //bzimage:{
+      //  url: "com/isoterminal/images/buildroot-bzimage.bin"
+      //},
+      network_relay_url: "<UNUSED>",
+      //bzimage_initrd_from_filesystem: true,
+      cmdline: "rw root=host9p rootfstype=9p rootflags=trans=virtio,cache=loose modules=virtio_pci tsc=reliable init_on_free=on",
+      //filesystem: {
+      //          baseurl: "com/isoterminal/v86/images/alpine-rootfs-flat",
+      //          basefs:  "com/isoterminal/v86/images/alpine-fs.json",
+      //      },
+      screen_dummy: true,
       autostart: true,
     });
   },
@@ -108,23 +135,27 @@ AFRAME.registerComponent('isoterminal', {
       // instance this component
       const instance = this.el.cloneNode(false)
       this.el.sceneEl.appendChild( instance )
+//      instance.addEventListener('DOMready', () => {
+//        console.dir(instance)
+//        debugger
+//        this.runISO(instance.dom)
+//      })
       instance.setAttribute("dom",      "")
       instance.setAttribute("xd",       "")  // allows flipping between DOM/WebGL when toggling XD-button
       instance.setAttribute("visible",  AFRAME.utils.XD() == '3D' ? 'true' : 'false' )
       instance.setAttribute("position", AFRAME.utils.XD.getPositionInFrontOfCamera(0.5) )
-      instance.setAttribute("grabbable","")
+     // instance.setAttribute("grabbable","")
       instance.object3D.quaternion.copy( AFRAME.scenes[0].camera.quaternion ) // face towards camera
 
       const setupWindow = () => {
-        this.createTerminal(instance)
+        this.runISO(instance.dom)
         const com = instance.components['isoterminal']
         instance.dom.style.display = 'none'
-        new WinBox("Hello World",{ 
-          width: window.innerWidth*0.5, 
-          height: window.innerHeight*0.5,
+        let winbox = new WinBox( this.data.iso, {
+          height:'50px',
           x:"center",
           y:"center",
-          id:  instance.uid, // important hint for html-mesh  
+          id:  instance.uid, // important hint for html-mesh
           root: document.querySelector("#overlay"),
           mount: instance.dom,
           onclose: () => {
@@ -132,13 +163,18 @@ AFRAME.registerComponent('isoterminal', {
             instance.dom.style.display = 'none';
             return false
           },
-          oncreate: () => instance.setAttribute("html",`html:#${instance.uid}; cursor:#cursor`)
+          oncreate: () => {
+            setTimeout( () => {
+              winbox.resize( winbox.width+'px', (instance.dom.offsetHeight+(2*15))+'px' )
+              setTimeout( () => instance.setAttribute("html",`html:#${instance.uid}; cursor:#cursor`), 1000)
+            },100)
+          }
         });
         instance.dom.style.display = '' // show
 
-        // hint grabbable's obb-collider to track the window-object 
+        // hint grabbable's obb-collider to track the window-object
         instance.components['obb-collider'].data.trackedObject3D = 'components.html.el.object3D.children.0'
-        instance.components['obb-collider'].update() 
+        instance.components['obb-collider'].update()
 
         // data2event demo
         //instance.setAttribute("data2event","")
