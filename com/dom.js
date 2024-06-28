@@ -95,7 +95,7 @@ AFRAME.registerComponent('dom',{
 
   assignUniqueID: function(){
     // assign unique app id so it's easy to reference (by html-mesh component e.g.)
-    if( !this.el.uid ) this.el.uid = '_'+String(Math.random()).substr(10)
+    if( !this.el.uid ) this.el.uid = this.el.dom.id = '_'+String(Math.random()).substr(10)
     return this
   },
 

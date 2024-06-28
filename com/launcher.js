@@ -80,8 +80,8 @@ AFRAME.registerComponent('launcher', {
   dom: {
     scale:   3,
     events:  ['click'],
-    html:    (me) => `<div id="iconmenu">loading components..</div>`,
-    css:     (me) => `#iconmenu {
+    html:    (me) => `<div class="iconmenu">loading components..</div>`,
+    css:     (me) => `.iconmenu {
                 z-index: 1000;
                 display: flex;
                 flex-direction: row;
@@ -98,7 +98,7 @@ AFRAME.registerComponent('launcher', {
                 pointer-events: none;
                 visibility: visible !important;
               }
-              #iconmenu > button {
+              .iconmenu > button {
                 line-height:0px;
                 pointer-events:all;
                 width: 58px;
@@ -112,27 +112,27 @@ AFRAME.registerComponent('launcher', {
                 font-size:18px;
               }
 
-              #iconmenu > button:first-child {
+              .iconmenu > button:first-child {
                 border-radius: 5px 0px 0px 5px;
                 border-bottom: 2px solid #BBB;
                 border-left: 2px solid #BBB;
                 padding-bottom:16px;
               }
 
-              #iconmenu > button:last-child {
+              .iconmenu > button:last-child {
                 border-radius:0px 5px 5px 0px;
                 border-top: 2px solid #BBB;
                 border-right: 2px solid #BBB;
                 padding-top:13px;
               }
 
-              #iconmenu > button > img {
+              .iconmenu > button > img {
                 transform: translate(0px,-14px);
                 opacity:0.5;
                 padding: 5px;
                 border-radius: 0px;
               }
-              #iconmenu > button > img:hover{
+              .iconmenu > button > img:hover{
                 background: #AAA;
                 transition:0.gg3s;
                 border-radius: 50%;
