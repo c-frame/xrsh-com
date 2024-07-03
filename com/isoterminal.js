@@ -39,6 +39,7 @@ AFRAME.registerComponent('isoterminal', {
                          font-size: 14px;
                          font-family: Liberation Mono,DejaVu Sans Mono,Courier New,monospace;
                          display: block;
+                         font-weight:700;
                       }
                       .terminal{
                         padding:15px;
@@ -109,6 +110,11 @@ AFRAME.registerComponent('isoterminal', {
       instance.setAttribute("visible",  AFRAME.utils.XD() == '3D' ? 'true' : 'false' )
       instance.setAttribute("position", AFRAME.utils.XD.getPositionInFrontOfCamera(0.5) )
       instance.setAttribute("grabbable","")
+
+      this.el.sceneEl.addEventListener('enter-vr', function(){
+        instance.dom.focus()
+        console.log("focusing terminal")
+      })
 
       instance.object3D.quaternion.copy( AFRAME.scenes[0].camera.quaternion ) // face towards camera
     },
