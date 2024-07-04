@@ -10,19 +10,23 @@ AFRAME.registerComponent('window', {
     y:      {type:'string',"default":"center"}
   },
 
-  dependencies:['dom'],
+  dependencies:{
+    dom:         "com/dom.js",
+    html:        "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",  // html to AFRAME
+  },
 
   init: function(){
     setTimeout( () => this.setupWindow(), 10 ) // init after other components
   },
 
-  setupWindow: function(){
+  setupWindow: async function(){
+    await AFRAME.utils.require(this.dependencies)
     if( !this.el.dom ) return console.error('window element requires dom-component as dependency')
 
     this.el.dom.style.display = 'none'
-    let winbox = new WinBox( this.data.title, {
+    let winbox = this.el.winbox = new WinBox( this.data.title, {
       height:this.data.height,
-      height:this.data.width,
+      width:this.data.width,
       x: this.data.x,
       y: this.data.y,
       id:  this.data.uid || String(Math.random()).substr(4), // important hint for html-mesh
@@ -32,7 +36,7 @@ AFRAME.registerComponent('window', {
         this.el.emit('window.oncreate',{})
         // resize after the dom content has been rendered & updated 
         setTimeout( () => {
-          winbox.resize( winbox.width+'px', (this.data.dom.offsetHeight+(2*15))+'px' )
+          winbox.resize( this.el.dom.offsetWidth+'px', this.el.dom.offsetHeight+'px' )
           setTimeout( () => this.el.setAttribute("html",`html:#${this.data.uid}; cursor:#cursor`), 1000)
           this.el.setAttribute("grabbable","")
         },1000)

@@ -1,9 +1,10 @@
 AFRAME.registerComponent('isoterminal', {
   schema: {
-    iso:  { type:"string", "default":"com/isoterminal/xrsh.iso" },
-    cols: { type: 'number', default: 120 },
-    rows: { type: 'number', default: 30 },
-    transparent: { type:'boolean', default:false } // need good gpu
+    iso:    { type:"string", "default":"com/isoterminal/xrsh.iso" },
+    cols:   { type: 'number',"default": 120 },
+    rows:   { type: 'number',"default": 30 },
+    padding:{ type: 'number',"default": 15 },
+    transparent: { type:'boolean', "default":false } // need good gpu
   },
 
   init: function(){
@@ -12,7 +13,6 @@ AFRAME.registerComponent('isoterminal', {
 
   requires:{
     'window':    "com/window.js",
-    html:        "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",  // html to AFRAME
     winboxjs:    "https://unpkg.com/winbox@0.2.82/dist/winbox.bundle.min.js",     // deadsimple windows: https://nextapps-de.github.io/winbox
     winboxcss:   "https://unpkg.com/winbox@0.2.82/dist/css/winbox.min.css",       //
     xtermcss:    "https://unpkg.com/xterm@3.12.0/dist/xterm.css",
@@ -31,23 +31,25 @@ AFRAME.registerComponent('isoterminal', {
 
     css:     (me) => `.isoterminal{
                         background:#000;
-                        padding:15px;
+                        padding: ${me.com.data.padding}px;
                         /*overflow:hidden; */
                       }
                       .isoterminal *{
                          white-space: pre;
                          font-size: 14px;
                          font-family: Liberation Mono,DejaVu Sans Mono,Courier New,monospace;
-                         display: block;
                          font-weight:700;
+                         display:inline;
+                         overflow: hidden;
                       }
-                      .terminal{
-                        padding:15px;
-                      }`
+                      .wb-body:has(> .isoterminal){ background: #000; }
+                      .isoterminal div{ display:block; }
+                      .isoterminal span{ display: inline }
+                      `
   },
 
   runISO: function(dom){
-    var emulator = window.emulator = new V86({
+    var emulator = window.emulator = dom.emulator = new V86({
       wasm_path:        "com/isoterminal/v86.wasm",
       memory_size:      32 * 1024 * 1024,
       vga_memory_size:  2 * 1024 * 1024,
@@ -75,13 +77,17 @@ AFRAME.registerComponent('isoterminal', {
       screen_dummy: true,
       autostart: true,
     });
+    
+    //setTimeout( () => {
+    //  window.requestAnimationFrame = requestAnimationFrame
+    //},1000)
   },
 
   events:{
 
     // combined AFRAME+DOM reactive events
     click:   function(e){ }, //
-    keydown: function(e){ }, //
+    keydown: function(e){ },
 
     // reactive events for this.data updates
     myvalue: function(e){ this.el.dom.querySelector('b').innerText = this.data.myvalue },
@@ -98,7 +104,18 @@ AFRAME.registerComponent('isoterminal', {
 
       instance.addEventListener('DOMready', () => {
         this.runISO(instance.dom)
-        instance.setAttribute("window",   `title: ${this.data.iso}; uid: ${instance.uid}; attach: #overlay; dom: #${instance.dom.id}`)
+        instance.setAttribute("window", `title: ${this.data.iso}; uid: ${instance.uid}; attach: #overlay; dom: #${instance.dom.id}`)
+      })
+
+      instance.addEventListener('window.oncreate', (e) => {
+        // resize after the dom content has been rendered & updated 
+        setTimeout( () => {
+          let spans = [...instance.dom.querySelectorAll('span')]
+          instance.winbox.resize( 
+            (spans[0].offsetWidth + (2*this.data.padding))+'px', 
+            ((spans.length * spans[0].offsetHeight) ) +'px' 
+          )
+        },1200)
       })
 
       instance.addEventListener('window.onclose', (e) => {
@@ -111,13 +128,12 @@ AFRAME.registerComponent('isoterminal', {
       instance.setAttribute("position", AFRAME.utils.XD.getPositionInFrontOfCamera(0.5) )
       instance.setAttribute("grabbable","")
 
-      this.el.sceneEl.addEventListener('enter-vr', function(){
-        instance.dom.focus()
-        console.log("focusing terminal")
-      })
+      const focus = () => document.querySelector('canvas.a-canvas').focus()
+      instance.addEventListener('obbcollisionstarted', focus )
+      this.el.sceneEl.addEventListener('enter-vr', focus )
 
       instance.object3D.quaternion.copy( AFRAME.scenes[0].camera.quaternion ) // face towards camera
-    },
+    }
 
   },
 

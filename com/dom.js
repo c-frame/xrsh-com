@@ -53,6 +53,7 @@ AFRAME.registerComponent('dom',{
     .assignUniqueID()
     .scaleDOMvsXR()
     .triggerKeyboardForInputs()
+    .stubRequestAnimationFrame()
 
     document.querySelector('#overlay').appendChild(this.el.dom)
     this.el.emit('DOMready',{el: this.el.dom})
@@ -121,6 +122,14 @@ AFRAME.registerComponent('dom',{
       input.addEventListener('click', triggerKeyboard )
     })
     return this
+  },
+
+  stubRequestAnimationFrame: function(){
+    // stub, because WebXR with overrule this (it will not call the callback as expected in immersive mode)
+    const requestAnimationFrame = window.requestAnimationFrame
+    window.requestAnimationFrame = (cb) => {
+      setTimeout( cb, 25 )
+    }
   }
 
 })

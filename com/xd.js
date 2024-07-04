@@ -36,7 +36,7 @@ AFRAME.registerComponent('xd', {
 
   // draw a button so we can toggle apps between 2D / XR
   toggle: function(state){
-    state = state || !document.body.className.match(/XR/)
+    state = state != undefined ? state : state || !document.body.className.match(/XR/)
     document.body.classList[ state ? 'add' : 'remove'](['XR'])
     AFRAME.scenes[0].emit( state ? '3D' : '2D')
   },
