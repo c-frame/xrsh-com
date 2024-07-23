@@ -65,6 +65,17 @@ AFRAME.registerComponent('isoterminal', {
                       `
   },
 
+  toUint8Array: function(str) {
+    // Create a new Uint8Array with the same length as the input string
+    const uint8Array = new Uint8Array(str.length);
+    
+    // Iterate over the string and populate the Uint8Array
+    for (let i = 0; i < str.length; i++) {
+        uint8Array[i] = str.charCodeAt(i);
+    }
+    return uint8Array;
+  },
+
   runISO: function(dom){
     var emulator = window.emulator = dom.emulator = new V86({
       wasm_path:        "com/isoterminal/v86.wasm",
@@ -92,12 +103,64 @@ AFRAME.registerComponent('isoterminal', {
       //          basefs:  "com/isoterminal/v86/images/alpine-fs.json",
       //      },
       //screen_dummy: true,
+      //disable_jit: false,
+      filesystem: {},
       autostart: true,
     });
+
+    emulator.bus.register("emulator-started", () => {
+      emulator.create_file("motd", this.toUint8Array(`
+[38;5;57m        ____  _____________  _________ ___ ___  
+[38;5;93m        \   \/  /\______   \/   _____//   |   \ 
+[38;5;93m         \     /  |       _/\_____  \/    ~    \
+[38;5;129m        /     \  |    |   \/        \    Y    /
+[38;5;165m       /___/\  \ |____|_  /_______  /\___|_  / 
+[38;5;201m             \_/        \/        \/       \/  
+
+      `+ "\033[0m" ))
+
+      emulator.create_file("js", this.toUint8Array(`#!/bin/sh
+        cat /mnt/motd 
+        cat > /dev/null 
+      `))
+      //emulator.serial0_send('chmod +x /mnt/js')
+      //emulator.serial0_send()
+    });
+
+    let line = ''
+    emulator.add_listener("serial0-output-byte", async (byte) => {
+        var chr = String.fromCharCode(byte);
+        if(chr < " " && chr !== "\n" && chr !== "\t" || chr > "~")
+        {
+            return;
+        }
+
+        if(chr === "\n")
+        {
+            var new_line = line;
+            line = "";
+        }
+        else if(chr >= " " && chr <= "~")
+        {
+            line += chr;
+        }
+
+        //if(!ran_command && line.endsWith("~% "))
+        //{
+        //    ran_command = true;
+        //    emulator.serial0_send("chmod +x /mnt/test-i386\n");
+        //    emulator.serial0_send("/mnt/test-i386 > /mnt/result\n");
+        //    emulator.serial0_send("echo test fini''shed\n");
+        //}
+        console.dir({line,new_line})
+
+        if(new_line && new_line.includes("buildroot login:"))
+        {
+            emulator.serial0_send("root\n")
+            emulator.serial0_send("mv /mnt/js . && chmod +x js\n")
+        }
+    });    
     
-    //setTimeout( () => {
-    //  window.requestAnimationFrame = requestAnimationFrame
-    //},1000)
   },
 
   events:{
