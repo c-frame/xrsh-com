@@ -45,6 +45,23 @@ AFRAME.registerComponent('isoterminal', {
                       .wb-body:has(> .isoterminal){ background: #000; }
                       .isoterminal div{ display:block; }
                       .isoterminal span{ display: inline }
+
+                      @keyframes fade {
+                          from { opacity: 1.0; }
+                          50% { opacity: 0.5; }
+                          to { opacity: 1.0; }
+                      }                                                                                                                                                                                                                                  
+
+                      @-webkit-keyframes fade {
+                          from { opacity: 1.0; }
+                          50% { opacity: 0.5; }
+                          to { opacity: 1.0; }
+                      }
+
+                      .blink {
+                        animation:fade 1000ms infinite;
+                        -webkit-animation:fade 1000ms infinite;
+                      }
                       `
   },
 
@@ -65,7 +82,7 @@ AFRAME.registerComponent('isoterminal', {
         url: this.data.iso,
       },
       network_relay_url: "<UNUSED>",
-      cmdline: "rw root=host9p rootfstype=9p rootflags=trans=virtio,cache=loose modules=virtio_pci tsc=reliable init_on_free=on",
+      cmdline: "rw root=host9p rootfstype=9p rootflags=trans=virtio,cache=loose modules=virtio_pci tsc=reliable init_on_free=on init=/bin/date",
       //bzimage:{
       //  url: "com/isoterminal/images/buildroot-bzimage.bin"
       //},
@@ -74,7 +91,7 @@ AFRAME.registerComponent('isoterminal', {
       //          baseurl: "com/isoterminal/v86/images/alpine-rootfs-flat",
       //          basefs:  "com/isoterminal/v86/images/alpine-fs.json",
       //      },
-      screen_dummy: true,
+      //screen_dummy: true,
       autostart: true,
     });
     
@@ -97,9 +114,16 @@ AFRAME.registerComponent('isoterminal', {
     },
 
     launcher: async function(){
+      if( this.instance ){
+        const el = document.querySelector('.isoterminal')
+        el.classList.add('blink')
+        setTimeout( () => el.classList.remove('blink'), 2000 )
+        return console.warn('TODO: allow multiple terminals (see v86 examples)')
+      }
+
       let s = await AFRAME.utils.require(this.requires)
       // instance this component
-      const instance = this.el.cloneNode(false)
+      const instance = this.instance = this.el.cloneNode(false)
       this.el.sceneEl.appendChild( instance )
 
       instance.addEventListener('DOMready', () => {
@@ -108,6 +132,7 @@ AFRAME.registerComponent('isoterminal', {
       })
 
       instance.addEventListener('window.oncreate', (e) => {
+        instance.dom.classList.add('blink')
         // resize after the dom content has been rendered & updated 
         setTimeout( () => {
           let spans = [...instance.dom.querySelectorAll('span')]
@@ -116,6 +141,7 @@ AFRAME.registerComponent('isoterminal', {
             ((spans.length * spans[0].offsetHeight) ) +'px' 
           )
         },1200)
+        setTimeout( () => instance.dom.classList.remove('blink'), 5000 )
       })
 
       instance.addEventListener('window.onclose', (e) => {

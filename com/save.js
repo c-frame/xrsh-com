@@ -24,9 +24,21 @@ AFRAME.registerComponent('save', {
     r.remove()
     // *TODO* dont crash on hands
 
-    this.inlineFiles()
+    this.save_state()
+    .then( this.inlineFiles )
     .then( () => this.download(document.documentElement.innerHTML,"xrsh.html") )
     .catch(console.error)
+  },
+
+  save_state: async function(){
+    if( window.emulator ){
+      let binaryString = '';
+      const state = await emulator.restore_state(state);
+      uint8Array.forEach(byte => binaryString += String.fromCharCode(byte) );
+      let b64data = btoa(binaryString);
+      console.log(b64data)
+      
+    }
   },
 
   download: function(content, filename, contentType){

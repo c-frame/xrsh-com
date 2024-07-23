@@ -1,4 +1,4 @@
-AFRAME.registerComponent('add', {
+AFRAME.registerComponent('launcher-optional', {
   schema:{
     comps: {type:"array"}
   },

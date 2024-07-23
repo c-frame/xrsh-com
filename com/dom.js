@@ -65,6 +65,7 @@ AFRAME.registerComponent('dom',{
     if( !overlay ){
       overlay = document.createElement('div')
       overlay.id = "overlay"
+      overlay.setAttribute('style','position:fixed;top:0px;left:0px;right:0px;bottom:0px')
       document.body.appendChild(overlay)
       //  sceneEl.setAttribute("webxr","overlayElement:#overlay")
     }
