@@ -63,7 +63,10 @@ AFRAME.registerComponent('launcher', {
     if( this.data.attach ){
       this.el.object3D.visible = false
       if( this.isHand(this.data.attach) ){
-        this.data.attach.addEventListener('model-loaded', () => this.attachMenu() )
+        this.data.attach.addEventListener('model-loaded', () => {
+          this.ready = true
+          this.attachMenu() 
+        })
         // add button
         this.menubutton = this.createMenuButton()
         this.menubutton.object3D.visible = false
@@ -280,7 +283,7 @@ AFRAME.registerComponent('launcher', {
   },
 
   tick: function(){
-    if( this.data.open ){
+    if( this.ready && this.data.open ){
       let indexTipPosition = document.querySelector('#right-hand[hand-tracking-controls]').components['hand-tracking-controls'].indexTipPosition
       this.el.object3D.getWorldPosition(this.worldPosition)
       const lookingAtPalm = this.data.attach.components['hand-tracking-controls'].wristObject3D.rotation.z > 2.0 

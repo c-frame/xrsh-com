@@ -44,6 +44,7 @@ AFRAME.registerComponent('helloworld', {
     "icons": [
       {
         "src": "https://css.gg/shape-hexagon.svg",
+        "src": "data:image/svg+xml;base64,PHN2ZwogIHdpZHRoPSIyNCIKICBoZWlnaHQ9IjI0IgogIHZpZXdCb3g9IjAgMCAyNCAyNCIKICBmaWxsPSJub25lIgogIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIKPgogIDxwYXRoCiAgICBmaWxsLXJ1bGU9ImV2ZW5vZGQiCiAgICBjbGlwLXJ1bGU9ImV2ZW5vZGQiCiAgICBkPSJNNiAxNS4yMzQ4TDEyIDE4LjU2ODFMMTggMTUuMjM0OFY4Ljc2NTIxTDEyIDUuNDMxODhMNiA4Ljc2NTIxVjE1LjIzNDhaTTEyIDJMMyA3VjE3TDEyIDIyTDIxIDE3VjdMMTIgMloiCiAgICBmaWxsPSJjdXJyZW50Q29sb3IiCiAgLz4KPC9zdmc+",
         "type": "image/svg+xml",
         "sizes": "512x512"
       }
