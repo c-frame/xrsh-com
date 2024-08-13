@@ -50,14 +50,14 @@ AFRAME.registerComponent('selfcontainer', {
             data = {binary: true, text: me.convert.arrayBufferToBase64(response.data)}
           }
           window.store[ request.url ] = data 
-          let $store = document.querySelector('script#store')
-          if( $store ) $store.remove
+          let $store = document.querySelector('template#store')
+          if( $store ) $store.remove()
           document.head.innerHTML += `\n<`+`template id="store">\nwindow.store = ${JSON.stringify(window.store,null,2)}\n`+`<`+`/template>`
           cb(response);
         }
-      });
+      }
     }
-    xhook.after( curry(me) )
+    xhook.after( curry(this) )
   }
 
 });

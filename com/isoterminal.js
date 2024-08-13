@@ -3,7 +3,7 @@ AFRAME.registerComponent('isoterminal', {
     iso:    { type:"string", "default":"com/isoterminal/xrsh.iso" },
     cols:   { type: 'number',"default": 120 },
     rows:   { type: 'number',"default": 30 },
-    padding:{ type: 'number',"default": 15 },
+    padding:{ type: 'number',"default": 18 },
     transparent: { type:'boolean', "default":false } // need good gpu
   },
 
@@ -13,10 +13,8 @@ AFRAME.registerComponent('isoterminal', {
 
   requires:{
     'window':    "com/window.js",
-    winboxjs:    "https://unpkg.com/winbox@0.2.82/dist/winbox.bundle.min.js",     // deadsimple windows: https://nextapps-de.github.io/winbox
-    winboxcss:   "https://unpkg.com/winbox@0.2.82/dist/css/winbox.min.css",       //
-    xtermcss:    "https://unpkg.com/xterm@3.12.0/dist/xterm.css",
-    xtermjs:     "https://unpkg.com/xterm@3.12.0/dist/xterm.js",
+    xtermjs:     "https://unpkg.com/@xterm/xterm@5.5.0/lib/xterm.js",
+    xtermcss:    "https://unpkg.com/@xterm/xterm@5.5.0/css/xterm.css",
     v86:         "com/isoterminal/libv86.js"
     //axterm:      "https://unpkg.com/aframe-xterm-component/aframe-xterm-component.js"
   },
@@ -24,15 +22,12 @@ AFRAME.registerComponent('isoterminal', {
   dom: {
     scale:   0.7,
     events:  ['click','keydown'],
-    html:    (me) => `<div class="isoterminal">
-                        <div style="white-space: pre; font: 14px monospace; line-height: 14px"></div>
-                        <canvas></canvas>
-                      </div>`,
+    html:    (me) => `<div class="isoterminal"></div>`,
 
     css:     (me) => `.isoterminal{
-                        background:#000;
                         padding: ${me.com.data.padding}px;
-                        /*overflow:hidden; */
+                        width:100%;
+                        height:100%;
                       }
                       .isoterminal *{
                          white-space: pre;
@@ -42,7 +37,17 @@ AFRAME.registerComponent('isoterminal', {
                          display:inline;
                          overflow: hidden;
                       }
-                      .wb-body:has(> .isoterminal){ background: #000; }
+
+                      .isoterminal style{ display:none }
+
+                      .wb-body:has(> .isoterminal){ 
+                        background: #000c; 
+                        overflow:hidden;
+                      }
+                      body .winbox .wb-header{
+                        background: linear-gradient(45deg, var(--xrsh-primary), var(--xrsh-third) )
+                      }
+
                       .isoterminal div{ display:block; }
                       .isoterminal span{ display: inline }
 
@@ -76,12 +81,18 @@ AFRAME.registerComponent('isoterminal', {
     return uint8Array;
   },
 
-  runISO: function(dom){
+  runISO: function(dom,instance){
+    //var term = new Terminal()
+    //term.open(dom)
+    //term.write('Hello from \x1B[1;3;31mxterm.js\x1B[0m $ ')``
+
+
     var emulator = window.emulator = dom.emulator = new V86({
       wasm_path:        "com/isoterminal/v86.wasm",
       memory_size:      32 * 1024 * 1024,
       vga_memory_size:  2 * 1024 * 1024,
-      screen_container: dom, //this.canvas.parentElement,
+      serial_container_xtermjs: dom,
+      //screen_container: dom, //this.canvas.parentElement,
       bios: {
         url: "com/isoterminal/bios/seabios.bin",
       },
@@ -92,11 +103,10 @@ AFRAME.registerComponent('isoterminal', {
       cdrom: {
         url: this.data.iso,
       },
-      network_relay_url: "<UNUSED>",
-      cmdline: "rw root=host9p rootfstype=9p rootflags=trans=virtio,cache=loose modules=virtio_pci tsc=reliable init_on_free=on init=/bin/date",
-      //bzimage:{
-      //  url: "com/isoterminal/images/buildroot-bzimage.bin"
-      //},
+      cmdline: "rw root=host9p rootfstype=9p rootflags=trans=virtio,cache=loose modules=virtio_pci tsc=reliable init_on_free=on",
+      bzimage:{
+        url: "com/isoterminal/images/buildroot-bzimage.bin"
+      },
       //bzimage_initrd_from_filesystem: true,
       //filesystem: {
       //          baseurl: "com/isoterminal/v86/images/alpine-rootfs-flat",
@@ -108,59 +118,111 @@ AFRAME.registerComponent('isoterminal', {
       autostart: true,
     });
 
-    emulator.bus.register("emulator-started", () => {
-      emulator.create_file("motd", this.toUint8Array(`
-[38;5;57m        ____  _____________  _________ ___ ___  
-[38;5;93m        \   \/  /\______   \/   _____//   |   \ 
-[38;5;93m         \     /  |       _/\_____  \/    ~    \
-[38;5;129m        /     \  |    |   \/        \    Y    /
-[38;5;165m       /___/\  \ |____|_  /_______  /\___|_  / 
-[38;5;201m             \_/        \/        \/       \/  
+    const loading = [
+      'loading quantum bits and bytes',
+      'preparing quantum flux capacitors',
+      'crunching peanuts and chakras',
+      'preparing parallel universe',
+      'loading quantum state fluctuations',
+      'preparing godmode',
+      'loading cat pawns and cuteness',
+      'beaming up scotty',
+      'still faster than Windows update',
+      'loading a microlinux',
+      'figuring out meaning of life',
+      'asking LLM why men have nipples',
+      'Aligning your chakras now',
+      'Breathing in good vibes',
+      'Finding inner peace soon',
+      'Centering your Zen energy',
+      'Awakening third eye powers',
+      'Tuning into the universe',
+      'Balancing your cosmic karma',
+      'Stretching time and space',
+      'Recharging your soul battery',
+      'Transcending earthly limits'
+    ]
 
-      `+ "\033[0m" ))
+    let motd = "\n\r"
+    motd += "[38;5;57m  " + ' ____  _____________  _________ ___ ___   ' + "\n\r"
+    motd += "[38;5;93m  " + ' \\   \\/  /\\______   \\/   _____//   |   \\  ' + "\n\r"  
+    motd += "[38;5;93m  " + '  \\     /  |       _/\\_____  \\/    ~    \\ ' + "\n\r"
+    motd += "[38;5;129m " + '   /     \\  |    |   \\/        \\    Y    / ' + "\n\r"
+    motd += "[38;5;165m " + '  /___/\\  \\ |____|_  /_______  /\\___|_  /  ' + "\n\r"
+    motd += "[38;5;201m " + '        \\_/        \\/        \\/       \\/   ' + "\n\r"
+    motd += "                                                                 \n\r"
+    motd += `${loading[ Math.floor(Math.random()*1000) % loading.length-1 ]}, please wait..\n\r\n\r`
+    motd += "\033[0m" 
 
+    const files = [
+      "com/isoterminal/mnt/gui",
+      "com/isoterminal/mnt/boot",
+      "com/isoterminal/mnt/edit",
+    ]
+
+    emulator.bus.register("emulator-started", async () => {
+      emulator.serial_adapter.term.element.querySelector('.xterm-viewport').style.background = 'transparent'
+      emulator.serial_adapter.term.clear()
+      emulator.serial_adapter.term.write(motd)
+
+      emulator.create_file("motd", this.toUint8Array(motd) )
       emulator.create_file("js", this.toUint8Array(`#!/bin/sh
         cat /mnt/motd 
         cat > /dev/null 
       `))
+
+      let p = files.map( (f) => fetch(f) )
+      Promise.all(p)
+      .then( (files) => {
+        files.map( (f) => {
+          f.arrayBuffer().then( (buf) => {
+            emulator.create_file( f.url.replace(/.*mnt\//,''), new Uint8Array(buf) )
+          })
+        })
+      })
+
       //emulator.serial0_send('chmod +x /mnt/js')
       //emulator.serial0_send()
+      let line = ''
+      let ready = false
+      emulator.add_listener("serial0-output-byte", async (byte) => {
+          var chr = String.fromCharCode(byte);
+          if(chr < " " && chr !== "\n" && chr !== "\t" || chr > "~")
+          {
+              return;
+          }
+
+          if(chr === "\n")
+          {
+              var new_line = line;
+              line = "";
+          }
+          else if(chr >= " " && chr <= "~")
+          {
+              line += chr;
+          }
+
+          //if(!ran_command && line.endsWith("~% "))
+          //{
+          //    ran_command = true;
+          //    emulator.serial0_send("chmod +x /mnt/test-i386\n");
+          //    emulator.serial0_send("/mnt/test-i386 > /mnt/result\n");
+          //    emulator.serial0_send("echo test fini''shed\n");
+          //}
+          //console.dir({line,new_line})
+          if( !ready && line.match(/^(\/ #|~%)/) ){
+            instance.dom.classList.remove('blink')
+            emulator.serial0_send("source /mnt/boot\n")
+            instance.winbox.maximize()
+            emulator.serial_adapter.term.focus()
+            ready = true
+              //emulator.serial0_send("root\n")
+              //emulator.serial0_send("mv /mnt/js . && chmod +x js\n")
+          }
+      });    
+    
     });
 
-    let line = ''
-    emulator.add_listener("serial0-output-byte", async (byte) => {
-        var chr = String.fromCharCode(byte);
-        if(chr < " " && chr !== "\n" && chr !== "\t" || chr > "~")
-        {
-            return;
-        }
-
-        if(chr === "\n")
-        {
-            var new_line = line;
-            line = "";
-        }
-        else if(chr >= " " && chr <= "~")
-        {
-            line += chr;
-        }
-
-        //if(!ran_command && line.endsWith("~% "))
-        //{
-        //    ran_command = true;
-        //    emulator.serial0_send("chmod +x /mnt/test-i386\n");
-        //    emulator.serial0_send("/mnt/test-i386 > /mnt/result\n");
-        //    emulator.serial0_send("echo test fini''shed\n");
-        //}
-        //console.dir({line,new_line})
-
-        if(new_line && new_line.includes("buildroot login:"))
-        {
-            emulator.serial0_send("root\n")
-            emulator.serial0_send("mv /mnt/js . && chmod +x js\n")
-        }
-    });    
-    
   },
 
   events:{
@@ -179,8 +241,6 @@ AFRAME.registerComponent('isoterminal', {
     launcher: async function(){
       if( this.instance ){
         const el = document.querySelector('.isoterminal')
-        el.classList.add('blink')
-        setTimeout( () => el.classList.remove('blink'), 2000 )
         return console.warn('TODO: allow multiple terminals (see v86 examples)')
       }
 
@@ -190,32 +250,32 @@ AFRAME.registerComponent('isoterminal', {
       this.el.sceneEl.appendChild( instance )
 
       instance.addEventListener('DOMready', () => {
-        this.runISO(instance.dom)
+        this.runISO(instance.dom, instance)
         instance.setAttribute("window", `title: ${this.data.iso}; uid: ${instance.uid}; attach: #overlay; dom: #${instance.dom.id}`)
       })
 
       instance.addEventListener('window.oncreate', (e) => {
         instance.dom.classList.add('blink')
-        // resize after the dom content has been rendered & updated 
-        setTimeout( () => {
-          let spans = [...instance.dom.querySelectorAll('span')]
-          instance.winbox.resize( 
-            (spans[0].offsetWidth + (2*this.data.padding))+'px', 
-            ((spans.length * spans[0].offsetHeight) ) +'px' 
-          )
-        },1200)
-        setTimeout( () => instance.dom.classList.remove('blink'), 5000 )
       })
 
       instance.addEventListener('window.onclose', (e) => {
         if( !confirm('do you want to kill this virtual machine and all its processes?') ) e.halt = true
       })
 
+      const resize = (w,h) => {
+        if( instance.dom.emulator && instance.dom.emulator.serial_adapter ){
+          setTimeout( () => {
+            this.autoResize(instance.dom.emulator.serial_adapter.term,instance,-5)
+          },1000) // wait for resize anim
+        }
+      }
+      instance.addEventListener('window.onresize', resize )
+      instance.addEventListener('window.onmaximize', resize )
+
       instance.setAttribute("dom",      "")
       instance.setAttribute("xd",       "")  // allows flipping between DOM/WebGL when toggling XD-button
       instance.setAttribute("visible",  AFRAME.utils.XD() == '3D' ? 'true' : 'false' )
       instance.setAttribute("position", AFRAME.utils.XD.getPositionInFrontOfCamera(0.5) )
-      instance.setAttribute("grabbable","")
 
       const focus = () => document.querySelector('canvas.a-canvas').focus()
       instance.addEventListener('obbcollisionstarted', focus )
@@ -224,6 +284,39 @@ AFRAME.registerComponent('isoterminal', {
       instance.object3D.quaternion.copy( AFRAME.scenes[0].camera.quaternion ) // face towards camera
     }
 
+  },
+
+  autoResize: function(term,instance,rowoffset){
+    if( !term.element ) return
+
+    const defaultScrollWidth = 24;
+    const MINIMUM_COLS = 2;
+    const MINIMUM_ROWS = 2;
+
+    const dims = term._core._renderService.dimensions;
+    const scrollbarWidth = (term.options.scrollback === 0
+      ? 0
+      : (term.options.overviewRuler?.width || defaultScrollWidth ));
+
+    const parentElementStyle = window.getComputedStyle(instance.dom);
+    const parentElementHeight = parseInt(parentElementStyle.getPropertyValue('height'));
+    const parentElementWidth = Math.max(0, parseInt(parentElementStyle.getPropertyValue('width')));
+    const elementStyle = window.getComputedStyle(term.element);
+    const elementPadding = {
+      top: parseInt(elementStyle.getPropertyValue('padding-top')),
+      bottom: parseInt(elementStyle.getPropertyValue('padding-bottom')),
+      right: parseInt(elementStyle.getPropertyValue('padding-right')),
+      left: parseInt(elementStyle.getPropertyValue('padding-left'))
+    };
+    const elementPaddingVer = elementPadding.top + elementPadding.bottom;
+    const elementPaddingHor = elementPadding.right + elementPadding.left;
+    const availableHeight = parentElementHeight - elementPaddingVer;
+    const availableWidth = parentElementWidth - elementPaddingHor - scrollbarWidth;
+    const geometry = {
+      cols: Math.max(MINIMUM_COLS, Math.floor(availableWidth / dims.css.cell.width)),
+      rows: Math.max(MINIMUM_ROWS, Math.floor(availableHeight / dims.css.cell.height))
+    };
+    term.resize(geometry.cols, geometry.rows + (rowoffset||0) );
   },
 
   manifest: { // HTML5 manifest to identify app to xrsh

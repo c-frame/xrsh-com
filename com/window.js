@@ -2,7 +2,7 @@ AFRAME.registerComponent('window', {
   schema:{
     title: {type:'string',"default":"title"},
     width: {type:'string'}, // wrap
-    height: {type:'string',"default":'50px'},
+    height: {type:'string',"default":'260px'},
     uid:    {type:'string'},
     attach: {type:'selector'},
     dom:    {type:'selector'},
@@ -13,6 +13,8 @@ AFRAME.registerComponent('window', {
   dependencies:{
     dom:         "com/dom.js",
     html:        "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",  // html to AFRAME
+    winboxjs:    "https://unpkg.com/winbox@0.2.82/dist/winbox.bundle.min.js",     // deadsimple windows: https://nextapps-de.github.io/winbox
+    winboxcss:   "https://unpkg.com/winbox@0.2.82/dist/css/winbox.min.css",       //
   },
 
   init: function(){
@@ -32,13 +34,17 @@ AFRAME.registerComponent('window', {
       id:  this.data.uid || String(Math.random()).substr(4), // important hint for html-mesh
       root: this.data.attach || document.body,
       mount: this.data.dom,
+      onresize: () => this.el.emit('window.onresize',{}),
+      onmaximize: () => this.el.emit('window.onmaximize',{}),
       oncreate: () => {
         this.el.emit('window.oncreate',{})
         // resize after the dom content has been rendered & updated 
         setTimeout( () => {
           winbox.resize( this.el.dom.offsetWidth+'px', this.el.dom.offsetHeight+'px' )
           setTimeout( () => this.el.setAttribute("html",`html:#${this.data.uid}; cursor:#cursor`), 1000)
-          this.el.setAttribute("grabbable","")
+          // hint grabbable's obb-collider to track the window-object
+          this.el.components['obb-collider'].data.trackedObject3D = 'components.html.el.object3D.children.0'
+          this.el.components['obb-collider'].update()
         },1000)
       },
       onclose: () => {
@@ -51,9 +57,7 @@ AFRAME.registerComponent('window', {
     });
     this.data.dom.style.display = '' // show
 
-    // hint grabbable's obb-collider to track the window-object
-    this.el.components['obb-collider'].data.trackedObject3D = 'components.html.el.object3D.children.0'
-    this.el.components['obb-collider'].update()
+    this.el.setAttribute("grabbable","")
 
   }
 })
