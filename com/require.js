@@ -34,7 +34,8 @@ AFRAME.utils.require = function(arr_or_obj,opts){
       if( AFRAME.required[id] ) return // already loaded before
       AFRAME.required[id] = true
 
-      if( !document.body.querySelector(`script#${id}`) ){
+      if( !document.body.querySelector(`script#${id}`) &&
+          !document.body.querySelector(`link#${id}`) ){
         let {type} = parseURI(package)
         let p = new Promise( (resolve,reject) => {
           switch(type){
@@ -49,8 +50,9 @@ AFRAME.utils.require = function(arr_or_obj,opts){
                         link.id  = id
                         link.href = package
                         link.rel = 'stylesheet'
+                        link.onload = () => setTimeout( () => resolve(id), 50 )
+                        link.onerror = (e) => reject(e)
                         document.body.appendChild(link)
-                        resolve(id)
                         break;
           }
         })

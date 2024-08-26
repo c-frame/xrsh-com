@@ -44,9 +44,6 @@ AFRAME.registerComponent('isoterminal', {
                         background: #000c; 
                         overflow:hidden;
                       }
-                      body .winbox .wb-header{
-                        background: linear-gradient(45deg, var(--xrsh-primary), var(--xrsh-third) )
-                      }
 
                       .isoterminal div{ display:block; }
                       .isoterminal span{ display: inline }
@@ -155,9 +152,13 @@ AFRAME.registerComponent('isoterminal', {
     motd += "\033[0m" 
 
     const files = [
-      "com/isoterminal/mnt/gui",
-      "com/isoterminal/mnt/boot",
-      "com/isoterminal/mnt/edit",
+      "com/isoterminal/mnt/js",
+      "com/isoterminal/mnt/jsh",
+      "com/isoterminal/mnt/confirm",
+      "com/isoterminal/mnt/prompt",
+      "com/isoterminal/mnt/alert",
+      "com/isoterminal/mnt/profile",
+      "com/isoterminal/mnt/motd",
     ]
 
     emulator.bus.register("emulator-started", async () => {
@@ -212,7 +213,19 @@ AFRAME.registerComponent('isoterminal', {
           //console.dir({line,new_line})
           if( !ready && line.match(/^(\/ #|~%)/) ){
             instance.dom.classList.remove('blink')
-            emulator.serial0_send("source /mnt/boot\n")
+            // set environment
+            let env = ['export BROWSER=1']
+            for ( let i in document.location ){
+              if( typeof document.location[i] == 'string' )
+                env.push( 'export '+String(i).toUpperCase()+'="'+document.location[i]+'"')
+            }
+            env.map( (e) => emulator.serial0_send(`echo '${e}' >> /mnt/profile\n`) )
+            let boot = `source /mnt/profile`
+            // exec hash as extra boot cmd
+            if( document.location.hash.length > 1 ){ 
+              boot += `&& cmd='${decodeURI(document.location.hash.substr(1))}' && $cmd`
+            }
+            emulator.serial0_send(boot+"\n")
             instance.winbox.maximize()
             emulator.serial_adapter.term.focus()
             ready = true
@@ -220,6 +233,24 @@ AFRAME.registerComponent('isoterminal', {
               //emulator.serial0_send("mv /mnt/js . && chmod +x js\n")
           }
       });    
+
+      // unix to js device
+      emulator.add_listener("9p-write-end", async (opts) => {
+        const decoder = new TextDecoder('utf-8');
+
+        if ( opts[0] == 'js' ){
+          const buf = await emulator.read_file("dev/browser/js")
+          const script = decoder.decode(buf)
+          try{
+            let res = (new Function(`return ${script}`))()
+            if( res && typeof res != 'string' ) res = JSON.stringify(res,null,2)
+            emulator.create_file( "dev/browser/js", this.toUint8Array( res || '' ) )
+          }catch(e){ 
+            console.dir(e)
+            emulator.create_file("dev/browser/js", this.toUint8Array( `[e] `+String(e.stack) ) )
+          }
+        }
+      })
     
     });
 
@@ -266,7 +297,7 @@ AFRAME.registerComponent('isoterminal', {
         if( instance.dom.emulator && instance.dom.emulator.serial_adapter ){
           setTimeout( () => {
             this.autoResize(instance.dom.emulator.serial_adapter.term,instance,-5)
-          },1000) // wait for resize anim
+          },500) // wait for resize anim
         }
       }
       instance.addEventListener('window.onresize', resize )

@@ -1,0 +1,29 @@
+install_xrsh(){
+  chmod +x /mnt/confirm /mnt/prompt /mnt/alert /mnt/js*
+
+  setup_browser_dev(){
+    mkdir -p /mnt/dev/browser
+    touch /mnt/dev/browser/js
+    touch /mnt/dev/browser/html
+    ln -s /mnt/dev/browser /dev/browser
+    test -f /etc/profile && rm /etc/profile
+    ln -s /mnt/profile /etc/profile
+  }
+
+  setup_browser_dev
+}
+
+test -d /dev/browser || install_xrsh
+
+test -f /mnt/V86 && {
+  mount -a
+  udhcpc 1>>/var/log/network.log 2>>/var/log/network.log & 
+  echo 0 > /proc/sys/kernel/printk
+}
+
+resize
+#clear 
+cat /mnt/motd
+export PATH=$PATH:/mnt
+export PS1="\n[38;5;57mx[38;5;93mr[38;5;129ms[38;5;165mh [38;5;201m# \033[0m"
+

@@ -14,7 +14,7 @@ AFRAME.registerComponent('window', {
     dom:         "com/dom.js",
     html:        "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",  // html to AFRAME
     winboxjs:    "https://unpkg.com/winbox@0.2.82/dist/winbox.bundle.min.js",     // deadsimple windows: https://nextapps-de.github.io/winbox
-    winboxcss:   "https://unpkg.com/winbox@0.2.82/dist/css/winbox.min.css",       //
+    //winboxcss:   "https://unpkg.com/winbox@0.2.82/dist/css/winbox.min.css",       // main theme
   },
 
   init: function(){
@@ -52,6 +52,9 @@ AFRAME.registerComponent('window', {
         this.el.emit('window.onclose',e)
         if( e.halt ) return true 
         this.data.dom.style.display = 'none';
+        this.data.dom.parentElement.remove()
+        debugger
+        this.el.parentElement.remove( this.el )
         return false
       },
     });

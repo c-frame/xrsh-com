@@ -1,0 +1,17 @@
+#!/bin/sh
+# usage: jsh <function> [arg1] [arg2] ...
+#         
+# 'jsh prompt question answer' executes: js prompt('question','answer') )
+
+to_js(){
+  printf "%s(" "$1"
+  shift
+  for arg in "$@"; do
+    printf '"%s",' "$arg"
+  done
+  printf ")\n"
+}
+
+func=$(to_js "$@")
+func=${func/,)/)}
+/mnt/js "$func"

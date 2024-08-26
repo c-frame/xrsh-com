@@ -1,0 +1,5 @@
+#!/bin/sh
+flock /dev/browser/js -c "echo '$*' > /dev/browser/js; cat /dev/browser/js"
+
+# we use flock, an awesome way to make processes read/write the same file
+# whilr preventing 1001 concurrency issues
