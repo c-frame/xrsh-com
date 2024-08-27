@@ -1,2 +1,2 @@
 #!/bin/sh
-jsh alert "$1"
+echo "$(printf "\033[0m")[i] [38;5;165m$1 $(printf "\033[0m")"

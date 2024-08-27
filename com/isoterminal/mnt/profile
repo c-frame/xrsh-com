@@ -1,16 +1,34 @@
 install_xrsh(){
-  chmod +x /mnt/confirm /mnt/prompt /mnt/alert /mnt/js*
+
+  setup_binaries(){
+    for bin in /mnt/prompt /mnt/alert /mnt/confirm /mnt/hook /mnt/js*; do 
+      chmod +x $bin
+      ln -s $bin /bin/.
+    done
+  }
 
   setup_browser_dev(){
     mkdir -p /mnt/dev/browser
     touch /mnt/dev/browser/js
     touch /mnt/dev/browser/html
+    touch /mnt/dev/browser/console
     ln -s /mnt/dev/browser /dev/browser
     test -f /etc/profile && rm /etc/profile
     ln -s /mnt/profile /etc/profile
   }
 
+  setup_hook_dirs(){ # see /mnt/hook for usage
+    mkdir -p ~/hook.d/alert  
+    mkdir -p ~/hook.d/confirm  
+    mkdir -p ~/hook.d/prompt  
+    echo -e "#!/bin/sh\necho yo"          > ~/hook.d/alert/yo
+    echo -e "#!/bin/js\nalert('yo')"      > ~/hook.d/alert/yo.js
+    echo -e "#!/usr/bin/lua\nalert('yo')" > ~/hook.d/alert/yo.lua
+  }
+
+  setup_binaries
   setup_browser_dev
+  setup_hook_dirs
 }
 
 test -d /dev/browser || install_xrsh
@@ -21,9 +39,20 @@ test -f /mnt/V86 && {
   echo 0 > /proc/sys/kernel/printk
 }
 
+## forward not-found commands to javascript (via jsh)
+command_not_found_handle(){
+  echo "$1 not found"
+  alert "did you mean $1(...) (javascript?)"
+  alert "TIP: run 'jsh $1 hello' to run $1('hello')"
+  alert "     or simply 'jsh' for a js console"
+}
+
+# source javascript functions
+#js "$(cat /mnt/profile.js)"
+
 resize
 #clear 
 cat /mnt/motd
 export PATH=$PATH:/mnt
 export PS1="\n[38;5;57mx[38;5;93mr[38;5;129ms[38;5;165mh [38;5;201m# \033[0m"
-
+export BROWSER=0 # running inside v86 (wasm) will set this to 1

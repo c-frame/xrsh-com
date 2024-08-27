@@ -1,5 +1,16 @@
 #!/bin/sh
-flock /dev/browser/js -c "echo '$*' > /dev/browser/js; cat /dev/browser/js"
+test -z $1 && { echo "Usage: js 'somefunction(1)'"; exit 0; }
+
+javascript="$*"
+
+# if we are run as shebang, use the file as input
+case "$1" in 
+  */*) javascript="$(cat $1 | tail +2)"
+       ;;
+esac
+
+
+flock /dev/browser/js -c "echo '$javascript' > /dev/browser/js; sleep 0.5; cat /dev/browser/js"
 
 # we use flock, an awesome way to make processes read/write the same file
-# whilr preventing 1001 concurrency issues
+# while preventing 1001 concurrency issues

@@ -7,11 +7,31 @@ to_js(){
   printf "%s(" "$1"
   shift
   for arg in "$@"; do
-    printf '"%s",' "$arg"
+    case "$arg" in
+      (*[\.0-9]*) 
+        printf '%s,' "$arg"
+        ;;
+      (*)
+	printf '"%s",' "$arg"
+        ;;
+    esac
   done
   printf ")\n"
 }
 
-func=$(to_js "$@")
-func=${func/,)/)}
-/mnt/js "$func"
+# run argument as js
+test -z $1 || {
+  func=$(to_js "$@")
+  func=${func/,)/)}
+  js "$func"
+}
+
+# otherwise start repl
+while true; do
+  echo -n "$(printf "\033[0m")jsh> $(printf "\033[0m")"
+  read input
+  test $input = exit && exit
+  js "$input"
+done
+
+

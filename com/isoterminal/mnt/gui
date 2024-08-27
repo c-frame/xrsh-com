@@ -1,7 +1,0 @@
-PS3="Enter a number: "
-
-select character in Sheldon Leonard Penny Howard Raj
-do
-    echo "Selected character: $character"
-    echo "Selected number: $REPLY"
-done

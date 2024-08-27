@@ -82,7 +82,30 @@ AFRAME.registerComponent('isoterminal', {
     //var term = new Terminal()
     //term.open(dom)
     //term.write('Hello from \x1B[1;3;31mxterm.js\x1B[0m $ ')``
+    if( typeof Terminal == undefined ) throw 'xterm terminal not loaded'
+    // monkeypatch Xterm (which V86 initializes) so we can add our own constructor args 
+    window._Terminal = window.Terminal 
+    window.Terminal = function(opts){
+      const term = new window._Terminal({ ...opts,
+        cursorBlink:true,
+        onSelectionChange: function(e){
+          debugger
+        }
+      })
 
+      term.onSelectionChange( () => {
+        document.execCommand('copy')
+        term.select(0, 0, 0)
+        instance.setStatus('copied to clipboard')
+      })
+      return term
+    }
+
+    instance.setStatus = (msg) => {
+      const w = instance.winbox
+      w.titleBak = w.titleBak || w.title
+      instance.winbox.setTitle( `${w.titleBak} [${msg}]` )
+    }
 
     var emulator = window.emulator = dom.emulator = new V86({
       wasm_path:        "com/isoterminal/v86.wasm",
@@ -157,7 +180,9 @@ AFRAME.registerComponent('isoterminal', {
       "com/isoterminal/mnt/confirm",
       "com/isoterminal/mnt/prompt",
       "com/isoterminal/mnt/alert",
+      "com/isoterminal/mnt/hook",
       "com/isoterminal/mnt/profile",
+      "com/isoterminal/mnt/profile.js",
       "com/isoterminal/mnt/motd",
     ]
 

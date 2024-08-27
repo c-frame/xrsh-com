@@ -1,10 +1,4 @@
 #!/bin/sh
-test -f /mnt/V86 && {
-  jsh confirm $1 $2 
-}
-
-test -f /mnt/V86 || {
-  read -p "$(printf "\033[0m")[?] [38;5;165m$1 [y/n] $(printf "\033[0m")" y
-  test $y = y && echo true && exit
-  echo false
-}
+read -p "$(printf "\033[0m")[?] [38;5;165m$1 [y/n] $(printf "\033[0m")" y
+test $y = y && echo true && exit
+echo false

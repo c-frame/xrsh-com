@@ -1,9 +1,3 @@
 #!/bin/sh
-test -f /mnt/V86 && {
-  jsh prompt "$1" "$2" 
-}
-
-test -f /mnt/V86 || {
-  read -p "$(printf "\033[0m")[?] [38;5;165m$1: $(printf "\033[0m")" answer
-  echo "$answer"
-}
+read -p "$(printf "\033[0m")[?] [38;5;165m$1: $(printf "\033[0m")" answer
+echo "$answer"
