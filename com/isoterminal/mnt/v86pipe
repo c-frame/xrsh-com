@@ -1,0 +1,30 @@
+#!/bin/sh
+#
+# this daemon allows 'tail -f' on v86 files (which don't persist inode when updated
+# via javascript)
+# more info see: https://github.com/copy/v86/issues/1140
+#
+# Hopefully as V86 (or my understanding of it) matures, this will be no longer needed
+
+test -z $2 && { echo "usage: v86pipe <logfile> <namedpipe>"; exit 0; }
+
+# Start reading from the last line in the log file
+last_size=0
+LOG_FILE=$1
+LOG_PIPE=$2
+
+test -f $LOG_FILE || touch $LOG_FILE
+test -p $LOG_PIPE || mkfifo $LOG_PIPE
+
+while true; do
+    # Get the current size of the file using wc -c (count bytes)
+    current_size=$(wc -c < $LOG_FILE)
+    test $current_size = $last_size || {
+      cat $LOG_FILE > $LOG_PIPE
+      truncate -s 0 $LOG_FILE
+    }
+    last_size=$current_size
+
+    # Sleep for a moment to avoid excessive CPU usage
+    sleep 0.2
+done

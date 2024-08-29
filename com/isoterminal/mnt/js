@@ -1,16 +1,19 @@
 #!/bin/sh
-test -z $1 && { echo "Usage: js 'somefunction(1)'"; exit 0; }
+test -z "$1" && { echo "Usage: js 'somefunction(1)'"; exit 0; }
 
+test -n "$BROWSER" || { alert warning "/dev/browser not active (are you running outside of v86?)"; }
 javascript="$*"
 
 # if we are run as shebang, use the file as input
 case "$1" in 
-  */*) javascript="$(cat $1 | tail +2)"
+  */*) javascript="args = String('$*').split(' '); $(cat $1 | tail +2)"
        ;;
 esac
 
+echo -n "$javascript" > /dev/browser/js
 
-flock /dev/browser/js -c "echo '$javascript' > /dev/browser/js; sleep 0.5; cat /dev/browser/js"
-
-# we use flock, an awesome way to make processes read/write the same file
-# while preventing 1001 concurrency issues
+# should we use flock, an awesome way to make processes read/write the same file
+# while preventing 1001 concurrency issues?
+# attempt:
+#
+# flock /dev/browser/js -c "echo \"$javascript\" > /dev/browser/js"

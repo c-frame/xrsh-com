@@ -150,7 +150,6 @@ AFRAME.registerComponent('isoterminal', {
       'still faster than Windows update',
       'loading a microlinux',
       'figuring out meaning of life',
-      'asking LLM why men have nipples',
       'Aligning your chakras now',
       'Breathing in good vibes',
       'Finding inner peace soon',
@@ -181,10 +180,40 @@ AFRAME.registerComponent('isoterminal', {
       "com/isoterminal/mnt/prompt",
       "com/isoterminal/mnt/alert",
       "com/isoterminal/mnt/hook",
+      "com/isoterminal/mnt/xrsh",
       "com/isoterminal/mnt/profile",
+      "com/isoterminal/mnt/profile.xrsh",
       "com/isoterminal/mnt/profile.js",
       "com/isoterminal/mnt/motd",
+      "com/isoterminal/mnt/v86pipe"
     ]
+
+    const redirectConsole = (handler) => {
+       const log = console.log;
+       const dir = console.dir;
+       const err = console.error;
+       const warn = console.warn;
+       console.log = (...args)=>{
+           const textArg = args[0];
+           handler(textArg+'\n');
+           log.apply(log, args);
+       };
+       console.error = (...args)=>{
+           const textArg = args[0].message?args[0].message:args[0];
+           handler( textArg+'\n', '\x1b[31merror\x1b[0m');
+           err.apply(log, args);
+       };
+       console.dir = (...args)=>{
+           const textArg = args[0].message?args[0].message:args[0];
+           handler( JSON.stringify(textArg,null,2)+'\n');
+           dir.apply(log, args);
+       };
+       console.warn = (...args)=>{
+           const textArg = args[0].message?args[0].message:args[0];
+           handler(textArg+'\n','\x1b[38;5;208mwarn\x1b[0m');
+           err.apply(log, args);
+       };
+    }
 
     emulator.bus.register("emulator-started", async () => {
       emulator.serial_adapter.term.element.querySelector('.xterm-viewport').style.background = 'transparent'
@@ -196,6 +225,17 @@ AFRAME.registerComponent('isoterminal', {
         cat /mnt/motd 
         cat > /dev/null 
       `))
+
+      redirectConsole( (str,prefix) => {
+        if( emulator.log_to_tty ){
+          prefix = prefix ? prefix+' ' : ' '
+          str.trim().split("\n").map( (line) => {
+            emulator.serial_adapter.term.write( '\r\x1b[38;5;165m/dev/browser: \x1b[0m'+prefix+line+'\n' )
+          })
+          emulator.serial_adapter.term.write( '\r' )
+        }
+        emulator.create_file( "console", this.toUint8Array( str ) )
+      })
 
       let p = files.map( (f) => fetch(f) )
       Promise.all(p)
@@ -267,13 +307,21 @@ AFRAME.registerComponent('isoterminal', {
           const buf = await emulator.read_file("dev/browser/js")
           const script = decoder.decode(buf)
           try{
-            let res = (new Function(`return ${script}`))()
+            let res = (new Function(`${script}`))()
             if( res && typeof res != 'string' ) res = JSON.stringify(res,null,2)
-            emulator.create_file( "dev/browser/js", this.toUint8Array( res || '' ) )
           }catch(e){ 
-            console.dir(e)
-            emulator.create_file("dev/browser/js", this.toUint8Array( `[e] `+String(e.stack) ) )
+            console.error(e)
           }
+        }
+      })
+
+      // enable/disable logging file (echo 1 > mnt/console.tty) 
+      emulator.add_listener("9p-write-end", async (opts) => {
+        const decoder = new TextDecoder('utf-8');
+        if ( opts[0] == 'console.tty' ){
+          const buf = await emulator.read_file("console.tty")
+          const val = decoder.decode(buf)
+          emulator.log_to_tty = ( String(val).trim() == '1')
         }
       })
     

@@ -1,15 +1,11 @@
 #!/bin/sh
 
 test -z $1 && { echo "usage: hook <cmd_or_jsfunction> [args]"; exit 0; } 
-
 cmd=$1
 shift 
 
 test -d ~/hook.d/$cmd && {
-  chmod +x ~/hook.d/$cmd/*
   find ~/hook.d/$cmd/ -type f -executable | while read hook; do 
-    $hook "$@" || true 
+    { $hook "$@" || true; } |  awk '{ gsub(/\/root\/\//,"",$1); $1 = sprintf("%-40s", $1)} 1'
   done
 }
-
-#test $BROWSER = 1 && {
