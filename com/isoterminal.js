@@ -108,8 +108,8 @@ AFRAME.registerComponent('isoterminal', {
     }
 
     let image = {}
-    //if( this.data.iso.match(/\.iso$/) ) image.cdrom   = { url: this.data.iso }
-    //if( this.data.iso.match(/\.bin$/) ) image.bzImage = { url: this.data.iso }
+    if( this.data.iso.match(/\.iso$/) ) image.cdrom   = { url: this.data.iso }
+    if( this.data.iso.match(/\.bin$/) ) image.bzimage = { url: this.data.iso }
 
     var emulator = window.emulator = dom.emulator = new V86({ ...image,
       wasm_path:        "com/isoterminal/v86.wasm",
