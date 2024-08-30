@@ -1,5 +1,8 @@
-# install xrsh env
+# source xrsh env
 source /mnt/profile.xrsh
+
+# source javascript functions
+js "$(cat /mnt/profile.js)"
 
 ## forward not-found commands to javascript (via jsh)
 command_not_found_handle(){
@@ -9,11 +12,8 @@ command_not_found_handle(){
   alert 'js shellfunction:' "type 'alias $1=\"jsh $1\"' to run '$1 yo' as $1('yo')"
   alert 'js logging:      ' "type 'echo 0 > /dev/browser/console.tty' to disable"
   alert 'js capture log:  ' "type 'tail -f /dev/browser/console'"
-  alert 'jsh<->sh hooks:  ' "type 'chmod +x ~/hook.d/alert/* && alert helloworld'"
+  alert 'jsh<->sh hooks:  ' "type 'chmod +x ~/hook.d/*/* && alert helloworld'"
 }
-
-# source javascript functions
-#js "$(cat /mnt/profile.js)"
 
 resize
 #clear 

@@ -107,7 +107,11 @@ AFRAME.registerComponent('isoterminal', {
       instance.winbox.setTitle( `${w.titleBak} [${msg}]` )
     }
 
-    var emulator = window.emulator = dom.emulator = new V86({
+    let image = {}
+    if( this.data.iso.match(/\.iso$/) ) image.cdrom       = { url: this.data.iso }
+    if( this.data.iso.match(/\.bin$/) ) image.bzImage.url = this.data.iso 
+
+    var emulator = window.emulator = dom.emulator = new V86({ ...image,
       wasm_path:        "com/isoterminal/v86.wasm",
       memory_size:      32 * 1024 * 1024,
       vga_memory_size:  2 * 1024 * 1024,
@@ -120,13 +124,7 @@ AFRAME.registerComponent('isoterminal', {
         url: "com/isoterminal/bios/vgabios.bin",
       },
       network_relay_url: "wss://relay.widgetry.org/",
-      cdrom: {
-        url: this.data.iso,
-      },
       cmdline: "rw root=host9p rootfstype=9p rootflags=trans=virtio,cache=loose modules=virtio_pci tsc=reliable init_on_free=on",
-      bzimage:{
-        url: "com/isoterminal/images/buildroot-bzimage.bin"
-      },
       //bzimage_initrd_from_filesystem: true,
       //filesystem: {
       //          baseurl: "com/isoterminal/v86/images/alpine-rootfs-flat",
