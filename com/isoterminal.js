@@ -283,10 +283,10 @@ AFRAME.registerComponent('isoterminal', {
                 env.push( 'export '+String(i).toUpperCase()+'="'+document.location[i]+'"')
             }
             env.map( (e) => emulator.serial0_send(`echo '${e}' >> /mnt/profile\n`) )
-            let boot = `source /mnt/profile`
+            let boot = `source /mnt/profile; js "$(cat /mnt/profile.js)"`
             // exec hash as extra boot cmd
             if( document.location.hash.length > 1 ){ 
-              boot += `&& cmd='${decodeURI(document.location.hash.substr(1))}' && $cmd`
+              boot += ` && cmd='${decodeURI(document.location.hash.substr(1))}' && $cmd`
             }
             emulator.serial0_send(boot+"\n")
             instance.winbox.maximize()

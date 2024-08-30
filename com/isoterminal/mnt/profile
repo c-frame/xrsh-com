@@ -1,9 +1,6 @@
 # source xrsh env
 source /mnt/profile.xrsh
 
-# source javascript functions
-js "$(cat /mnt/profile.js)"
-
 ## forward not-found commands to javascript (via jsh)
 command_not_found_handle(){
   echo "$1 not found, did you mean $1(...) (javascript?)"
@@ -16,7 +13,7 @@ command_not_found_handle(){
 }
 
 resize
-#clear 
+test $HOSTNAME = localhost || clear
 cat /mnt/motd
 export PATH=$PATH:/mnt
 export PS1="\n[38;5;57mx[38;5;93mr[38;5;129ms[38;5;165mh [38;5;201m# \033[0m"

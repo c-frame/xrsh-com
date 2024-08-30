@@ -43,5 +43,6 @@ test -d /dev/browser || {
   setup_binaries
   setup_browser_dev
   setup_hook_dirs
+
 }
 
