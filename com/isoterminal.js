@@ -1,6 +1,6 @@
 AFRAME.registerComponent('isoterminal', {
   schema: {
-    iso:    { type:"string", "default":"com/isoterminal/xrsh.iso" },
+    iso:    { type:"string", "default":"com/isoterminal/images/buildroot-bzimage.bin" },
     cols:   { type: 'number',"default": 120 },
     rows:   { type: 'number',"default": 30 },
     padding:{ type: 'number',"default": 18 },
