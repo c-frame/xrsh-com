@@ -3,6 +3,8 @@
 #         
 # 'jsh prompt question answer' executes: js prompt('question','answer') )
 
+source /mnt/profile.sh
+
 to_js(){
   printf "%s(" "$1"
   shift

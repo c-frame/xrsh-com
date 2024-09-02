@@ -1,4 +1,0 @@
-#!/bin/sh
-read -p "$(printf "\033[0m")[?] [38;5;165m$1 [y/n] $(printf "\033[0m")" y
-test $y = y && echo true && exit
-echo false

@@ -174,12 +174,9 @@ AFRAME.registerComponent('isoterminal', {
     const files = [
       "com/isoterminal/mnt/js",
       "com/isoterminal/mnt/jsh",
-      "com/isoterminal/mnt/confirm",
-      "com/isoterminal/mnt/prompt",
-      "com/isoterminal/mnt/alert",
-      "com/isoterminal/mnt/hook",
       "com/isoterminal/mnt/xrsh",
       "com/isoterminal/mnt/profile",
+      "com/isoterminal/mnt/profile.sh",
       "com/isoterminal/mnt/profile.xrsh",
       "com/isoterminal/mnt/profile.js",
       "com/isoterminal/mnt/motd",
@@ -282,12 +279,13 @@ AFRAME.registerComponent('isoterminal', {
               if( typeof document.location[i] == 'string' )
                 env.push( 'export '+String(i).toUpperCase()+'="'+document.location[i]+'"')
             }
-            env.map( (e) => emulator.serial0_send(`echo '${e}' >> /mnt/profile\n`) )
-            let boot = `source /mnt/profile; js "$(cat /mnt/profile.js)"`
+            await emulator.create_file("profile.browser", this.toUint8Array( env.join('\n') ) )
+            let boot = `source /mnt/profile ; js "$(cat /mnt/profile.js)"`
             // exec hash as extra boot cmd
             if( document.location.hash.length > 1 ){ 
-              boot += ` && cmd='${decodeURI(document.location.hash.substr(1))}' && $cmd`
+              boot += ` ; cmd='${decodeURI(document.location.hash.substr(1))}' && $cmd`
             }
+          console.dir(boot)
             emulator.serial0_send(boot+"\n")
             instance.winbox.maximize()
             emulator.serial_adapter.term.focus()
@@ -368,7 +366,7 @@ AFRAME.registerComponent('isoterminal', {
         if( instance.dom.emulator && instance.dom.emulator.serial_adapter ){
           setTimeout( () => {
             this.autoResize(instance.dom.emulator.serial_adapter.term,instance,-5)
-          },500) // wait for resize anim
+          },800) // wait for resize anim
         }
       }
       instance.addEventListener('window.onresize', resize )

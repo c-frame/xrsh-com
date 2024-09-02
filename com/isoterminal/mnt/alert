@@ -1,6 +1,0 @@
-#!/bin/sh
-title=$1
-shift
-msg="$*"
-echo "[38;5;165m$title $(printf "\033[0m")$msg"
-hook alert $title "$msg" 

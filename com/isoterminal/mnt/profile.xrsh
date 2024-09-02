@@ -3,10 +3,18 @@
 test -d /dev/browser || {
 
   setup_binaries(){
-    for bin in /mnt/prompt /mnt/alert /mnt/confirm /mnt/hook /mnt/js* /mnt/v86pipe /mnt/xrsh; do 
+    for bin in /mnt/js* /mnt/v86pipe /mnt/xrsh; do 
       chmod +x $bin
       ln -s $bin /bin/.
     done
+  }
+
+  setup_links(){
+    ln -s /mnt/profile ~/.profile
+    ln -s /mnt/profile.js ~/.profile.js
+    ln -s /mnt/profile.browser ~/.profile.browser
+    ln -s /mnt/profile.sh ~/.profile.sh
+    ln -s /mnt/motd ~/.motd 
   }
 
   setup_browser_dev(){
@@ -35,7 +43,7 @@ test -d /dev/browser || {
 
   setup_network(){
     test -n "$BROWSER" || return 0
-    mount -a
+    #mount -a
     udhcpc 1>>/var/log/network.log 2>>/var/log/network.log & 
     echo 0 > /proc/sys/kernel/printk
   }
@@ -43,6 +51,6 @@ test -d /dev/browser || {
   setup_binaries
   setup_browser_dev
   setup_hook_dirs
+  setup_links
 
 }
-
