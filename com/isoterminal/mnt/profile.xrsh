@@ -23,10 +23,12 @@ test -d /dev/browser || {
     touch /mnt/dev/browser/html
     touch /mnt/console.tty
     ln -s /mnt/dev/browser /dev/browser
+    ln -s /dev/browser/html ~/index.html
     # setup console goodies
     ln -s /mnt/console.tty /dev/browser/console.tty # emulator.write_file() only writes to /mnt/. :(
-    echo 1 > /dev/browser/console.tty               # should be in /proc, but v86 gives 'no such file or dir' when creating it there
-    v86pipe /mnt/console /dev/browser/console &
+    echo 0 > /dev/browser/console.tty               # should be in /proc, but v86 gives 'no such file or dir' when creating it there
+    touch /mnt/console
+    ln -s /mnt/console /dev/browser/console
 
     test -f /etc/profile && rm /etc/profile
     ln -s /mnt/profile /etc/profile
@@ -34,11 +36,10 @@ test -d /dev/browser || {
 
   setup_hook_dirs(){ # see /mnt/hook for usage
     mkdir -p ~/hook.d/alert  
-    mkdir -p ~/hook.d/confirm  
-    mkdir -p ~/hook.d/prompt  
-    echo -e "#!/bin/sh\necho hook.d/alert/yo: yo \$*"                           > ~/hook.d/alert/yo
-    echo -e "#!/bin/js\nalert(\"hook.d/alert/yo.js \"+args.slice(1).join(' '))" > ~/hook.d/alert/yo.js
-    echo -e "#!/usr/bin/lua\nprint(\"hook.d/alert/yo.lua: yo \" .. arg[1])"     > ~/hook.d/alert/yo.lua
+    echo -e "#!/bin/sh\necho hook.d/alert/yo: yo \$*"                                   > ~/hook.d/alert/yo
+    echo -e "#!/bin/js\nalert(\"hook.d/alert/yo.js \"+args.slice(1).join(' '))"         > ~/hook.d/alert/yo.js
+    echo -e "#!/usr/bin/env lua\nprint(\"hook.d/alert/yo.lua: yo \" .. arg[1])"         > ~/hook.d/alert/yo.lua
+    echo -e "#!/usr/bin/awk -f\nBEGIN{\n\tprint \"hook.d/alert/yo.awk: yo \" ARGV[1]\n}" > ~/hook.d/alert/yo.awk
   }
 
   setup_network(){
@@ -52,5 +53,6 @@ test -d /dev/browser || {
   setup_browser_dev
   setup_hook_dirs
   setup_links
+  setup_network
 
 }

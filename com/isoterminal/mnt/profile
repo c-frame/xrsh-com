@@ -18,7 +18,7 @@ command_not_found_handle(){
   echo '----'
   echo 'js console:      ' "type 'jsh'"
   echo 'js shellfunction:' "type 'alias $1=\"jsh $1\"' to run '$1 yo' as $1('yo')"
-  echo 'js logging:      ' "type 'echo 0 > /dev/browser/console.tty' to disable"
+  echo 'js log to tty:   ' "type 'echo 1 > /dev/browser/console.tty' to enable"
   echo 'js capture log:  ' "type 'tail -f /dev/browser/console'"
   echo 'jsh<->sh hooks:  ' "type 'chmod +x ~/hook.d/*/* && alert helloworld'"
 }
@@ -27,4 +27,5 @@ resize
 test $HOSTNAME = localhost || clear
 cat /mnt/motd
 export PATH=$PATH:/mnt
-export PS1="\n[38;5;57mx[38;5;93mr[38;5;129ms[38;5;165mh [38;5;201m# \033[0m"
+export PS1="\n\[\033[38;5;57m\]x\[\033[38;5;93m\]r\[\033[38;5;129m\]s\[\033[38;5;165m\]h \[\033[38;5;201m\]# \[\033[0m\]"
+

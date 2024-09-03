@@ -1,0 +1,23 @@
+ISOTerminal.addEventListener('init', function(){
+
+  this.addEventListener('emulator-started', function(e){
+
+    const emulator = this.emulator
+
+    // unix to js device
+    this.readFromPipe( '/mnt/js', async (data) => {
+      const buf = await emulator.read_file("dev/browser/js")
+      const decoder = new TextDecoder('utf-8');
+      const script = decoder.decode(buf)
+      try{
+        let res = (new Function(`${script}`))()
+        if( res && typeof res != 'string' ) res = JSON.stringify(res,null,2)
+      }catch(e){ 
+        console.error(e)
+      }
+    })
+  
+  })  
+
+})
+
