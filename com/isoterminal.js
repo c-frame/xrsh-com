@@ -46,6 +46,9 @@ if( typeof AFRAME != 'undefined '){
       xtermjs:     "https://unpkg.com/@xterm/xterm@5.5.0/lib/xterm.js",
       xtermcss:    "https://unpkg.com/@xterm/xterm@5.5.0/css/xterm.css",
       v86:         "com/isoterminal/libv86.js",
+      // html to texture
+      htmlinxr:    "com/html-as-texture-in-xr.js",
+      html:        "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",  // html to AFRAME
       // isoterminal features
       core:        "com/isoterminal/core.js",
       utils_9p:    "com/isoterminal/feat/9pfs_utils.js",
@@ -53,10 +56,11 @@ if( typeof AFRAME != 'undefined '){
       xterm:       "com/isoterminal/feat/xterm.js",
       jsconsole:   "com/isoterminal/feat/jsconsole.js",
       javascript:  "com/isoterminal/feat/javascript.js",
+      index:       "com/isoterminal/feat/index.html.js",
     },
 
     dom: {
-      scale:   0.7,
+      scale:   0.5,
       events:  ['click','keydown'],
       html:    (me) => `<div class="isoterminal"></div>`,
 
@@ -77,7 +81,7 @@ if( typeof AFRAME != 'undefined '){
                         .isoterminal style{ display:none }
 
                         .wb-body:has(> .isoterminal){ 
-                          background: #000c; 
+                          background: #000F; 
                           overflow:hidden;
                         }
 
@@ -147,6 +151,9 @@ if( typeof AFRAME != 'undefined '){
         this.isoterminal.addEventListener('ready', function(e){
           instance.dom.classList.remove('blink')
           instance.winbox.maximize()
+          setTimeout( () => { // important: after window maximize animation to get true size
+            instance.setAttribute("html-as-texture-in-xr", `domid: #${instance.uid}`)  // only show aframe-html in xr 
+          },1500)
         })
 
         this.isoterminal.addEventListener('status', function(e){
@@ -172,13 +179,11 @@ if( typeof AFRAME != 'undefined '){
         instance.addEventListener('window.onmaximize', resize )
 
         instance.setAttribute("dom",      "")
-        instance.setAttribute("xd",       "")  // allows flipping between DOM/WebGL when toggling XD-button
-        instance.setAttribute("visible",  AFRAME.utils.XD() == '3D' ? 'true' : 'false' )
-        instance.setAttribute("position", AFRAME.utils.XD.getPositionInFrontOfCamera(0.5) )
 
         const focus = () => document.querySelector('canvas.a-canvas').focus()
         instance.addEventListener('obbcollisionstarted', focus )
         this.el.sceneEl.addEventListener('enter-vr', focus )
+        this.el.sceneEl.addEventListener('enter-ar', focus )
 
         instance.object3D.quaternion.copy( AFRAME.scenes[0].camera.quaternion ) // face towards camera
       }

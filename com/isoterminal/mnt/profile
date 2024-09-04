@@ -26,6 +26,6 @@ command_not_found_handle(){
 resize
 test $HOSTNAME = localhost || clear
 cat /mnt/motd
-export PATH=$PATH:/mnt
+export PATH=$PATH:/mnt:~/bin
 export PS1="\n\[\033[38;5;57m\]x\[\033[38;5;93m\]r\[\033[38;5;129m\]s\[\033[38;5;165m\]h \[\033[38;5;201m\]# \[\033[0m\]"
 

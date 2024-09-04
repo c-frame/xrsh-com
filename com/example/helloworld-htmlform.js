@@ -57,9 +57,7 @@ AFRAME.registerComponent('helloworld-htmlform', {
       const instance = this.el.cloneNode(false)
       this.el.sceneEl.appendChild( instance )
       instance.setAttribute("dom",      "")
-      instance.setAttribute("xd",       "")  // allows flipping between DOM/WebGL when toggling XD-button
-      instance.setAttribute("visible",  AFRAME.utils.XD() == '3D' ? 'true' : 'false' )
-      instance.setAttribute("position", AFRAME.utils.XD.getPositionInFrontOfCamera(0.5) )
+      instance.setAttribute("show-texture-in-xr", "")  // only show aframe-html in xr 
       instance.setAttribute("grabbable","")
       instance.object3D.quaternion.copy( AFRAME.scenes[0].camera.quaternion ) // face towards camera
 
@@ -75,7 +73,11 @@ AFRAME.registerComponent('helloworld-htmlform', {
           root: document.querySelector("#overlay"),
           mount: instance.dom,
           onclose: () => { instance.dom.style.display = 'none'; return false; },
-          oncreate: () => instance.setAttribute("html",`html:#${instance.uid}; cursor:#cursor`)
+          oncreate: () => {
+            instance.setAttribute("position", AFRAME.utils.XD.getPositionInFrontOfCamera(0.5) )
+            instance.setAttribute("html",`html:#${instance.uid}; cursor:#cursor`)
+            instance.setAttribute("show-texture-in-xr","") // only show aframe-html texture in xr mode
+          }
         });
         instance.dom.style.display = AFRAME.utils.XD() == '3D' ? 'none' : '' // show/hide
 

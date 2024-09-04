@@ -5,7 +5,7 @@ AFRAME.registerComponent('helloworld-window', {
 
   requires:     {
     dom:         "./com/dom.js",                                                  // interpret .dom object
-    xd:          "./com/dom.js",                                                  // allow switching between 2D/3D 
+    xrtexture:   "./com/html-as-texture-in-xr.js",                                // allow switching between 3D/3D 
     html:        "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",  // html to AFRAME
     winboxjs:    "https://unpkg.com/winbox@0.2.82/dist/winbox.bundle.min.js",     // deadsimple windows: https://nextapps-de.github.io/winbox
     winboxcss:   "https://unpkg.com/winbox@0.2.82/dist/css/winbox.min.css",       // 
@@ -39,10 +39,7 @@ AFRAME.registerComponent('helloworld-window', {
       // instance this component
       const instance = this.el.cloneNode(false)
       this.el.sceneEl.appendChild( instance )
-      instance.setAttribute("dom",      "")
-      instance.setAttribute("xd",       "")  // allows flipping between DOM/WebGL when toggling XD-button
-      instance.setAttribute("visible",  AFRAME.utils.XD() == '3D' ? 'true' : 'false' )
-      instance.setAttribute("position", AFRAME.utils.XD.getPositionInFrontOfCamera(0.5) )
+      instance.setAttribute("dom",             "")
       instance.setAttribute("grabbable","")
       instance.object3D.quaternion.copy( AFRAME.scenes[0].camera.quaternion ) // face towards camera
 
@@ -59,7 +56,9 @@ AFRAME.registerComponent('helloworld-window', {
           root: document.querySelector("#overlay"),
           mount: instance.dom,
           onclose: () => { instance.dom.style.display = 'none'; return false; },
-          oncreate: () => instance.setAttribute("html",`html:#${instance.uid}; cursor:#cursor`)
+          oncreate: () => {
+            instance.setAttribute("show-texture-in-xr",`domid: #${instance.uid}`) // only show aframe-html texture in xr mode
+          }
         });
         instance.dom.style.display = '' // show
 

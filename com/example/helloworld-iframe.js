@@ -87,7 +87,9 @@ AFRAME.registerComponent('helloworld-iframe', {
           onclose: () => { instance.dom.style.display = 'none'; return false; },
           oncreate: () => {
             com.data.url = URL
+            instance.setAttribute("position", AFRAME.utils.XD.getPositionInFrontOfCamera(0.5) )
             instance.setAttribute("html",`html:#${instance.uid}; cursor:#cursor`)
+            instance.setAttribute("show-texture-in-xr","") // only show aframe-html texture in xr mode
           }
         });
         instance.dom.style.display = ''
