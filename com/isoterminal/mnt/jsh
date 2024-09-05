@@ -25,7 +25,7 @@ to_js(){
 test -z "$1" || {
   func=$(to_js "$@")
   func=${func/,)/)}
-  js "$func"
+  js "return $func"
   hook "$@"
   exit 0
 }
@@ -35,7 +35,7 @@ echo "jsh> type 'exit' or CTRL-C to quit"
 echo "jsh> HINT: to run alert('foo') outside this REPL, run 'jsh alert foo'"
 echo "jsh>"
 while true; do
-  echo -n -e "\r$(printf "\033[0m")jsh> $(printf "\033[0m")"
+  echo -n -e "\n$(printf "\033[0m")jsh> $(printf "\033[0m")"
   read line
   test "$line" = exit && exit
   js "$line"

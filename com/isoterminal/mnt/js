@@ -1,4 +1,5 @@
 #!/bin/sh
+PID=$$
 test -z "$1" && { echo "Usage: js 'somefunction(1)'"; exit 0; }
 
 test -n "$BROWSER" || { alert warning "/dev/browser not active (are you running outside of v86?)"; }
@@ -10,7 +11,19 @@ case "$1" in
        ;;
 esac
 
-echo -n "$javascript" > /dev/browser/js
+# below is not ideal
+# first I tried /dev/ttyS* https://github.com/copy/v86/issues/530
+# and differentiate processes by prefixing output by PID's 
+# to parse it later with AWK, but it was very hairy
+
+OUTPUT=/mnt/$PID
+echo -n "PID=$PID; $javascript" > /dev/browser/js
+sleep 0.1
+test -f $OUTPUT && {
+  cat $OUTPUT
+  rm $OUTPUT
+}
+
 
 # should we use flock, an awesome way to make processes read/write the same file
 # while preventing 1001 concurrency issues?

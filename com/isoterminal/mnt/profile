@@ -8,7 +8,7 @@ source /mnt/profile.xrsh
 source /mnt/profile.sh
 
 # source js functions 
-js "$(cat ~/.profile.js)"
+js "$(cat ~/.profile.js)" &>/dev/null &
 
 ## forward not-found commands to javascript (via jsh)
 command_not_found_handle(){
@@ -16,11 +16,13 @@ command_not_found_handle(){
   echo ""
   echo 'TIPS'
   echo '----'
-  echo 'js console:      ' "type 'jsh'"
-  echo 'js shellfunction:' "type 'alias $1=\"jsh $1\"' to run '$1 yo' as $1('yo')"
-  echo 'js log to tty:   ' "type 'echo 1 > /dev/browser/console.tty' to enable"
-  echo 'js capture log:  ' "type 'tail -f /dev/browser/console'"
-  echo 'jsh<->sh hooks:  ' "type 'chmod +x ~/hook.d/*/* && alert helloworld'"
+  echo 'js run              ' "type 'js 'alert(\"hello\")'"
+  echo 'js console.log:     ' "type 'console document.baseURI"
+  echo 'js function as cmd: ' "type 'alias $1=\"jsh $1\"' to run '$1 yo' as $1('yo')"
+  echo 'js inspect:         ' "type 'js \"return document.baseURI\"'"
+  echo 'js console disable: ' "type 'echo 0 > /dev/browser/console.tty' to enable"
+  echo 'js capture console: ' "type 'tail -f /dev/browser/console'"
+  echo 'jsh<->sh hooks:     ' "type 'chmod +x ~/hook.d/*/* && alert helloworld'"
 }
 
 resize

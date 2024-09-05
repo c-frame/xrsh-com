@@ -25,7 +25,7 @@ test -d /dev/browser || {
     # emulator.write_file() only writes to /mnt/. :(
     # should be in /proc, but v86 gives 'no such file or dir' when creating it there
     ln -s /mnt/console.tty /dev/browser/console.tty 
-    echo 0 > /dev/browser/console.tty
+    echo 1 > /dev/browser/console.tty
     touch /mnt/console    && ln -s /mnt/console /dev/browser/console
     touch /mnt/index.html && ln -s /mnt/index.html /dev/browser/index.html
     ln -s /dev/browser/index.html ~/index.html
@@ -38,7 +38,7 @@ test -d /dev/browser || {
     mkdir ~/bin
     mkdir -p ~/hook.d/alert  
     echo -e "#!/bin/sh\necho hook.d/alert/yo: yo \$*"                                   > ~/hook.d/alert/yo 
-    echo -e "#!/bin/js\nalert(\"hook.d/alert/yo.js \"+args.slice(1).join(' '))"         > ~/hook.d/alert/yo.js
+    echo -e "#!/bin/js\nstr = \"hook.d/alert/yo.js yo \"+args.slice(1).join(' ')\nalert(str)\nreturn str" > ~/hook.d/alert/yo.js
     echo -e "#!/usr/bin/env lua\nprint(\"hook.d/alert/yo.lua: yo \" .. arg[1])"         > ~/hook.d/alert/yo.lua
     echo -e "#!/usr/bin/awk -f\nBEGIN{\n\tprint \"hook.d/alert/yo.awk: yo \" ARGV[1]\n}" > ~/hook.d/alert/yo.awk
     echo -e "#!/bin/sh\necho hello \$*"                                                 > ~/bin/hello 

@@ -34,3 +34,11 @@ prompt(){
   echo "$answer"
   hook prompt $1 $answer
 }
+
+console(){
+  js 'return '$1
+}
+
+fetch(){
+  js ''
+}

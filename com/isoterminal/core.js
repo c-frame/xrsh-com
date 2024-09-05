@@ -1,3 +1,11 @@
+//ISOTerminal.prototype.exec(cmd_array,stdin){
+//  // exec(['lua'] "print \"hello\") ---> cat /dev/browser/js/stdin | lua > /dev/browser/js/stdout
+//}
+
+ISOTerminal.prototype.send = function(ttyNr, str){
+  this.toUint8Array( str ).map( (c) => this.emulator.bus.send(`serial${ttyNr}-input`, c ) )
+}
+
 ISOTerminal.prototype.toUint8Array = function(str) {
   str = String(str) || String("")
   // Create a new Uint8Array with the same length as the input string
@@ -17,6 +25,9 @@ ISOTerminal.prototype.runISO = function(opts){
   if( opts.iso.match(/\.bin$/) ) image.bzimage = { url: opts.iso }
 
   let emulator = this.emulator = new V86({ ...image,
+    uart1:true, // /dev/ttyS1
+    uart2:true, // /dev/ttyS2
+    uart3:true, // /dev/ttyS3
     wasm_path:        "com/isoterminal/v86.wasm",
     memory_size:      32 * 1024 * 1024,
     vga_memory_size:  2 * 1024 * 1024,
