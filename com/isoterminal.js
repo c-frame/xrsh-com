@@ -166,7 +166,7 @@ if( typeof AFRAME != 'undefined '){
 
       instance.setAttribute("dom",      "")
 
-      const focus = () => document.querySelector('canvas.a-canvas').focus()
+      const focus = () => this.isoterminal.emulator.serial_adapter.term.focus() 
       instance.addEventListener('obbcollisionstarted', focus )
       this.el.sceneEl.addEventListener('enter-vr', focus )
       this.el.sceneEl.addEventListener('enter-ar', focus )
