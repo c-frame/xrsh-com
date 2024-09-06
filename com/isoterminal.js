@@ -37,7 +37,7 @@ if( typeof AFRAME != 'undefined '){
       transparent: { type:'boolean', "default":false } // need good gpu
     },
 
-    init: function(){
+    init: async function(){
       this.el.object3D.visible = false
     },
 
@@ -107,6 +107,73 @@ if( typeof AFRAME != 'undefined '){
                         `
     },
 
+    initTerminal: async function(){
+      if( this.instance ){
+        const el = document.querySelector('.isoterminal')
+        return console.warn('TODO: allow multiple terminals (see v86 examples)')
+      }
+
+      let s = await AFRAME.utils.require(this.requires)
+
+      // instance this component
+      const instance = this.instance = this.el.cloneNode(false)
+      this.el.sceneEl.appendChild( instance )
+
+      // init isoterminal
+      this.isoterminal = new ISOTerminal()
+
+      instance.addEventListener('DOMready', () => {
+        instance.setAttribute("window", `title: ${this.data.iso}; uid: ${instance.uid}; attach: #overlay; dom: #${instance.dom.id}`)
+      })
+
+      instance.addEventListener('window.oncreate', (e) => {
+        instance.dom.classList.add('blink')
+        // run iso
+        let opts = {dom:instance.dom}
+        for( let i in this.data ) opts[i] = this.data[i]
+        this.isoterminal.runISO(opts)
+      })
+
+      this.isoterminal.addEventListener('ready', function(e){
+        instance.dom.classList.remove('blink')
+        instance.winbox.maximize()
+        setTimeout( () => { // important: after window maximize animation to get true size
+          instance.setAttribute("html-as-texture-in-xr", `domid: #${instance.uid}`)  // only show aframe-html in xr 
+        },1500)
+      })
+
+      this.isoterminal.addEventListener('status', function(e){
+        let msg = e.detail
+        const w = instance.winbox
+        if(!w) return
+        w.titleBak = w.titleBak || w.title
+        instance.winbox.setTitle( `${w.titleBak} [${msg}]` )
+      })
+
+      instance.addEventListener('window.onclose', (e) => {
+        if( !confirm('do you want to kill this virtual machine and all its processes?') ) e.halt = true
+      })
+
+      const resize = (w,h) => {
+        if( this.isoterminal.emulator && this.isoterminal.emulator.serial_adapter ){
+          setTimeout( () => {
+            this.isoterminal.xtermAutoResize(this.isoterminal.emulator.serial_adapter.term,instance,-5)
+          },800) // wait for resize anim
+        }
+      }
+      instance.addEventListener('window.onresize', resize )
+      instance.addEventListener('window.onmaximize', resize )
+
+      instance.setAttribute("dom",      "")
+
+      const focus = () => document.querySelector('canvas.a-canvas').focus()
+      instance.addEventListener('obbcollisionstarted', focus )
+      this.el.sceneEl.addEventListener('enter-vr', focus )
+      this.el.sceneEl.addEventListener('enter-ar', focus )
+
+      instance.object3D.quaternion.copy( AFRAME.scenes[0].camera.quaternion ) // face towards camera
+    },
+
 
     events:{
 
@@ -122,70 +189,7 @@ if( typeof AFRAME != 'undefined '){
       },
 
       launcher: async function(){
-        if( this.instance ){
-          const el = document.querySelector('.isoterminal')
-          return console.warn('TODO: allow multiple terminals (see v86 examples)')
-        }
-
-        let s = await AFRAME.utils.require(this.requires)
-
-        // instance this component
-        const instance = this.instance = this.el.cloneNode(false)
-        this.el.sceneEl.appendChild( instance )
-
-        // init isoterminal
-        this.isoterminal = new ISOTerminal()
-
-        instance.addEventListener('DOMready', () => {
-          instance.setAttribute("window", `title: ${this.data.iso}; uid: ${instance.uid}; attach: #overlay; dom: #${instance.dom.id}`)
-        })
-
-        instance.addEventListener('window.oncreate', (e) => {
-          instance.dom.classList.add('blink')
-          // run iso
-          let opts = {dom:instance.dom}
-          for( let i in this.data ) opts[i] = this.data[i]
-          this.isoterminal.runISO(opts)
-        })
-
-        this.isoterminal.addEventListener('ready', function(e){
-          instance.dom.classList.remove('blink')
-          instance.winbox.maximize()
-          setTimeout( () => { // important: after window maximize animation to get true size
-            instance.setAttribute("html-as-texture-in-xr", `domid: #${instance.uid}`)  // only show aframe-html in xr 
-          },1500)
-        })
-
-        this.isoterminal.addEventListener('status', function(e){
-          let msg = e.detail
-          const w = instance.winbox
-          if(!w) return
-          w.titleBak = w.titleBak || w.title
-          instance.winbox.setTitle( `${w.titleBak} [${msg}]` )
-        })
-
-        instance.addEventListener('window.onclose', (e) => {
-          if( !confirm('do you want to kill this virtual machine and all its processes?') ) e.halt = true
-        })
-
-        const resize = (w,h) => {
-          if( this.isoterminal.emulator && this.isoterminal.emulator.serial_adapter ){
-            setTimeout( () => {
-              this.isoterminal.xtermAutoResize(this.isoterminal.emulator.serial_adapter.term,instance,-5)
-            },800) // wait for resize anim
-          }
-        }
-        instance.addEventListener('window.onresize', resize )
-        instance.addEventListener('window.onmaximize', resize )
-
-        instance.setAttribute("dom",      "")
-
-        const focus = () => document.querySelector('canvas.a-canvas').focus()
-        instance.addEventListener('obbcollisionstarted', focus )
-        this.el.sceneEl.addEventListener('enter-vr', focus )
-        this.el.sceneEl.addEventListener('enter-ar', focus )
-
-        instance.object3D.quaternion.copy( AFRAME.scenes[0].camera.quaternion ) // face towards camera
+        this.initTerminal()
       }
 
     },
@@ -244,20 +248,4 @@ if( typeof AFRAME != 'undefined '){
     }
 
   });
-
-  // reflect HTML changes to /dev/browser/html
-  AFRAME.registerSystem('isoterminal',{
-
-    init: function(){
-      this.components = []
-      // observe HTML changes in <a-scene>
-      observer = new MutationObserver( (a,b) => {
-
-        console.log("change")
-      })
-      observer.observe( this.sceneEl, {characterData: false, childList: true, attributes: false});
-    }
-
-  })
 }
-

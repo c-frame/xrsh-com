@@ -8,7 +8,7 @@ source /mnt/profile.xrsh
 source /mnt/profile.sh
 
 # source js functions 
-js "$(cat ~/.profile.js)" &>/dev/null &
+./.profile.js
 
 ## forward not-found commands to javascript (via jsh)
 command_not_found_handle(){

@@ -45,9 +45,12 @@ AFRAME.registerComponent('launcher', {
     cols:   { type:"number", "default": 5 }
   },
 
-  dependencies:['dom'],
+  dependencies:{
+    dom:         "com/dom.js"
+  },
 
   init: async function () {
+    await AFRAME.utils.require(this.dependencies)
     this.worldPosition = new THREE.Vector3()
 
     await AFRAME.utils.require({
@@ -377,7 +380,7 @@ AFRAME.registerSystem('launcher',{
 
   updateLauncher: function(){
     let launcher = document.querySelector('[launcher]')
-    if( launcher ) launcher.components['launcher'].render()
+    if( launcher ) launcher.components.launcher.render()
   }
 
 })
