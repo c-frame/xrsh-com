@@ -39,6 +39,19 @@ console(){
   js 'return '$1
 }
 
-fetch(){
-  js ''
+require(){
+  file=$(basename "$1")
+  js '(async () => {
+    await AFRAME.utils.require({"'$file'": "'$1'"})
+  })()'
+}
+
+a_entity(){
+  code="let el = document.createElement('a-entity')"
+  for i in "$@"; do 
+    code="$code;\nel.setAttribute('$i','')\n"; 
+  done
+  code="document.querySelector('a-scene').appendChild(el)"
+  echo "$code"
+  js "$code"
 }

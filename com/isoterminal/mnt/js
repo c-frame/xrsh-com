@@ -6,10 +6,9 @@ test -n "$BROWSER" || { alert warning "/dev/browser not active (are you running 
 javascript="$*"
 
 # if we are run as shebang, use the file as input
-case "$1" in 
-  */*) javascript="args = String('$*').split(' '); $(cat $1 | tail +2)"
-       ;;
-esac
+test -f "$1" && {
+  javascript="args = String('$*').split(' '); $(cat $1 | tail +2)"
+}
 
 # below is not ideal
 # first I tried /dev/ttyS* https://github.com/copy/v86/issues/530

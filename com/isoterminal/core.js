@@ -80,16 +80,14 @@ ISOTerminal.prototype.runISO = function(opts){
   let loadmsg = loading[ Math.floor(Math.random()*1000) % loading.length-1 ]
   this.emit('status',loadmsg)
 
-  let motd = "\n\r"
-  motd += "[38;5;57m  " + ' ____  _____________  _________ ___ ___   ' + "\n\r"
-  motd += "[38;5;93m  " + ' \\   \\/  /\\______   \\/   _____//   |   \\  ' + "\n\r"  
-  motd += "[38;5;93m  " + '  \\     /  |       _/\\_____  \\/    ~    \\ ' + "\n\r"
-  motd += "[38;5;129m " + '   /     \\  |    |   \\/        \\    Y    / ' + "\n\r"
-  motd += "[38;5;165m " + '  /___/\\  \\ |____|_  /_______  /\\___|_  /  ' + "\n\r"
-  motd += "[38;5;201m " + '        \\_/        \\/        \\/       \\/   ' + "\n\r"
-  motd += "                                                                 \n\r"
-  motd += `${loadmsg}, please wait..\n\r\n\r`
-  motd += "\033[0m" 
+  // replace welcome message https://github.com/copy/v86/blob/3c77b98bc4bc7a5d51a2056ea73d7666ca50fc9d/src/browser/serial.js#L231
+  let welcome = "This is the serial console. Whatever you type or paste here will be sent to COM1"
+
+  let motd = "\r[38;5;129m" 
+  let msg  = `${loadmsg}, please wait..`
+  while( msg.length < welcome.length ) msg += " "
+  msg += "\n"
+  motd += msg+"\033[0m" 
 
   const files = [
     "com/isoterminal/mnt/js",
@@ -107,12 +105,6 @@ ISOTerminal.prototype.runISO = function(opts){
     this.emit('emulator-started',e)
     emulator.serial_adapter.term.clear()
     emulator.serial_adapter.term.write(motd)
-
-    emulator.create_file("motd", this.toUint8Array(motd) )
-    emulator.create_file("js", this.toUint8Array(`#!/bin/sh
-      cat /mnt/motd 
-      cat > /dev/null 
-    `))
 
     let p = files.map( (f) => fetch(f) )
     Promise.all(p)

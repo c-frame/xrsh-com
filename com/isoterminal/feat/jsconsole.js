@@ -23,6 +23,7 @@ ISOTerminal.prototype.redirectConsole = function(handler){
        handler(textArg+'\n','\x1b[38;5;208mwarn\x1b[0m');
        err.apply(log, args);
    };
+
 }
 
 ISOTerminal.addEventListener('emulator-started', function(){
@@ -38,6 +39,16 @@ ISOTerminal.addEventListener('emulator-started', function(){
     }
     emulator.fs9p.append_file( "console", str )
   })
+
+  window.addEventListener('error', function(event) {
+    console.error(event.filename+":"+event.lineno+":"+event.colno)
+    console.error(event.message);
+    console.error(event.error);
+  });
+
+  window.addEventListener('unhandledrejection', function(event) {
+    console.error('Unhandled promise rejection:', event.reason);
+  });
 
   // enable/disable logging file (echo 1 > mnt/console.tty) 
   this.readFromPipe( '/mnt/console.tty', (data) => {

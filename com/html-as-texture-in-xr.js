@@ -7,11 +7,13 @@ if( !AFRAME.components['html-as-textre-in-xr'] ){
 
     dependencies:{
       html:        "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",  // html to AFRAME
+      //html:          "https://coderofsalvation.github.io/aframe-htmlmesh/build/aframe-html.js"
+      //html:          "com/aframe-html.js"
     },
 
     init: async function () { 
       let s = await AFRAME.utils.require(this.dependencies)
-      this.el.setAttribute("html",`html: ${this.data.domid}; cursor:#cursor`)
+      this.el.setAttribute("html",`html: ${this.data.domid}; cursor:#cursor; xrlayer: true`)
       this.el.setAttribute("visible",  AFRAME.utils.XD() == '3D' ? 'true' : 'false' )
       this.el.setAttribute("position", AFRAME.utils.XD.getPositionInFrontOfCamera(0.5) )
     },
@@ -93,9 +95,6 @@ if( !AFRAME.components['html-as-textre-in-xr'] ){
       this.sceneEl.addEventListener('exit-vr', () => AFRAME.utils.XD.toggle(false) )
       this.sceneEl.addEventListener('2D', () => this.showElements(false) )
       this.sceneEl.addEventListener('3D', () => this.showElements(true) )
-
-      // toggle immersive with ESCAPE
-      //document.body.addEventListener('keydown', (e) => e.key == 'Escape' && this.toggle() )
 
       document.head.innerHTML += `<style type="text/css">
         .XR #toggle_overlay{

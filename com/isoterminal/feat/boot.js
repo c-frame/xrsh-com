@@ -10,7 +10,7 @@ ISOTerminal.prototype.boot = async function(){
       env.push( 'export '+String(i).toUpperCase()+'="'+document.location[i]+'"')
   }
   await this.emulator.create_file("profile.browser", this.toUint8Array( env.join('\n') ) )
-  let boot = `source /mnt/profile`
+  let boot = `clear ; echo 'preparing xrsh env..'; source /mnt/profile`
   // exec hash as extra boot cmd
   if( document.location.hash.length > 1 ){ 
     boot += ` ; cmd='${decodeURI(document.location.hash.substr(1))}' && $cmd`

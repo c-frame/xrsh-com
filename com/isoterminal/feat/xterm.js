@@ -24,6 +24,8 @@ ISOTerminal.prototype.xtermInit = function(){
 
   this.addEventListener('emulator-started', function(){
     this.emulator.serial_adapter.term.element.querySelector('.xterm-viewport').style.background = 'transparent'
+    // toggle immersive with ESCAPE
+    //document.body.addEventListener('keydown', (e) => e.key == 'Escape' && this.emulator.serial_adapter.term.blur() )
   })
 }
 

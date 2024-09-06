@@ -39,16 +39,20 @@ if( typeof AFRAME != 'undefined '){
 
     init: async function(){
       this.el.object3D.visible = false
+      this.initTerminal(true)
     },
 
     requires:{
-      'window':    "com/window.js",
+      com:         "com/dom.js",
+      window:      "com/window.js",
       xtermjs:     "https://unpkg.com/@xterm/xterm@5.5.0/lib/xterm.js",
       xtermcss:    "https://unpkg.com/@xterm/xterm@5.5.0/css/xterm.css",
       v86:         "com/isoterminal/libv86.js",
+      // allow xrsh to selfcontain scene + itself
+      xhook:       "https://jpillora.com/xhook/dist/xhook.min.js",
+      selfcontain: "com/selfcontainer.js",
       // html to texture
       htmlinxr:    "com/html-as-texture-in-xr.js",
-      html:        "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",  // html to AFRAME
       // isoterminal features
       core:        "com/isoterminal/core.js",
       utils_9p:    "com/isoterminal/feat/9pfs_utils.js",
@@ -107,23 +111,31 @@ if( typeof AFRAME != 'undefined '){
                         `
     },
 
-    initTerminal: async function(){
-      if( this.instance ){
-        const el = document.querySelector('.isoterminal')
-        return console.warn('TODO: allow multiple terminals (see v86 examples)')
-      }
+    initTerminal: async function(singleton){
 
       let s = await AFRAME.utils.require(this.requires)
 
-      // instance this component
-      const instance = this.instance = this.el.cloneNode(false)
-      this.el.sceneEl.appendChild( instance )
+      this.el.setAttribute("selfcontainer","")
+
+      // *DISABLED* instance this component 
+      // rason: we only need one term for now (more = too cpu heavy)
+      let instance 
+      if( singleton ){
+        instance = this.el
+      }else{
+        if( this.instance ){
+          const el = document.querySelector('.isoterminal')
+          return console.warn('TODO: allow multiple terminals for future beefy devices(see v86 examples)')
+        }
+        instance = this.instance = this.el.cloneNode(false)
+        this.el.sceneEl.appendChild( instance )
+      }
 
       // init isoterminal
       this.isoterminal = new ISOTerminal()
 
       instance.addEventListener('DOMready', () => {
-        instance.setAttribute("window", `title: ${this.data.iso}; uid: ${instance.uid}; attach: #overlay; dom: #${instance.dom.id}`)
+        instance.setAttribute("window", `title: xrsh [booting linux iso..]; uid: ${instance.uid}; attach: #overlay; dom: #${instance.dom.id}`)
       })
 
       instance.addEventListener('window.oncreate', (e) => {
@@ -166,7 +178,11 @@ if( typeof AFRAME != 'undefined '){
 
       instance.setAttribute("dom",      "")
 
-      const focus = () => this.isoterminal.emulator.serial_adapter.term.focus() 
+      const focus = () => {
+        if( this.isoterminal?.emulator?.serial_adapter?.focus ){
+          this.isoterminal.emulator.serial_adapter.term.focus()
+        }
+      }
       instance.addEventListener('obbcollisionstarted', focus )
       this.el.sceneEl.addEventListener('enter-vr', focus )
       this.el.sceneEl.addEventListener('enter-ar', focus )
