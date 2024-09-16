@@ -32,7 +32,7 @@ if( typeof AFRAME != 'undefined '){
 
   AFRAME.registerComponent('isoterminal', {
     schema: {
-      iso:         { type:"string", "default":"com/isoterminal/images/buildroot-bzimage.bin" },
+      iso:         { type:"string", "default":"https://forgejo.isvery.ninja/assets/xrsh-buildroot/main/xrsh.iso" },
       overlayfs:   { type:"string"},
       cols:        { type: 'number',"default": 120 },
       rows:        { type: 'number',"default": 30 },
@@ -45,7 +45,16 @@ if( typeof AFRAME != 'undefined '){
 
     init: async function(){
       this.el.object3D.visible = false
-      this.initTerminal(true)
+      fetch(this.data.iso,{method: 'HEAD'})
+      .then( (res) => {
+        if( res.status != 200 ) throw 'not found'
+      })
+      .catch( (e) => {
+        console.warn(this.data.iso+" could not be loaded, loading fallback ISO URL:")
+        console.warn(this.schema.iso.default)
+        this.data.iso = this.schema.iso.default
+      })
+      .finally( () => this.initTerminal(true) )
     },
 
     requires:{
