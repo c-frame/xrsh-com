@@ -2,7 +2,14 @@ ISOTerminal.addEventListener('init', function(){
   if( typeof Terminal != 'undefined' ) this.xtermInit()
 })
 
+ISOTerminal.addEventListener('runISO', function(e){
+  let opts = e.detail
+  opts.serial_container_xtermjs = opts.screen_container
+  delete opts.screen_container
+})
+
 ISOTerminal.prototype.xtermInit = function(){
+  this.serial_input = 0 // set input to serial line 0
   let isoterm = this
   // monkeypatch Xterm (which V86 initializes) so we can add our own constructor args 
   window._Terminal = window.Terminal 
@@ -11,7 +18,8 @@ ISOTerminal.prototype.xtermInit = function(){
       cursorBlink:true,
       onSelectionChange: function(e){
         debugger
-      }
+      },
+      letterSpacing: 0
     })
 
     term.onSelectionChange( () => {
@@ -27,6 +35,14 @@ ISOTerminal.prototype.xtermInit = function(){
     // toggle immersive with ESCAPE
     //document.body.addEventListener('keydown', (e) => e.key == 'Escape' && this.emulator.serial_adapter.term.blur() )
   })
+
+  const resize = (w,h) => {
+    setTimeout( () => {
+      isoterm.xtermAutoResize(isoterm.emulator.serial_adapter.term, isoterm.instance,-2)
+    },800) // wait for resize anim
+  }
+  isoterm.instance.addEventListener('window.onresize', resize )
+  isoterm.instance.addEventListener('window.onmaximize', resize )
 }
 
 ISOTerminal.prototype.xtermAutoResize = function(term,instance,rowoffset){

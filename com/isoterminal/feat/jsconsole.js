@@ -30,14 +30,12 @@ ISOTerminal.addEventListener('emulator-started', function(){
   let emulator = this.emulator
 
   this.redirectConsole( (str,prefix) => {
-    if( emulator.log_to_tty ){
-      prefix = prefix ? prefix+' ' : ' '
-      str.trim().split("\n").map( (line) => {
-        emulator.serial_adapter.term.write( '\r\x1b[38;5;165m/dev/browser: \x1b[0m'+prefix+line+'\n' )
-      })
-      emulator.serial_adapter.term.write( '\r' )
-    }
-    emulator.fs9p.append_file( "console", str )
+    let finalStr = ""
+    prefix = prefix ? prefix+' ' : ' '
+    str.trim().split("\n").map( (line) => {
+      finalStr += '\x1b[38;5;165m/dev/browser: \x1b[0m'+prefix+line+'\n'
+    })
+    emulator.fs9p.append_file( "console", finalStr )
   })
 
   window.addEventListener('error', function(event) {

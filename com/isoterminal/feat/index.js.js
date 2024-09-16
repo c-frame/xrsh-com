@@ -5,19 +5,18 @@ ISOTerminal.addEventListener('init', function(){
     const emulator = this.emulator
 
     // unix to js device
-    this.readFromPipe( '/mnt/index.html', async (data) => {
-      const buf = await emulator.read_file("index.html")
+    this.readFromPipe( '/mnt/index.js', async (data) => {
+      const buf = await emulator.read_file("index.js")
       const decoder = new TextDecoder('utf-8');
-      const html = decoder.decode(buf)
+      const js = decoder.decode(buf)
       try{
-        let $scene = document.querySelector("a-scene")
-        let $root = document.querySelector("a-entity#root")
+        let $root = document.querySelector("script#root")
         if( !$root ){                          
-          $root = document.createElement("a-entity")
+          $root = document.createElement("script")
           $root.id = "root"               
-          $scene.appendChild($root)
+          document.body.appendChild($root)
         }                                                            
-        $root.innerHTML = html
+        $root.innerHTML = js
       }catch(e){ 
         console.error(e)
       }

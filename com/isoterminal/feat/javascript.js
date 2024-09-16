@@ -6,7 +6,7 @@ ISOTerminal.addEventListener('init', function(){
 
     // unix to js device
     this.readFromPipe( '/mnt/js', async (data) => {
-      const buf = await emulator.read_file("dev/browser/js")
+      const buf = await emulator.read_file("js")
       const decoder = new TextDecoder('utf-8');
       const script = decoder.decode(buf)
       let PID="?"

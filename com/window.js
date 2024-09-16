@@ -1,13 +1,14 @@
 AFRAME.registerComponent('window', {
   schema:{
-    title: {type:'string',"default":"title"},
-    width: {type:'string'}, // wrap
-    height: {type:'string',"default":'260px'},
-    uid:    {type:'string'},
-    attach: {type:'selector'},
-    dom:    {type:'selector'},
-    x:      {type:'string',"default":"center"},
-    y:      {type:'string',"default":"center"}
+    title:     {type:'string',"default":"title"},
+    width:     {type:'string'}, // wrap
+    height:    {type:'string',"default":'260px'},
+    uid:       {type:'string'},
+    attach:    {type:'selector'},
+    dom:       {type:'selector'},
+    max:       {type:'boolean',"default":false},
+    x:         {type:'string',"default":"center"},
+    y:         {type:'string',"default":"center"}
   },
 
   dependencies:{
@@ -33,13 +34,14 @@ AFRAME.registerComponent('window', {
       id:  this.data.uid || String(Math.random()).substr(4), // important hint for html-mesh
       root: this.data.attach || document.body,
       mount: this.data.dom,
+      max: this.data.max,
       onresize: () => this.el.emit('window.onresize',{}),
       onmaximize: () => this.el.emit('window.onmaximize',{}),
-      oncreate: () => {
+      oncreate: (e) => {
         this.el.emit('window.oncreate',{})
         // resize after the dom content has been rendered & updated 
         setTimeout( () => {
-          winbox.resize( this.el.dom.offsetWidth+'px', this.el.dom.offsetHeight+'px' )
+          if( !this.data.max ) winbox.resize( this.el.dom.offsetWidth+'px', this.el.dom.offsetHeight+'px' )
           // hint grabbable's obb-collider to track the window-object
           this.el.components['obb-collider'].data.trackedObject3D = 'components.html.el.object3D.children.0'
           this.el.components['obb-collider'].update()

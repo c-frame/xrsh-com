@@ -1,7 +1,9 @@
-function ISOTerminal(){
+function ISOTerminal(instance,opts){
   // create a neutral isoterminal object which can be decorated
   // with prototype functions and has addListener() and dispatchEvent()
-  let obj  = new EventTarget()
+  let obj      = new EventTarget()
+  obj.instance = instance
+  obj.opts     = opts 
   // register default event listeners (enable file based features like isoterminal/jsconsole.js e.g.)
   for( let event in ISOTerminal.listener )
     for( let cb in ISOTerminal.listener[event] )
@@ -30,12 +32,16 @@ if( typeof AFRAME != 'undefined '){
 
   AFRAME.registerComponent('isoterminal', {
     schema: {
-      iso:    { type:"string", "default":"com/isoterminal/images/buildroot-bzimage.bin" },
-      cols:   { type: 'number',"default": 120 },
-      rows:   { type: 'number',"default": 30 },
-      padding:{ type: 'number',"default": 18 },
-      transparent: { type:'boolean', "default":false } // need good gpu
-    },
+      iso:         { type:"string", "default":"com/isoterminal/images/buildroot-bzimage.bin" },
+      overlayfs:   { type:"string"},
+      cols:        { type: 'number',"default": 120 },
+      rows:        { type: 'number',"default": 30 },
+      padding:     { type: 'number',"default": 18 },
+      maximized:   { type: 'boolean',"default":true},
+      transparent: { type:'boolean', "default":false }, // need good gpu
+      xterm:       { type: 'boolean', "default":true }, // use xterm.js (slower)
+      memory:      { type: 'number', "default":32   }  // VM memory (in MB)
+     },
 
     init: async function(){
       this.el.object3D.visible = false
@@ -45,8 +51,6 @@ if( typeof AFRAME != 'undefined '){
     requires:{
       com:         "com/dom.js",
       window:      "com/window.js",
-      xtermjs:     "https://unpkg.com/@xterm/xterm@5.5.0/lib/xterm.js",
-      xtermcss:    "https://unpkg.com/@xterm/xterm@5.5.0/css/xterm.css",
       v86:         "com/isoterminal/libv86.js",
       // allow xrsh to selfcontain scene + itself
       xhook:       "https://jpillora.com/xhook/dist/xhook.min.js",
@@ -57,16 +61,20 @@ if( typeof AFRAME != 'undefined '){
       core:        "com/isoterminal/core.js",
       utils_9p:    "com/isoterminal/feat/9pfs_utils.js",
       boot:        "com/isoterminal/feat/boot.js",
-      xterm:       "com/isoterminal/feat/xterm.js",
       jsconsole:   "com/isoterminal/feat/jsconsole.js",
       javascript:  "com/isoterminal/feat/javascript.js",
-      index:       "com/isoterminal/feat/index.html.js",
+      indexhtml:   "com/isoterminal/feat/index.html.js",
+      indexjs:     "com/isoterminal/feat/index.js.js",
     },
 
     dom: {
       scale:   0.5,
       events:  ['click','keydown'],
-      html:    (me) => `<div class="isoterminal"></div>`,
+      html:    (me) => `<div class="isoterminal">
+                          <div id="screen" style="white-space: pre; font: 14px monospace; "></div>
+                          <canvas style="display: none"></canvas> 
+<div id="serial"></div>
+                        </div>`,
 
       css:     (me) => `.isoterminal{
                           padding: ${me.com.data.padding}px;
@@ -77,7 +85,9 @@ if( typeof AFRAME != 'undefined '){
                            white-space: pre;
                            font-size: 14px;
                            font-family: Liberation Mono,DejaVu Sans Mono,Courier New,monospace;
-                           font-weight:700;
+                           font-weight:900 !important;
+                           letter-spacing: 0 !important;
+                           line-height:16px;
                            display:inline;
                            overflow: hidden;
                         }
@@ -85,7 +95,7 @@ if( typeof AFRAME != 'undefined '){
                         .isoterminal style{ display:none }
 
                         .wb-body:has(> .isoterminal){ 
-                          background: #000F; 
+                          background: #000C; 
                           overflow:hidden;
                         }
 
@@ -113,6 +123,12 @@ if( typeof AFRAME != 'undefined '){
 
     initTerminal: async function(singleton){
 
+      if( this.data.xterm ){
+        this.requires.xtermjs  = "https://unpkg.com/@xterm/xterm@5.5.0/lib/xterm.js"
+        this.requires.xtermcss = "https://unpkg.com/@xterm/xterm@5.5.0/css/xterm.css"
+        this.requires.xterm    = "com/isoterminal/feat/xterm.js"
+      }
+
       let s = await AFRAME.utils.require(this.requires)
 
       this.el.setAttribute("selfcontainer","")
@@ -132,10 +148,13 @@ if( typeof AFRAME != 'undefined '){
       }
 
       // init isoterminal
-      this.isoterminal = new ISOTerminal()
+      this.isoterminal = new ISOTerminal(instance,this.data)
 
       instance.addEventListener('DOMready', () => {
-        instance.setAttribute("window", `title: xrsh [booting linux iso..]; uid: ${instance.uid}; attach: #overlay; dom: #${instance.dom.id}`)
+        //instance.winbox.resize(720,380)
+        let size = this.data.xterm ? 'width: 1024px; height:600px'
+                                   : 'width: 720px; height:455px'
+        instance.setAttribute("window", `title: xrsh.iso; uid: ${instance.uid}; attach: #overlay; dom: #${instance.dom.id}; ${size}`)
       })
 
       instance.addEventListener('window.oncreate', (e) => {
@@ -146,9 +165,18 @@ if( typeof AFRAME != 'undefined '){
         this.isoterminal.runISO(opts)
       })
 
-      this.isoterminal.addEventListener('ready', function(e){
+      instance.setAttribute("dom",      "")
+
+
+      this.isoterminal.addEventListener('postReady', (e)=>{
+        // bugfix: send window dimensions to xterm (xterm.js does that from dom-sizechange to xterm via escape codes)
+        if( this.data.maximized ) instance.winbox.maximize()
+        else instance.winbox.resize()
+      })
+
+      this.isoterminal.addEventListener('ready', (e)=>{
         instance.dom.classList.remove('blink')
-        instance.winbox.maximize()
+        this.isoterminal.emit('status',"running")
         setTimeout( () => { // important: after window maximize animation to get true size
           instance.setAttribute("html-as-texture-in-xr", `domid: #${instance.uid}`)  // only show aframe-html in xr 
         },1500)
@@ -159,34 +187,26 @@ if( typeof AFRAME != 'undefined '){
         const w = instance.winbox
         if(!w) return
         w.titleBak = w.titleBak || w.title
-        instance.winbox.setTitle( `${w.titleBak} [${msg}]` )
+        w.setTitle( `${w.titleBak} [${msg}]` )
       })
 
       instance.addEventListener('window.onclose', (e) => {
         if( !confirm('do you want to kill this virtual machine and all its processes?') ) e.halt = true
       })
 
-      const resize = (w,h) => {
-        if( this.isoterminal.emulator && this.isoterminal.emulator.serial_adapter ){
-          setTimeout( () => {
-            this.isoterminal.xtermAutoResize(this.isoterminal.emulator.serial_adapter.term,instance,-5)
-          },800) // wait for resize anim
-        }
-      }
+      const resize = (w,h) => { }
       instance.addEventListener('window.onresize', resize )
       instance.addEventListener('window.onmaximize', resize )
 
-      instance.setAttribute("dom",      "")
-
-      const focus = () => {
+      const focus = (e) => {
         if( this.isoterminal?.emulator?.serial_adapter?.focus ){
           this.isoterminal.emulator.serial_adapter.term.focus()
         }
       }
-      instance.addEventListener('obbcollisionstarted', focus )
+      //instance.addEventListener('obbcollisionstarted', focus )
       this.el.sceneEl.addEventListener('enter-vr', focus )
       this.el.sceneEl.addEventListener('enter-ar', focus )
-
+      
       instance.object3D.quaternion.copy( AFRAME.scenes[0].camera.quaternion ) // face towards camera
     },
 

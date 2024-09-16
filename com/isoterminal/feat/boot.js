@@ -10,12 +10,15 @@ ISOTerminal.prototype.boot = async function(){
       env.push( 'export '+String(i).toUpperCase()+'="'+document.location[i]+'"')
   }
   await this.emulator.create_file("profile.browser", this.toUint8Array( env.join('\n') ) )
-  let boot = `clear ; echo 'preparing xrsh env..'; source /mnt/profile`
-  // exec hash as extra boot cmd
-  if( document.location.hash.length > 1 ){ 
-    boot += ` ; cmd='${decodeURI(document.location.hash.substr(1))}' && $cmd`
+  if( this.serial_input == 0 ){
+    let boot = "source /etc/profile\n"
+    this.send(boot+"\n")
   }
-  this.emulator.serial0_send(boot+"\n")
-  this.emulator.serial_adapter.term.focus()
+
+  if( this.emulator.serial_adapter ) this.emulator.serial_adapter.term.focus()
+  else{
+    let els = [...document.querySelectorAll("div#screen")]
+    els.map( (el) => el.focus() )
+  }
 }
 
