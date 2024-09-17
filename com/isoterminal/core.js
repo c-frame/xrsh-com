@@ -47,7 +47,7 @@ ISOTerminal.prototype.runISO = function(opts){
     uart3:true, // /dev/ttyS3
     wasm_path:        "com/isoterminal/v86.wasm",
     memory_size:      opts.memory * 1024 * 1024,
-    vga_memory_size:  1024, //2 * 1024 * 1024,
+    vga_memory_size:  2 * 1024 * 1024,
     screen_container: opts.dom,
     //serial_container: opts.dom,
     bios: {
@@ -145,8 +145,8 @@ ISOTerminal.prototype.runISO = function(opts){
             line += chr;
         }
         if( !ready && line.match(/^(\/ #|~%|\[.*\]>)/) ){
-          this.emit('postReady')
-          setTimeout( () => this.emit('ready'), 500 )
+          this.emit('postReady',e)
+          setTimeout( () => this.emit('ready',e), 500 )
           ready = true
         }
     });    

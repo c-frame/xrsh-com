@@ -16,9 +16,7 @@ ISOTerminal.prototype.xtermInit = function(){
   window.Terminal = function(opts){
     const term = new window._Terminal({ ...opts,
       cursorBlink:true,
-      onSelectionChange: function(e){
-        debugger
-      },
+      onSelectionChange: function(e){ console.log("selectchange") },
       letterSpacing: 0
     })
 
@@ -38,7 +36,7 @@ ISOTerminal.prototype.xtermInit = function(){
 
   const resize = (w,h) => {
     setTimeout( () => {
-      isoterm.xtermAutoResize(isoterm.emulator.serial_adapter.term, isoterm.instance,-2)
+      isoterm.xtermAutoResize(isoterm.emulator.serial_adapter.term, isoterm.instance,-3)
     },800) // wait for resize anim
   }
   isoterm.instance.addEventListener('window.onresize', resize )

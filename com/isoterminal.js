@@ -37,11 +37,12 @@ if( typeof AFRAME != 'undefined '){
       cols:        { type: 'number',"default": 120 },
       rows:        { type: 'number',"default": 30 },
       padding:     { type: 'number',"default": 18 },
+      minimized:   { type: 'boolean',"default":false},
       maximized:   { type: 'boolean',"default":true},
       transparent: { type:'boolean', "default":false }, // need good gpu
       xterm:       { type: 'boolean', "default":true }, // use xterm.js (slower)
-      memory:      { type: 'number', "default":32   }  // VM memory (in MB)
-     },
+      memory:      { type: 'number', "default":48   }  // VM memory (in MB)
+    },
 
     init: async function(){
       this.el.object3D.visible = false
@@ -74,6 +75,8 @@ if( typeof AFRAME != 'undefined '){
       javascript:  "com/isoterminal/feat/javascript.js",
       indexhtml:   "com/isoterminal/feat/index.html.js",
       indexjs:     "com/isoterminal/feat/index.js.js",
+      autorestore: "com/isoterminal/feat/autorestore.js",
+      localforage: "https://cdn.rawgit.com/mozilla/localForage/master/dist/localforage.js"
     },
 
     dom: {
@@ -90,15 +93,25 @@ if( typeof AFRAME != 'undefined '){
                           width:100%;
                           height:100%;
                         }
+                        @font-face {
+                          font-family: 'Cousine';
+                          font-style: normal;
+                          font-weight: 400;
+                          src: url(./assets/Cousine.ttf) format('truetype');
+                        }
                         .isoterminal *{
                            white-space: pre;
-                           font-size: 14px;
-                           font-family: Liberation Mono,DejaVu Sans Mono,Courier New,monospace;
-                           font-weight:900 !important;
-                           letter-spacing: 0 !important;
                            line-height:16px;
                            display:inline;
                            overflow: hidden;
+                        }
+                        .isoterminal *,
+                        .xterm-dom-renderer-owner-1 .xterm-rows {
+                           font-size: 14px;
+                           font-family: "Cousine",Liberation Mono,DejaVu Sans Mono,Courier New,monospace;
+                           font-weight:500 !important;
+                           letter-spacing: 0 !important;
+                           text-shadow: 0px 0px 10px #F075;
                         }
 
                         .isoterminal style{ display:none }
@@ -106,6 +119,10 @@ if( typeof AFRAME != 'undefined '){
                         .wb-body:has(> .isoterminal){ 
                           background: #000C; 
                           overflow:hidden;
+                        }
+
+                        .XR .wb-body:has(> .isoterminal){
+                          background: #000;
                         }
 
                         .isoterminal div{ display:block; }
@@ -163,7 +180,7 @@ if( typeof AFRAME != 'undefined '){
         //instance.winbox.resize(720,380)
         let size = this.data.xterm ? 'width: 1024px; height:600px'
                                    : 'width: 720px; height:455px'
-        instance.setAttribute("window", `title: xrsh.iso; uid: ${instance.uid}; attach: #overlay; dom: #${instance.dom.id}; ${size}`)
+        instance.setAttribute("window", `title: xrsh.iso; uid: ${instance.uid}; attach: #overlay; dom: #${instance.dom.id}; ${size}; min: ${this.data.minimized}; max: ${this.data.maximized}`)
       })
 
       instance.addEventListener('window.oncreate', (e) => {
@@ -179,8 +196,11 @@ if( typeof AFRAME != 'undefined '){
 
       this.isoterminal.addEventListener('postReady', (e)=>{
         // bugfix: send window dimensions to xterm (xterm.js does that from dom-sizechange to xterm via escape codes)
-        if( this.data.maximized ) instance.winbox.maximize()
-        else instance.winbox.resize()
+        let wb = instance.winbox
+        if( this.data.maximized ){
+          wb.restore()
+          wb.maximize()
+        }else wb.resize() 
       })
 
       this.isoterminal.addEventListener('ready', (e)=>{
@@ -208,14 +228,15 @@ if( typeof AFRAME != 'undefined '){
       instance.addEventListener('window.onmaximize', resize )
 
       const focus = (e) => {
-        if( this.isoterminal?.emulator?.serial_adapter?.focus ){
+        if( this.isoterminal?.emulator?.serial_adapter?.term ){
           this.isoterminal.emulator.serial_adapter.term.focus()
         }
       }
-      //instance.addEventListener('obbcollisionstarted', focus )
+      instance.addEventListener('obbcollisionstarted', focus )
+
       this.el.sceneEl.addEventListener('enter-vr', focus )
       this.el.sceneEl.addEventListener('enter-ar', focus )
-      
+
       instance.object3D.quaternion.copy( AFRAME.scenes[0].camera.quaternion ) // face towards camera
     },
 

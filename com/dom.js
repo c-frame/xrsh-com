@@ -36,6 +36,10 @@ if( !AFRAME.components.dom ){
 
   AFRAME.registerComponent('dom',{
 
+    requires: {
+      "requestAnimationFrameXR": "com/requestAnimationFrameXR.js"
+    },
+
     init: function(){
       Object.values(this.el.components)
       .map( (c) => {
@@ -127,12 +131,9 @@ if( !AFRAME.components.dom ){
       return this
     },
 
-    stubRequestAnimationFrame: function(){
-      // stub, because WebXR with overrule this (it will not call the callback as expected in immersive mode)
-      const requestAnimationFrame = window.requestAnimationFrame
-      window.requestAnimationFrame = (cb) => {
-        setTimeout( cb, 25 )
-      }
+    stubRequestAnimationFrame: async function(){
+      let s = await AFRAME.utils.require(this.requires)
+      this.el.setAttribute("requestAnimationFrameXR","")
     }
 
   })

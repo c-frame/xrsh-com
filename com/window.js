@@ -7,6 +7,7 @@ AFRAME.registerComponent('window', {
     attach:    {type:'selector'},
     dom:       {type:'selector'},
     max:       {type:'boolean',"default":false},
+    min:       {type:'boolean',"default":false},
     x:         {type:'string',"default":"center"},
     y:         {type:'string',"default":"center"}
   },
@@ -35,6 +36,7 @@ AFRAME.registerComponent('window', {
       root: this.data.attach || document.body,
       mount: this.data.dom,
       max: this.data.max,
+      min: this.data.min,
       onresize: () => this.el.emit('window.onresize',{}),
       onmaximize: () => this.el.emit('window.onmaximize',{}),
       oncreate: (e) => {

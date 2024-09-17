@@ -1,4 +1,4 @@
-if( !AFRAME.components['html-as-textre-in-xr'] ){
+if( !AFRAME.components['html-as-texture-in-xr'] ){
 
   AFRAME.registerComponent('html-as-texture-in-xr', {
     schema: {
@@ -12,6 +12,10 @@ if( !AFRAME.components['html-as-textre-in-xr'] ){
     },
 
     init: async function () { 
+      let el = document.querySelector(this.data.domid)
+      if( ! el ){
+        return console.error("html-as-texture-in-xr: cannot get dom element "+this.data.dom.id)
+      }
       let s = await AFRAME.utils.require(this.dependencies)
       this.el.setAttribute("html",`html: ${this.data.domid}; cursor:#cursor; xrlayer: true`)
       this.el.setAttribute("visible",  AFRAME.utils.XD() == '3D' ? 'true' : 'false' )

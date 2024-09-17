@@ -1,3 +1,5 @@
+if( AFRAME.components.codemirror ) delete AFRAME.components.codemirror 
+
 AFRAME.registerComponent('codemirror', {
   schema: { 
     foo: { type:"string"}
@@ -16,7 +18,6 @@ AFRAME.registerComponent('codemirror', {
 
   requires:{
     window:        "com/window.js",
-    htmltexture:   "com/html-as-texture-in-xr.js",
     codemirror:    "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.1/codemirror.js",
     codemirrorcss: "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.35.0/codemirror.css",
     cmtheme:       "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.35.0/theme/shadowfox.css"
@@ -30,6 +31,13 @@ AFRAME.registerComponent('codemirror', {
 
     css:     (me) => `.codemirror{
                         width:100%;
+                     }
+                     .codemirror *{
+                       font-size: 14px;
+                       font-family: "Cousine",Liberation Mono,DejaVu Sans Mono,Courier New,monospace;
+                       font-weight:500 !important;
+                       letter-spacing: 0 !important;
+                       text-shadow: 0px 0px 10px #F075;
                      }
                      .wb-body + .codemirror{ overflow:hidden; }
                      .CodeMirror {
@@ -47,7 +55,6 @@ AFRAME.registerComponent('codemirror', {
     DOMready: function(e){
       console.log(`title: codemirror; uid: ${this.el.dom.id}; attach: #overlay; dom: #${this.el.dom.id};`)
       this.el.setAttribute("window", `title: codemirror; uid: ${this.el.dom.id}; attach: #overlay; dom: #${this.el.dom.id};`)
-      this.el.setAttribute("html-as-texture-in-xr", `domid: #${this.el.dom.id}`)  // only show aframe-html in xr 
       this.editor = CodeMirror( this.el.dom, {
         value: "function myScript(){return 100;}\n",
         mode:  "javascript",
@@ -61,6 +68,9 @@ AFRAME.registerComponent('codemirror', {
         }
       })
       this.editor.setOption("theme", "shadowfox")
+      setTimeout( () => {
+        this.el.setAttribute("html-as-texture-in-xr", `domid: #${this.el.dom.id}`)  // only show aframe-html in xr 
+      },1500)
     },
   },
 
