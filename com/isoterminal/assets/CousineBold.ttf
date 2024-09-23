@@ -1,0 +1,16 @@
+--2024-09-23 17:49:04--  https://fonts.gstatic.com/s/cousine/v27/d6lNkaiiRdih4SpP9Z8K6T4.ttf
+Resolving fonts.gstatic.com (fonts.gstatic.com)... 142.250.180.195, 2a00:1450:400d:806::2003
+Connecting to fonts.gstatic.com (fonts.gstatic.com)|142.250.180.195|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 287924 (281K) [font/ttf]
+Saving to: ‘d6lNkaiiRdih4SpP9Z8K6T4.ttf’
+
+     0K .......... .......... .......... .......... .......... 17% 2.31M 0s
+    50K .......... .......... .......... .......... .......... 35% 1.91M 0s
+   100K .......... .......... .......... .......... .......... 53% 9.09M 0s
+   150K .......... .......... .......... .......... .......... 71% 3.03M 0s
+   200K .......... .......... .......... .......... .......... 88% 3.40M 0s
+   250K .......... .......... .......... .                    100% 12.4M=0.09s
+
+2024-09-23 17:49:05 (3.23 MB/s) - ‘d6lNkaiiRdih4SpP9Z8K6T4.ttf’ saved [287924/287924]
+
