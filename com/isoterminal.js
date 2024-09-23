@@ -80,7 +80,7 @@ if( typeof AFRAME != 'undefined '){
     },
 
     dom: {
-      scale:   0.5,
+      scale:   0.66,
       events:  ['click','keydown'],
       html:    (me) => `<div class="isoterminal">
                           <div id="screen" style="white-space: pre; font: 14px monospace; "></div>
@@ -97,7 +97,13 @@ if( typeof AFRAME != 'undefined '){
                           font-family: 'Cousine';
                           font-style: normal;
                           font-weight: 400;
-                          src: url(./assets/Cousine.ttf) format('truetype');
+                          src: url(./com/isoterminal/assets/Cousine.ttf) format('truetype');
+                        }
+                        @font-face {
+                          font-family: 'Cousine';
+                          font-style: normal;
+                          font-weight: 700;
+                          src: url(./com/isoterminal/assets/CousineBold.ttf) format('truetype');
                         }
                         .isoterminal *{
                            white-space: pre;

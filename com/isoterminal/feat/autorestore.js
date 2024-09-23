@@ -11,7 +11,7 @@ ISOTerminal.prototype.autorestore = async function(e){
   ]).then( () => {
 
     localforage.getItem("state", async (err,stateBase64) => {
-      if( !err && confirm('continue last session?') ){
+      if( stateBase64 && !err && confirm('continue last session?') ){
         this.noboot = true // see feat/boot.js
         state = this.convert.base64ToArrayBuffer( stateBase64 )
         this.emulator.restore_state(state)

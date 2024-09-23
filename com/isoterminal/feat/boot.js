@@ -7,7 +7,7 @@ ISOTerminal.prototype.boot = async function(e){
   let env = ['export BROWSER=1']
   for ( let i in document.location ){
     if( typeof document.location[i] == 'string' )
-      env.push( 'export '+String(i).toUpperCase()+'="'+document.location[i]+'"')
+      env.push( 'export '+String(i).toUpperCase()+'="'+decodeURIComponent( document.location[i]+'"') )
   }
   await this.emulator.create_file("profile.browser", this.convert.toUint8Array( env.join('\n') ) )
 
