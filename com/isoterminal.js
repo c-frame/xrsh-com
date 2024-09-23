@@ -38,13 +38,13 @@ if( typeof AFRAME != 'undefined '){
       rows:        { type: 'number',"default": 30 },
       padding:     { type: 'number',"default": 18 },
       minimized:   { type: 'boolean',"default":false},
-      maximized:   { type: 'boolean',"default":true},
+      maximized:   { type: 'boolean',"default":false},
       transparent: { type:'boolean', "default":false }, // need good gpu
       xterm:       { type: 'boolean', "default":true }, // use xterm.js? (=slower)
       memory:      { type: 'number', "default":48   }  // VM memory (in MB)
     },
 
-    init: async function(){
+    init: function(){
       this.el.object3D.visible = false
       fetch(this.data.iso,{method: 'HEAD'})
       .then( (res) => {
@@ -125,6 +125,7 @@ if( typeof AFRAME != 'undefined '){
                         .wb-body:has(> .isoterminal){ 
                           background: #000C; 
                           overflow:hidden;
+                          border-radius:7px;
                         }
 
                         .XR .wb-body:has(> .isoterminal){
@@ -159,6 +160,7 @@ if( typeof AFRAME != 'undefined '){
         this.requires.xtermjs  = "https://unpkg.com/@xterm/xterm@5.5.0/lib/xterm.js"
         this.requires.xtermcss = "https://unpkg.com/@xterm/xterm@5.5.0/css/xterm.css"
         this.requires.xterm    = "com/isoterminal/feat/xterm.js"
+        // xterm relies on window.requestAnimationFrame which is not called in XR (xrSession.requestAnimationFrame is)
       }
 
       let s = await AFRAME.utils.require(this.requires)
@@ -198,7 +200,6 @@ if( typeof AFRAME != 'undefined '){
       })
 
       instance.setAttribute("dom",      "")
-
 
       this.isoterminal.addEventListener('postReady', (e)=>{
         // bugfix: send window dimensions to xterm (xterm.js does that from dom-sizechange to xterm via escape codes)
@@ -245,7 +246,6 @@ if( typeof AFRAME != 'undefined '){
 
       instance.object3D.quaternion.copy( AFRAME.scenes[0].camera.quaternion ) // face towards camera
     },
-
 
     events:{
 

@@ -25,8 +25,29 @@ ISOTerminal.prototype.xtermInit = function(){
       term.select(0, 0, 0)
       isoterm.emit('status','copied to clipboard')
     })
+
+    term.onRender( () => {
+      console.log("render")
+      // xterm relies on requestAnimationFrame (which does not called in immersive mode)
+      const _window = term._core._coreBrowserService._window
+      const requestAnimationFrame = _window.requestAnimationFrame
+      // luckily xterm allows a swappable window object
+      let newWindow = function(){}.bind(window)
+      for( var i in window ) newWindow[i] = window[i]
+      newWindow.requestAnimationFrame = (cb) => {
+        if( term.tid != null ) return 
+        setTimeout( () => {
+          cb()
+          term.tid = null
+        },200)
+      }
+      term._core._coreBrowserService._window = newWindow
+
+    })
+
     return term
   }
+
 
   this.addEventListener('emulator-started', function(){
     this.emulator.serial_adapter.term.element.querySelector('.xterm-viewport').style.background = 'transparent'
@@ -36,7 +57,9 @@ ISOTerminal.prototype.xtermInit = function(){
 
   const resize = (w,h) => {
     setTimeout( () => {
-      isoterm.xtermAutoResize(isoterm.emulator.serial_adapter.term, isoterm.instance,-3)
+      if( isoterm?.emulator?.serial_adapter?.term ){
+        isoterm.xtermAutoResize(isoterm.emulator.serial_adapter.term, isoterm.instance,-3)
+      }
     },800) // wait for resize anim
   }
   isoterm.instance.addEventListener('window.onresize', resize )

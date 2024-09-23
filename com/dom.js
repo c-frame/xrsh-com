@@ -59,7 +59,6 @@ if( !AFRAME.components.dom ){
       .assignUniqueID()
       .scaleDOMvsXR()
       .triggerKeyboardForInputs()
-      .stubRequestAnimationFrame()
 
       document.querySelector('#overlay').appendChild(this.el.dom)
       this.el.emit('DOMready',{el: this.el.dom})
@@ -130,11 +129,6 @@ if( !AFRAME.components.dom ){
       })
       return this
     },
-
-    stubRequestAnimationFrame: async function(){
-      let s = await AFRAME.utils.require(this.requires)
-      this.el.setAttribute("requestAnimationFrameXR","")
-    }
 
   })
 }
