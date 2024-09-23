@@ -40,7 +40,7 @@ if( typeof AFRAME != 'undefined '){
       minimized:   { type: 'boolean',"default":false},
       maximized:   { type: 'boolean',"default":true},
       transparent: { type:'boolean', "default":false }, // need good gpu
-      xterm:       { type: 'boolean', "default":true }, // use xterm.js (slower)
+      xterm:       { type: 'boolean', "default":true }, // use xterm.js? (=slower)
       memory:      { type: 'number', "default":48   }  // VM memory (in MB)
     },
 

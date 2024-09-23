@@ -54,8 +54,8 @@ AFRAME.registerComponent('window', {
         this.el.emit('window.onclose',e)
         if( e.halt ) return true 
         this.data.dom.style.display = 'none';
+        if( this.el.parentNode ) this.el.remove() //parentElement.remove( this.el )
         this.data.dom.parentElement.remove()
-        this.el.parentElement.remove( this.el )
         return false
       },
     });

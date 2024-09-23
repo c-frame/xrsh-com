@@ -10,14 +10,7 @@ ISOTerminal.addEventListener('init', function(){
       const decoder = new TextDecoder('utf-8');
       const html = decoder.decode(buf)
       try{
-        let $scene = document.querySelector("a-scene")
-        let $root = document.querySelector("a-entity#root")
-        if( !$root ){                          
-          $root = document.createElement("a-entity")
-          $root.id = "root"               
-          $scene.appendChild($root)
-        }                                                            
-        $root.innerHTML = html
+        this.runHTML(html)
       }catch(e){ 
         console.error(e)
       }
@@ -27,3 +20,13 @@ ISOTerminal.addEventListener('init', function(){
 
 })
 
+ISOTerminal.prototype.runHTML = function(html){
+  let $scene = document.querySelector("a-scene")
+  let $root = document.querySelector("a-entity#root")
+  if( !$root ){                          
+    $root = document.createElement("a-entity")
+    $root.id = "root"               
+    $scene.appendChild($root)
+  }                                                            
+  $root.innerHTML = html
+}

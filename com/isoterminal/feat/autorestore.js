@@ -2,28 +2,6 @@ ISOTerminal.addEventListener('emulator-started', function(e){
   this.autorestore(e)
 })
 
-ISOTerminal.prototype.convert = {
-
-  arrayBufferToBase64: function(buffer){
-      let binary = '';
-      const bytes = new Uint8Array(buffer);
-      const len = bytes.byteLength;
-      for (let i = 0; i < len; i++) binary += String.fromCharCode(bytes[i]);
-      return window.btoa(binary);
-  },
-
-  base64ToArrayBuffer: function(base64) {
-      const binaryString = window.atob(base64);
-      const len = binaryString.length;
-      const bytes = new Uint8Array(len);
-
-      for (let i = 0; i < len; i++) {
-          bytes[i] = binaryString.charCodeAt(i);
-      }
-      return bytes.buffer;
-  }
-}
-
 ISOTerminal.prototype.autorestore = async function(e){
 
   localforage.setDriver([
@@ -32,7 +10,7 @@ ISOTerminal.prototype.autorestore = async function(e){
   localforage.LOCALSTORAGE
   ]).then( () => {
 
-    localforage.getItem("state", (err,stateBase64) => {
+    localforage.getItem("state", async (err,stateBase64) => {
       if( !err && confirm('continue last session?') ){
         this.noboot = true // see feat/boot.js
         state = this.convert.base64ToArrayBuffer( stateBase64 )
@@ -40,7 +18,19 @@ ISOTerminal.prototype.autorestore = async function(e){
         this.emit('postReady',e)
         setTimeout( () => {
           this.emit('ready',e)
-          this.send("alert last session restored\n")
+          // press CTRL+a l  (=gnu screen redisplay)
+          setTimeout( () => this.send("l\n"),400 ) 
+          // reload index.js
+          this.emulator.read_file("root/index.js")
+          .then( this.convert.Uint8ArrayToString )
+          .then( this.runJavascript )
+          .catch( console.error )
+          // reload index.html
+          this.emulator.read_file("root/index.html")
+          .then( this.convert.Uint8ArrayToString )
+          .then( this.runHTML )
+          .catch( console.error )
+
         }, 500 )
       } 
     })
@@ -50,6 +40,13 @@ ISOTerminal.prototype.autorestore = async function(e){
       console.log( String(this.convert.arrayBufferToBase64(state)).substr(0,5) )
       localforage.setItem("state", this.convert.arrayBufferToBase64(state) )
     }
+
+    window.addEventListener("beforeunload", function (e) {
+      var confirmationMessage = "Sure you want to leave?\nTIP: enter 'save' to continue this session later";
+      (e || window.event).returnValue = confirmationMessage; //Gecko + IE
+      return confirmationMessage;                            //Webkit, Safari, Chrome
+    });
+
   })
 }
 

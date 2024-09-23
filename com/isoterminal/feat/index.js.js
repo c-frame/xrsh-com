@@ -10,13 +10,7 @@ ISOTerminal.addEventListener('init', function(){
       const decoder = new TextDecoder('utf-8');
       const js = decoder.decode(buf)
       try{
-        let $root = document.querySelector("script#root")
-        if( !$root ){                          
-          $root = document.createElement("script")
-          $root.id = "root"               
-          document.body.appendChild($root)
-        }                                                            
-        $root.innerHTML = js
+        this.runJavascript(js)
       }catch(e){ 
         console.error(e)
       }
@@ -25,4 +19,14 @@ ISOTerminal.addEventListener('init', function(){
   })  
 
 })
+
+ISOTerminal.prototype.runJavascript = function(js){
+  let $root = document.querySelector("script#root")
+  if( !$root ){                          
+    $root = document.createElement("script")
+    $root.id = "root"               
+    document.body.appendChild($root)
+  }                                                            
+  $root.innerHTML = js
+}
 
