@@ -17,21 +17,48 @@ ISOTerminal.prototype.send = function(str, ttyNr){
       this.emulator.serial_adapter.term.paste(str)
     }else this.emulator.keyboard_send_text(str) // vga screen
   }else{
-    this.toUint8Array( str ).map( (c) => this.emulator.bus.send(`serial${ttyNr}-input`, c ) )
+    this.convert.toUint8Array( str ).map( (c) => this.emulator.bus.send(`serial${ttyNr}-input`, c ) )
   }
 }
 
-ISOTerminal.prototype.toUint8Array = function(str) {
-  str = String(str) || String("")
-  // Create a new Uint8Array with the same length as the input string
-  const uint8Array = new Uint8Array(str.length);
-  
-  // Iterate over the string and populate the Uint8Array
-  for (let i = 0; i < str.length; i++) {
-      uint8Array[i] = str.charCodeAt(i);
+ISOTerminal.prototype.convert = {
+
+  arrayBufferToBase64: function(buffer){
+      let binary = '';
+      const bytes = new Uint8Array(buffer);
+      const len = bytes.byteLength;
+      for (let i = 0; i < len; i++) binary += String.fromCharCode(bytes[i]);
+      return window.btoa(binary);
+  },
+
+  base64ToArrayBuffer: function(base64) {
+      const binaryString = window.atob(base64);
+      const len = binaryString.length;
+      const bytes = new Uint8Array(len);
+
+      for (let i = 0; i < len; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+      }
+      return bytes.buffer;
+  },
+
+  toUint8Array: function(str) {
+    str = String(str) || String("")
+    // Create a new Uint8Array with the same length as the input string
+    const uint8Array = new Uint8Array(str.length);
+    
+    // Iterate over the string and populate the Uint8Array
+    for (let i = 0; i < str.length; i++) {
+        uint8Array[i] = str.charCodeAt(i);
+    }
+    return uint8Array;
+  },
+
+  Uint8ArrayToString: function(arr){
+    const decoder = new TextDecoder('utf-8'); // Specify encoding
+    return decoder.decode(arr);
   }
-  return uint8Array;
-},
+}
 
 ISOTerminal.prototype.runISO = function(opts){
 
@@ -157,11 +184,9 @@ ISOTerminal.prototype.runISO = function(opts){
 ISOTerminal.prototype.readFromPipe = function(filename,cb){
 
   this.emulator.add_listener("9p-write-end", async (opts) => {
-    const decoder = new TextDecoder('utf-8');
     if ( opts[0] == filename.replace(/.*\//,'') ){
       const buf = await this.emulator.read_file("console.tty")
-      const val = decoder.decode(buf)
-      cb(val)
+      cb( this.convert.Uint8ArrayToString(buf) )
     }
   })
 
