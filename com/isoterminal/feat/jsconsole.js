@@ -45,7 +45,8 @@ ISOTerminal.addEventListener('emulator-started', function(){
   });
 
   window.addEventListener('unhandledrejection', function(event) {
-    console.error('Unhandled promise rejection:', event.reason);
+    console.error('Unhandled promise rejection:')
+    console.error(event.reason);
   });
 
   // enable/disable logging file (echo 1 > mnt/console.tty) 

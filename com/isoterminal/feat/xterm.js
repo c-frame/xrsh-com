@@ -27,24 +27,23 @@ ISOTerminal.prototype.xtermInit = function(){
     })
 
     term.onRender( () => {
-      return
 
       // xterm relies on requestAnimationFrame (which does not called in immersive mode)
       let _window = term._core._coreBrowserService._window
       if( !_window.requestAnimationFrameAFRAME ){ // patch the planet!
 
-        _window.requestAnimationFrameAFRAME = function(cb){
-          if( term.tid != null ) clearTimeout(term.tid)
-          term.tid = setTimeout( function(){
-            console.log("render")
+//        _window.requestAnimationFrameAFRAME = function(cb){
+//          if( term.tid != null ) clearTimeout(term.tid)
+//          term.tid = setTimeout( function(){
+//            console.log("render")
+//            cb()
+//            term.tid = null
+//          },100)
+//        }
+        _window.requestAnimationFrameAFRAME = 
+          AFRAME.utils.throttleLeadingAndTrailing( function(cb){
             cb()
-            term.tid = null
-          },100)
-        }
-        //_window.requestAnimationFrameAFRAME = 
-        //  AFRAME.utils.throttleLeadingAndTrailing( function(cb){
-        //    cb()
-        //  },150 )
+          },150 )
 
         // we proxy the _window object of xterm, and reroute 
         // requestAnimationFrame to requestAnimationFrameAFRAME
