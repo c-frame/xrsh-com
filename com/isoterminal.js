@@ -151,6 +151,7 @@ if( typeof AFRAME != 'undefined '){
                           animation:fade 1000ms infinite;
                           -webkit-animation:fade 1000ms infinite;
                         }
+
                         `
     },
 

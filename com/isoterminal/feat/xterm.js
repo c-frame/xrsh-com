@@ -30,36 +30,36 @@ ISOTerminal.prototype.xtermInit = function(){
 
       // xterm relies on requestAnimationFrame (which does not called in immersive mode)
       let _window = term._core._coreBrowserService._window
-      if( !_window.requestAnimationFrameAFRAME ){ // patch the planet!
+      if( !_window._XRSH_proxied ){ // patch the planet!
 
-//        _window.requestAnimationFrameAFRAME = function(cb){
-//          if( term.tid != null ) clearTimeout(term.tid)
-//          term.tid = setTimeout( function(){
-//            console.log("render")
-//            cb()
-//            term.tid = null
-//          },100)
-//        }
-        _window.requestAnimationFrameAFRAME = 
-          AFRAME.utils.throttleLeadingAndTrailing( function(cb){
-            cb()
-          },150 )
+        //_window.requestAnimationFrameAFRAME = function(cb){
+        //  if( term.tid != null ) clearTimeout(term.tid)
+        //  term.tid = setTimeout( function(){
+        //    console.log("render")
+        //    cb()
+        //    term.tid = null
+        //  },100)
+        //}
+        const requestAnimationFrameAFRAME = AFRAME.utils.throttleLeadingAndTrailing(
+          function(cb){ cb() },150 
+        )
 
         // we proxy the _window object of xterm, and reroute 
         // requestAnimationFrame to requestAnimationFrameAFRAME
-        _window = new Proxy(_window,{
+        _window_new = new Proxy(_window,{
           get(me,k){ 
+            if( k == '_XRSH_proxied' ) return true 
             if( k == 'requestAnimationFrame' ){
-              return me.requestAnimationFrameAFRAME
+              return requestAnimationFrameAFRAME.bind(me)
             }
-            return me[k]
+            return typeof me[k] == 'function' ? me[k].bind(me) : me[k]
           },
           set(me,k,v){
             me[k] = v 
             return true
           }
         })
-        term._core._coreBrowserService._window = _window 
+        term._core._coreBrowserService._window = _window_new 
       }
 
     })
