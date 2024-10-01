@@ -1,4 +1,5 @@
 ISOTerminal.addEventListener('emulator-started', function(e){
+  return console.log("TODO: autorestore.js")
   this.autorestore(e)
 })
 

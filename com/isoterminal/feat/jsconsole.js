@@ -27,7 +27,6 @@ ISOTerminal.prototype.redirectConsole = function(handler){
 }
 
 ISOTerminal.addEventListener('emulator-started', function(){
-  let emulator = this.emulator
 
   this.redirectConsole( (str,prefix) => {
     let finalStr = ""
@@ -35,7 +34,7 @@ ISOTerminal.addEventListener('emulator-started', function(){
     str.trim().split("\n").map( (line) => {
       finalStr += '\x1b[38;5;165m/dev/browser: \x1b[0m'+prefix+line+'\n'
     })
-    emulator.fs9p.append_file( "console", finalStr )
+    this.emit('fs9p.append_file', ["/dev/browser/console",finalStr])
   })
 
   window.addEventListener('error', function(event) {
@@ -50,10 +49,5 @@ ISOTerminal.addEventListener('emulator-started', function(){
     console.error('Unhandled promise rejection:')
     console.error(event);
   });
-
-  // enable/disable logging file (echo 1 > mnt/console.tty) 
-  this.readFromPipe( '/mnt/console.tty', (data) => {
-    emulator.log_to_tty = ( String(data).trim() == '1')
-  })
 
 })

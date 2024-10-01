@@ -1,32 +1,33 @@
-function ISOTerminal(instance,opts){
-  // create a neutral isoterminal object which can be decorated
-  // with prototype functions and has addListener() and dispatchEvent()
-  let obj      = new EventTarget()
-  obj.instance = instance
-  obj.opts     = opts 
-  // register default event listeners (enable file based features like isoterminal/jsconsole.js e.g.)
-  for( let event in ISOTerminal.listener )
-    for( let cb in ISOTerminal.listener[event] )
-      obj.addEventListener( event, ISOTerminal.listener[event][cb] )
-  // compose object with functions
-  for( let i in ISOTerminal.prototype ) obj[i] = ISOTerminal.prototype[i]
-  obj.emit('init')
-  return obj
-}
-
-ISOTerminal.prototype.emit = function(event,data){
-  data = data || false 
-  this.dispatchEvent( new CustomEvent(event, {detail: data} ) )
-}
-
-ISOTerminal.addEventListener = (event,cb) => {
-  ISOTerminal.listener = ISOTerminal.listener || {}
-  ISOTerminal.listener[event] = ISOTerminal.listener[event] || []
-  ISOTerminal.listener[event].push(cb)
-}
-
-// ISOTerminal has defacto support for AFRAME 
-// but can be decorated to work without it as well
+/* 
+ *
+ *                   css/html template                                                                                
+ *                                                                                                                     
+ *                     ┌─────────┐   ┌────────────┐  ┌─────────────┐            exit-AR                                
+ *            ┌───────►│ com/dom ┼──►│ com/window ├─►│ domrenderer │◄────────── exit-VR  ◄─┐                           
+ *            │        └─────────┘   └────────────┘  └─────▲───────┘                       │                           
+ *            │                                            │         ┌───────────────┐     │                           
+ * ┌──────────┴────────┐                             ┌─────┴──────┐  │  xterm.js     │  ┌─────────────────────────────┐
+ * │  com/isoterminal  ├────────────────────────────►│com/xterm.js│◄─┤               │  │com/html-as-texture-in-XR.js │
+ * └────────┬─┬────────┘                             └──┬──────┬▲─┘  │  xterm.css    │  └─────────────────────────────┘
+ *          │ │        ┌────────┐             ┌─────────▼──┐   ││    └───────────────┘     │     ▲                     
+ *          │ └───────►│ plane  ├─────►text───┼►canvas     │◄────────────────── enter-VR   │     │                     
+ *          │          └────────┘             └────────────┘   ││               enter-AR ◄─┘     │                     
+ *          │                                                  ││                                │                     
+ *          │                                                  ││                                │                     
+ *          │                      ISOTerminal.js              ││                                │                     
+ *          │                ┌───────────────────────────┐◄────┘│                                │                     
+ *          │                │ com/isoterminal/worker.js ├──────┘                                │                     
+ *          │                └──────────────┌────────────┤                                       │                     
+ *          │                               │ v86.js     │                                       │                     
+ *          │                               │ feat/*.js  │                                       │                     
+ *          │                               │ libv86.js  │                                       │                     
+ *          │                               └────────────┘                                       │                     
+ *          │                                                                                    │                     
+ *          └────────────────────────────────────────────────────────────────────────────────────┘                     
+ *                                                                                                                     
+ * NOTE: For convenience reasons, events are forwarded between com/isoterminal.js, worker.js and ISOTerminal
+ *       Instead of a melting pot of different functionnames, events are flowing through everything (ISOTerminal.emit())
+ */ 
 
 if( typeof AFRAME != 'undefined '){
 
@@ -68,14 +69,7 @@ if( typeof AFRAME != 'undefined '){
       // html to texture
       htmlinxr:    "com/html-as-texture-in-xr.js",
       // isoterminal features
-      core:        "com/isoterminal/core.js",
-      utils_9p:    "com/isoterminal/feat/9pfs_utils.js",
-      boot:        "com/isoterminal/feat/boot.js",
-      jsconsole:   "com/isoterminal/feat/jsconsole.js",
-      javascript:  "com/isoterminal/feat/javascript.js",
-      indexhtml:   "com/isoterminal/feat/index.html.js",
-      indexjs:     "com/isoterminal/feat/index.js.js",
-      autorestore: "com/isoterminal/feat/autorestore.js",
+      ISOTerminal: "com/isoterminal/ISOTerminal.js",
       localforage: "https://cdn.rawgit.com/mozilla/localForage/master/dist/localforage.js"
     },
 
@@ -83,9 +77,6 @@ if( typeof AFRAME != 'undefined '){
       scale:   0.66,
       events:  ['click','keydown'],
       html:    (me) => `<div class="isoterminal">
-                          <div id="screen" style="white-space: pre; font: 14px monospace; "></div>
-                          <canvas style="display: none"></canvas> 
-<div id="serial"></div>
                         </div>`,
 
       css:     (me) => `.isoterminal{
@@ -112,7 +103,8 @@ if( typeof AFRAME != 'undefined '){
                            overflow: hidden;
                         }
                         .isoterminal *,
-                        .xterm-dom-renderer-owner-1 .xterm-rows {
+                        .isotemrinal .xterm-dom-renderer-owner-1 .xterm-rows {
+                           background:transparent !important;
                            font-size: 14px;
                            font-family: "Cousine",Liberation Mono,DejaVu Sans Mono,Courier New,monospace;
                            font-weight:500 !important;
@@ -121,6 +113,11 @@ if( typeof AFRAME != 'undefined '){
                         }
 
                         .isoterminal style{ display:none }
+
+                        #overlay .winbox:has(> .isoterminal){ 
+                          background:transparent;
+                          box-shadow:none;
+                        }
 
                         .wb-body:has(> .isoterminal){ 
                           background: #000C; 
@@ -134,6 +131,11 @@ if( typeof AFRAME != 'undefined '){
 
                         .isoterminal div{ display:block; }
                         .isoterminal span{ display: inline }
+
+                        .isoterminal .xterm-helpers { 
+                          position:absolute; 
+                          opacity:0;
+                        }
 
                         @keyframes fade {
                             from { opacity: 1.0; }
@@ -158,13 +160,27 @@ if( typeof AFRAME != 'undefined '){
     initTerminal: async function(singleton){
 
       if( this.data.xterm ){
-        this.requires.xtermjs  = "https://unpkg.com/@xterm/xterm@5.5.0/lib/xterm.js"
-        this.requires.xtermcss = "https://unpkg.com/@xterm/xterm@5.5.0/css/xterm.css"
-        this.requires.xterm    = "com/isoterminal/feat/xterm.js"
-        // xterm relies on window.requestAnimationFrame which is not called in XR (xrSession.requestAnimationFrame is)
+        // why 3.12?
+        // first versions used 1.5.4, a typescript rewrite which:
+        // * does not use canvas anymore [which would be ideal for THREE.js texture]
+        // * does not allow switching between dom/canvas
+        // * only allows a standalone WebGL addon (conflicts with THREE)
+        // * heavily dependent on requestAnimationFrame (conflicts with THREE)
+        // * typescript-rewrite results in ~300k lib (instead of 96k)
+        this.requires.xtermcss = "//unpkg.com/xterm@3.12.0/dist/xterm.css",
+        this.requires.xtermjs  = "//unpkg.com/xterm@3.12.0/dist/xterm.js",
+        this.requires.xtermcss = "com/xterm.js"
       }
 
-      let s = await AFRAME.utils.require(this.requires)
+      await AFRAME.utils.require(this.requires)
+      await AFRAME.utils.require({ // ISOTerminal plugins
+        boot:          "com/isoterminal/feat/boot.js",
+        javascript:    "com/isoterminal/feat/javascript.js",
+        jsconsole:     "com/isoterminal/feat/jsconsole.js",
+        //indexhtml:   "com/isoterminal/feat/index.html.js",
+        //indexjs:     "com/isoterminal/feat/index.js.js",
+        //autorestore: "com/isoterminal/feat/autorestore.js",
+      })
 
       this.el.setAttribute("selfcontainer","")
 
@@ -194,10 +210,12 @@ if( typeof AFRAME != 'undefined '){
 
       instance.addEventListener('window.oncreate', (e) => {
         instance.dom.classList.add('blink')
+        instance.setAttribute("xterm","")
+        instance.addEventListener("xterm-input", (e) => this.isoterminal.send(e.detail,0) )
         // run iso
         let opts = {dom:instance.dom}
         for( let i in this.data ) opts[i] = this.data[i]
-        this.isoterminal.runISO(opts)
+        this.isoterminal.start(opts)
       })
 
       instance.setAttribute("dom",      "")
@@ -214,9 +232,6 @@ if( typeof AFRAME != 'undefined '){
       this.isoterminal.addEventListener('ready', (e)=>{
         instance.dom.classList.remove('blink')
         this.isoterminal.emit('status',"running")
-        setTimeout( () => { // important: after window maximize animation to get true size
-          instance.setAttribute("html-as-texture-in-xr", `domid: #${instance.uid}`)  // only show aframe-html in xr 
-        },1500)
       })
 
       this.isoterminal.addEventListener('status', function(e){
@@ -236,8 +251,8 @@ if( typeof AFRAME != 'undefined '){
       instance.addEventListener('window.onmaximize', resize )
 
       const focus = (e) => {
-        if( this.isoterminal?.emulator?.serial_adapter?.term ){
-          this.isoterminal.emulator.serial_adapter.term.focus()
+        if( this.el.components.xterm ){
+          this.el.components.xterm.term.focus()
         }
       }
       instance.addEventListener('obbcollisionstarted', focus )
@@ -256,10 +271,6 @@ if( typeof AFRAME != 'undefined '){
 
       // reactive events for this.data updates
       myvalue: function(e){ this.el.dom.querySelector('b').innerText = this.data.myvalue },
-
-      ready: function( ){
-        this.el.dom.style.display = 'none'
-      },
 
       launcher: async function(){
         this.initTerminal()

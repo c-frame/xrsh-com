@@ -27,7 +27,6 @@ ISOTerminal.prototype.xtermInit = function(){
     })
 
     term.onRender( () => {
-
       // xterm relies on requestAnimationFrame (which does not called in immersive mode)
       let _window = term._core._coreBrowserService._window
       if( !_window._XRSH_proxied ){ // patch the planet!
@@ -40,8 +39,10 @@ ISOTerminal.prototype.xtermInit = function(){
         //    term.tid = null
         //  },100)
         //}
+        this.i = 0
         const requestAnimationFrameAFRAME = AFRAME.utils.throttleLeadingAndTrailing(
-          function(cb){ cb() },150 
+          function(cb){ cb() }
+          ,150 
         )
 
         // we proxy the _window object of xterm, and reroute 
