@@ -35,8 +35,8 @@ if( typeof AFRAME != 'undefined '){
     schema: {
       iso:         { type:"string", "default":"https://forgejo.isvery.ninja/assets/xrsh-buildroot/main/xrsh.iso" },
       overlayfs:   { type:"string"},
-      cols:        { type: 'number',"default": 120 },
-      rows:        { type: 'number',"default": 30 },
+      cols:        { type: 'number',"default": 80 },
+      rows:        { type: 'number',"default": 20 },
       padding:     { type: 'number',"default": 18 },
       minimized:   { type: 'boolean',"default":false},
       maximized:   { type: 'boolean',"default":false},
@@ -74,7 +74,7 @@ if( typeof AFRAME != 'undefined '){
     },
 
     dom: {
-      scale:   0.66,
+      //scale: 0.5,
       events:  ['click','keydown'],
       html:    (me) => `<div class="isoterminal">
                         </div>`,
@@ -83,6 +83,10 @@ if( typeof AFRAME != 'undefined '){
                           padding: ${me.com.data.padding}px;
                           width:100%;
                           height:100%;
+                        }
+                        .isoterminal div{
+                          display:block;
+                          position:relative;
                         }
                         @font-face {
                           font-family: 'Cousine';
@@ -95,21 +99,6 @@ if( typeof AFRAME != 'undefined '){
                           font-style: normal;
                           font-weight: 700;
                           src: url(./com/isoterminal/assets/CousineBold.ttf) format('truetype');
-                        }
-                        .isoterminal *{
-                           white-space: pre;
-                           line-height:16px;
-                           display:inline;
-                           overflow: hidden;
-                        }
-                        .isoterminal *,
-                        .isotemrinal .xterm-dom-renderer-owner-1 .xterm-rows {
-                           background:transparent !important;
-                           font-size: 14px;
-                           font-family: "Cousine",Liberation Mono,DejaVu Sans Mono,Courier New,monospace;
-                           font-weight:500 !important;
-                           letter-spacing: 0 !important;
-                           text-shadow: 0px 0px 10px #F075;
                         }
 
                         .isoterminal style{ display:none }
@@ -128,13 +117,28 @@ if( typeof AFRAME != 'undefined '){
                         .XR .wb-body:has(> .isoterminal){
                           background: #000;
                         }
-
-                        .isoterminal div{ display:block; }
-                        .isoterminal span{ display: inline }
-
+                        .isoterminal *,
+                        .isoterminal .xterm-dom-renderer-owner-1 .xterm-rows {
+                          background:transparent !important;
+                           font-size: 14px;
+                           font-family: "Cousine",Liberation Mono,DejaVu Sans Mono,Courier New,monospace;
+                           font-weight:500 !important;
+                           text-shadow: 0px 0px 10px #F075;
+                        }
+                        .isoterminal .xterm-rows.xterm-focus .xterm-cursor.xterm-cursor-block {
+                          background-color:#a5F !important;
+                        }
+                        .isoterminal .xterm-rows div{
+                          height:8px;
+                          height:18px;
+                        }
+                        .isoterminal .xterm-rows span{
+                          width:8px;
+                        }
                         .isoterminal .xterm-helpers { 
                           position:absolute; 
                           opacity:0;
+                          top: -2000px;
                         }
 
                         @keyframes fade {
@@ -149,7 +153,8 @@ if( typeof AFRAME != 'undefined '){
                             to { opacity: 1.0; }
                         }
 
-                        .blink {
+                        .isoterminal .xterm-rows.xterm-focus .xterm-cursor.xterm-cursor-block,
+                        .blink{
                           animation:fade 1000ms infinite;
                           -webkit-animation:fade 1000ms infinite;
                         }
@@ -162,6 +167,7 @@ if( typeof AFRAME != 'undefined '){
       if( this.data.xterm ){
         // why 3.12?
         // first versions used 1.5.4, a typescript rewrite which:
+        // * acts weird with oculus browser keyboard (does not repaint properly after typing)
         // * does not use canvas anymore [which would be ideal for THREE.js texture]
         // * does not allow switching between dom/canvas
         // * only allows a standalone WebGL addon (conflicts with THREE)
@@ -177,8 +183,8 @@ if( typeof AFRAME != 'undefined '){
         boot:          "com/isoterminal/feat/boot.js",
         javascript:    "com/isoterminal/feat/javascript.js",
         jsconsole:     "com/isoterminal/feat/jsconsole.js",
-        //indexhtml:   "com/isoterminal/feat/index.html.js",
-        //indexjs:     "com/isoterminal/feat/index.js.js",
+        indexhtml:     "com/isoterminal/feat/index.html.js",
+        indexjs:       "com/isoterminal/feat/index.js.js",
         //autorestore: "com/isoterminal/feat/autorestore.js",
       })
 
@@ -202,6 +208,7 @@ if( typeof AFRAME != 'undefined '){
       this.isoterminal = new ISOTerminal(instance,this.data)
 
       instance.addEventListener('DOMready', () => {
+        //instance.setAttribute("html-as-texture-in-xr", `domid: #${this.el.dom.id}`)
         //instance.winbox.resize(720,380)
         let size = this.data.xterm ? 'width: 1024px; height:600px'
                                    : 'width: 720px; height:455px'
@@ -210,7 +217,7 @@ if( typeof AFRAME != 'undefined '){
 
       instance.addEventListener('window.oncreate', (e) => {
         instance.dom.classList.add('blink')
-        instance.setAttribute("xterm","")
+        instance.setAttribute("xterm",`cols: ${this.data.cols}; rows: ${this.data.rows}`)
         instance.addEventListener("xterm-input", (e) => this.isoterminal.send(e.detail,0) )
         // run iso
         let opts = {dom:instance.dom}
@@ -255,7 +262,7 @@ if( typeof AFRAME != 'undefined '){
           this.el.components.xterm.term.focus()
         }
       }
-      instance.addEventListener('obbcollisionstarted', focus )
+      //instance.addEventListener('obbcollisionstarted', focus )
 
       this.el.sceneEl.addEventListener('enter-vr', focus )
       this.el.sceneEl.addEventListener('enter-ar', focus )

@@ -1,23 +1,53 @@
-//ISOTerminal.prototype.exec(cmd_array,stdin){
-//  // exec(['lua'] "print \"hello\") ---> cat /dev/browser/js/stdin | lua > /dev/browser/js/stdout
-//}
+function ISOTerminal(instance,opts){
+  // create a neutral isoterminal object which can be decorated
+  // with prototype functions and has addListener() and dispatchEvent()
+  let obj      = new EventTarget()
+  obj.instance = instance
+  obj.opts     = opts 
+  // register default event listeners (enable file based features like isoterminal/jsconsole.js e.g.)
+  for( let event in ISOTerminal.listener )
+    for( let cb in ISOTerminal.listener[event] )
+      obj.addEventListener( event, ISOTerminal.listener[event][cb] )
+  // compose object with functions
+  for( let i in ISOTerminal.prototype ) obj[i] = ISOTerminal.prototype[i]
+  obj.emit('init')
+  return obj
+}
 
-ISOTerminal.prototype.serial_input = undefined; // can be set to 0,1,2,3 to define stdinput tty (xterm plugin)
+ISOTerminal.prototype.emit = function(event,data,sender){
+  data = data || false 
+  const evObj = new CustomEvent(event, {detail: data} )
+  // forward event to worker/instance/AFRAME element or component-function
+  // this feels complex, but actually keeps event- and function-names more concise in codebase
+  this.dispatchEvent( evObj )
+  if( sender !=  "instance" && this.instance                    ) this.instance.dispatchEvent(evObj)
+  if( sender !=  "worker"   && this.worker                      ) this.worker.postMessage({event,data})
+  if( sender !== undefined  && typeof this[event] == 'function' ) this[event].apply(this, data && data.push ? data : [data] )
+}
+
+ISOTerminal.addEventListener = (event,cb) => {
+  ISOTerminal.listener = ISOTerminal.listener || {}
+  ISOTerminal.listener[event] = ISOTerminal.listener[event] || []
+  ISOTerminal.listener[event].push(cb)
+}
 
 ISOTerminal.prototype.exec = function(shellscript){
-  //let ts = String(Date.now())+".job"
-  //this.emulator.create_file(ts, this.toUint8Array(shellscript) )
+  console.log("exec:"+shellscript)
   this.send(shellscript+"\n",1)
 }
 
+ISOTerminal.prototype.serial_input = 0; // can be set to 0,1,2,3 to define stdinput tty (xterm plugin)
+
 ISOTerminal.prototype.send = function(str, ttyNr){
-  if( !ttyNr ) ttyNr = this.serial_input
-  if( !ttyNr ){
+  if( ttyNr == undefined) ttyNr = this.serial_input
+  if( ttyNr == undefined ){
     if( this.emulator.serial_adapter ){
       this.emulator.serial_adapter.term.paste(str)
     }else this.emulator.keyboard_send_text(str) // vga screen
   }else{
-    this.convert.toUint8Array( str ).map( (c) => this.emulator.bus.send(`serial${ttyNr}-input`, c ) )
+    this.convert.toUint8Array( str ).map( (c) => {
+      this.worker.postMessage({event:`serial${ttyNr}-input`,data:c})
+    })
   }
 }
 
@@ -60,7 +90,7 @@ ISOTerminal.prototype.convert = {
   }
 }
 
-ISOTerminal.prototype.runISO = function(opts){
+ISOTerminal.prototype.start = function(opts){
 
   let me = this
   this.opts = {...this.opts, ...opts}
@@ -72,16 +102,16 @@ ISOTerminal.prototype.runISO = function(opts){
     uart1:true, // /dev/ttyS1
     uart2:true, // /dev/ttyS2
     uart3:true, // /dev/ttyS3
-    wasm_path:        "com/isoterminal/v86.wasm",
+    wasm_path:        "v86.wasm",
     memory_size:      opts.memory * 1024 * 1024,
     vga_memory_size:  2 * 1024 * 1024,
-    screen_container: opts.dom,
+    //screen_container: opts.dom,
     //serial_container: opts.dom,
     bios: {
-      url: "com/isoterminal/bios/seabios.bin",
+      url: "bios/seabios.bin",
     },
     vga_bios: {
-      url: "com/isoterminal/bios/vgabios.bin",
+      url: "bios/vgabios.bin",
       //urg|: "com/isoterminal/bios/VGABIOS-lgpl-latest.bin",
     },
     network_relay_url: "wss://relay.widgetry.org/",
@@ -96,9 +126,31 @@ ISOTerminal.prototype.runISO = function(opts){
     filesystem: {},
     autostart: true,
   };
-  this.emit('runISO',opts)
-  let emulator = this.emulator = new V86(opts)
 
+  this.worker = new Worker("com/isoterminal/worker.js");
+  this.worker.onmessage = (e) => {
+    const {event,data} = e.data
+    this.emit(event,data,"worker")
+  }
+
+  //this.term = new window.Terminal({
+  //  logLevel:"off",
+  //  rows: 50,
+  //  cols: 110
+  //})
+  //this.term.open( this.instance.dom )
+  //this.term.onData( (data) => {
+  //  for(let i = 0; i < data.length; i++){
+  //    this.worker.postMessage({event:"serial0-input", data: data.charCodeAt(i) })
+  //  }
+  //})
+
+  //this.instance.addEventListener('serial-output-byte', (e) => {
+  //  const byte = e.detail
+  //  this.term.write(byte)
+  //})
+
+  this.emit('runISO',opts)
   const loading = [
     'loading quantum bits and bytes',
     'preparing quantum flux capacitors',
@@ -123,71 +175,45 @@ ISOTerminal.prototype.runISO = function(opts){
     'Transcending earthly limits'
   ]
 
-  let loadmsg = loading[ Math.floor(Math.random()*1000) % loading.length ]
+  const loadmsg = loading[ Math.floor(Math.random()*1000) % loading.length ] + "..(please wait..)"
+  const text_color = "\r[38;5;129m" 
+  const text_reset = "\033[0m"
   this.emit('status',loadmsg)
-
-  // replace welcome message https://github.com/copy/v86/blob/3c77b98bc4bc7a5d51a2056ea73d7666ca50fc9d/src/browser/serial.js#L231
-  let welcome = "This is the serial console. Whatever you type or paste here will be sent to COM1"
-  let motd = "\r[38;5;129m" 
-  let msg  = `${loadmsg}, please wait..`
-  while( msg.length < welcome.length ) msg += " "
-  msg += "\n"
-  motd += msg+"\033[0m"
-
-  emulator.bus.register("emulator-started", async (e) => {
-    this.emit('emulator-started',e)
-
-    if( emulator.serial_adapter ){
-      emulator.serial_adapter.term.clear()
-      emulator.serial_adapter.term.write(motd)
-    }
+  this.emit('serial-output-string', text_color + loadmsg + text_reset + "\n\r")
 
 
-    if( me.opts.overlayfs ){
-      fetch(me.opts.overlayfs)
-      .then( (f) => {
-        f.arrayBuffer().then( (buf) => {
-          emulator.create_file('overlayfs.zip', new Uint8Array(buf) )
-        })
-      })
-    }
+  this.addEventListener('emulator-started', async (e) => {
+
+    // OVERLAY FS *FIXME*
+    //if( me.opts.overlayfs ){
+    //  fetch(me.opts.overlayfs)
+    //  .then( (f) => {
+    //    f.arrayBuffer().then( (buf) => {
+    //      emulator.create_file('overlayfs.zip', new Uint8Array(buf) )
+    //    })
+    //  })
+    //}
 
     let line = ''
     let ready = false
-    emulator.add_listener(`serial0-output-byte`, async (byte) => {
-        this.emit('${this.serial}-output-byte',byte)
+    this.addEventListener(`serial0-output-byte`, async (e) => {
+        this.emit("serial-output-byte",e.detail) // send to xterm
+        const byte = e.detail
         var chr = String.fromCharCode(byte);
-        if(chr < " " && chr !== "\n" && chr !== "\t" || chr > "~")
-        {
-            return;
-        }
+        if(chr < " " && chr !== "\n" && chr !== "\t" || chr > "~") return 
 
         if(chr === "\n")
         {
             var new_line = line;
             line = "";
         }
-        else if(chr >= " " && chr <= "~")
-        {
-            line += chr;
-        }
+        else if(chr >= " " && chr <= "~"){ line += chr }
         if( !ready && line.match(/^(\/ #|~%|\[.*\]>)/) ){
-          this.emit('postReady',e)
-          setTimeout( () => this.emit('ready',e), 500 )
+          this.emit('postReady',{})
+          setTimeout( () => this.emit('ready',{}), 500 )
           ready = true
         }
     });    
   });
-
-}
-
-ISOTerminal.prototype.readFromPipe = function(filename,cb){
-
-  this.emulator.add_listener("9p-write-end", async (opts) => {
-    if ( opts[0] == filename.replace(/.*\//,'') ){
-      const buf = await this.emulator.read_file("console.tty")
-      cb( this.convert.Uint8ArrayToString(buf) )
-    }
-  })
 
 }

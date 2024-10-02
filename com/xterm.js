@@ -1,3 +1,30 @@
+/*
+ * MIT License
+ * 
+ * Copyright (c) 2019 
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ * 2019 Mauve Ranger
+ * 2024 Leon van Kammen
+ */
+
 let terminalInstance = 0
 
 const TERMINAL_THEME = {
@@ -86,9 +113,15 @@ AFRAME.registerComponent('xterm', {
       overflow: hidden;
     `)
 
-    this.el.dom.appendChild(terminalElement)
-    //document.body.appendChild(terminalElement)
+    this.el.setAttribute("geometry",`primitive: plane; width:2; height:${this.data.rows*5/this.data.cols}*2`)
+
     this.el.terminalElement = terminalElement
+
+    // we switch between dom/canvas rendering because canvas looks pixely in nonimmersive mode
+    this.el.sceneEl.addEventListener('enter-vr', this.enterImmersive.bind(this) )
+    this.el.sceneEl.addEventListener('enter-ar', this.enterImmersive.bind(this) )
+    this.el.sceneEl.addEventListener('exit-vr',  this.exitImmersive.bind(this) )
+    this.el.sceneEl.addEventListener('exit-ar',  this.exitImmersive.bind(this) )
 
     // Build up a theme object
     const theme = Object.keys(this.data).reduce((theme, key) => {
@@ -99,9 +132,7 @@ AFRAME.registerComponent('xterm', {
       return theme
     }, {})
 
-    this.renderType = 'dom'
-
-    const term = new Terminal({
+    const term = this.term = new Terminal({
       theme: theme,
       allowTransparency: true,
       cursorBlink: true,
@@ -110,35 +141,40 @@ AFRAME.registerComponent('xterm', {
       cols: this.data.cols,
       fontSize: 14,
       lineHeight: 1.15,
-      rendererType: this.renderType 
+      rendererType: this.renderType // 'dom' // 'canvas' 
     })
 
-    this.term = term
+    this.tick = AFRAME.utils.throttle( () => {
+      if( this.el.sceneEl.renderer.xr.isPresenting ){
+        // workaround
+        // xterm relies on window.requestAnimationFrame (which is not called WebXR immersive mode)
+        this.term._core.viewport._innerRefresh()
+        this.term._core.renderer._renderDebouncer._innerRefresh() 
+      }
+    },150)
 
-    term.open(terminalElement)
-    term.focus()
+    this.term.open(terminalElement)
+    this.term.focus()
+    this.setRenderType('dom')
+
+    const refresh = term._core.renderer._renderDebouncer.refresh 
+    let scene     = this.el.sceneEl
+    term._core.renderer._renderDebouncer.refresh = function(){
+      refresh.apply(this,arguments)
+      if( scene.renderer.xr.isPresenting ){
+        this._innerRefresh()
+      }
+    }.bind(term._core.renderer._renderDebouncer)
     
     terminalElement.querySelector('.xterm-viewport').style.background = 'transparent'
 
-    ////// now we can scale  canvases to the parent element
+    // now we can scale  canvases to the parent element
     const $screen = terminalElement.querySelector('.xterm-screen') 
     $screen.style.width = '100%'
 
-    term.on('refresh', () => {
-      if( this.renderType == 'canvas' ){
-        const material = this.el.getObject3D('mesh').material
-        if (!material.map) return
-        this.canvasContext.drawImage(this.cursorCanvas, 0,0)
-        material.map.needsUpdate = true
-      }
-    })
-
+    term.on('refresh', AFRAME.utils.throttle( () => this.update(), 150 ) )
     term.on('data', (data) => {
       this.el.emit('xterm-input', data)
-    })
-
-    this.el.addEventListener('click', () => {
-      term.focus()
     })
 
     this.el.addEventListener('serial-output-byte', (e) => {
@@ -147,29 +183,81 @@ AFRAME.registerComponent('xterm', {
       this.term.write(chr)
     })
 
-    this.el.addEventListener('serial-output-string', (e) => this.term.write(e.detail) )
+    this.el.addEventListener('serial-output-string', (e) => {
+      this.term.write(e.detail) 
+    })
 
+  },
+
+  update: function(){ 
+    if( this.renderType == 'canvas' ){
+      const material = this.el.getObject3D('mesh').material
+      if (!material.map ) return 
+      if( this.cursorCanvas ) this.canvasContext.drawImage(this.cursorCanvas, 0,0)
+      material.map.needsUpdate = true
+      //material.needsUpdate = true
+    }
   },
 
   setRenderType: function(type){
 
+
     if( type.match(/(dom|canvas)/) ){
 
       if( type == 'dom'){
-        this.el.removeAttribute('material')
+        this.el.dom.appendChild(this.el.terminalElement)
+        this.term.setOption('fontSize', 14 )
+        this.term.setOption('rendererType',type )
+        this.renderType = type
       }
-
-      term.setOption('rendererType',type )
-      this.renderType = type
 
       if( type == 'canvas'){
-        this.canvas = terminalElement.querySelector('.xterm-text-layer')
-        this.canvasContext = this.canvas.getContext('2d')
-        this.cursorCanvas = terminalElement.querySelector('.xterm-cursor-layer')
-        this.el.setAttribute('material', 'transparent', true)
-        this.el.setAttribute('material', 'src', '#' + this.canvas.id)
+        this.el.appendChild(this.el.terminalElement)
+        this.term.setOption('fontSize', 48 )
+        this.term.setOption('rendererType',type )
+        this.renderType = type
+        this.update()
+        setTimeout( () => {
+          this.canvas = this.el.terminalElement.querySelector('.xterm-text-layer')
+          this.canvas.id = "xterm-canvas"
+          this.canvasContext = this.canvas.getContext('2d')
+          this.cursorCanvas = this.el.terminalElement.querySelector('.xterm-cursor-layer')
+          // Create a texture from the canvas
+          const canvasTexture = new THREE.Texture(this.canvas)
+          //canvasTexture.minFilter = THREE.LinearFilter
+          //canvasTexture.magFilter = THREE.LinearFilter
+          canvasTexture.needsUpdate = true; // Ensure the texture updates
+          let plane = this.el.getObject3D('mesh')
+          if( plane.material ) plane.material.dispose() 
+          plane.material = new THREE.MeshBasicMaterial({
+              map: canvasTexture,  // Set the texture from the canvas
+              transparent: false,   // Set transparency
+              side: THREE.DoubleSide // Set to double-sided rendering
+          });
+          this.el.getObject3D('mesh').scale.x = 0.3
+          this.el.getObject3D('mesh').scale.y = 0.3 
+          this.el.getObject3D('mesh').scale.z = 0.3 
+        },100)
       }
+        
+      this.el.terminalElement.style.opacity = type == 'canvas' ? 0 : 1
+
     }
+  },
+
+  enterImmersive: function(){
+    if( this.mode == 'immersive' ) return
+    this.el.object3D.visible = true
+    this.mode = "immersive"
+    this.setRenderType('canvas')
+    this.term.focus()
+  },
+
+  exitImmersive: function(){
+    if( this.mode == 'nonimmersive' ) return
+    this.el.object3D.visible = false
+    this.mode = "nonimmersive"
+    this.setRenderType('dom')
   },
 
 })

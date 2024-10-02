@@ -1,32 +1,30 @@
-ISOTerminal.addEventListener('init', function(){
+if( typeof emulator != 'undefined' ){
+  // inside worker-thread
 
-  this.addEventListener('emulator-started', function(e){
+  // unix to js device
+  this.emulator.readFromPipe( 'root/index.js', async (data) => {
+    const buf = await emulator.read_file("root/index.js")
+    const decoder = new TextDecoder('utf-8');
+    const js = decoder.decode(buf).replace(/^#!\/bin\/js/,'') // remove leftover shebangs if any
+    try{
+      this.postMessage({event:'runJavascript',data:[js]})
+    }catch(e){ 
+      console.error(e)
+    }
+  })
+    
 
-    const emulator = this.emulator
+}else{
+  // inside browser-thread
 
-    // unix to js device
-    this.readFromPipe( '/mnt/index.js', async (data) => {
-      const buf = await emulator.read_file("index.js")
-      const decoder = new TextDecoder('utf-8');
-      const js = decoder.decode(buf)
-      try{
-        this.runJavascript(js)
-      }catch(e){ 
-        console.error(e)
-      }
-    })
-  
-  })  
+  ISOTerminal.prototype.runJavascript = function(js){
+    let $root = document.querySelector("script#root")
+    if( !$root ){                          
+      $root = document.createElement("script")
+      $root.id = "root"               
+      document.body.appendChild($root)
+    }                                                            
+    $root.innerHTML = js
+  }
 
-})
-
-ISOTerminal.prototype.runJavascript = function(js){
-  let $root = document.querySelector("script#root")
-  if( !$root ){                          
-    $root = document.createElement("script")
-    $root.id = "root"               
-    document.body.appendChild($root)
-  }                                                            
-  $root.innerHTML = js
 }
-

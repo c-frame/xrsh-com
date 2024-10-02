@@ -1,4 +1,5 @@
 let emulator    = this.emulator
+let me          = this
 
 emulator.fs9p.update_file = async function(file,data){
     const convert = ISOTerminal.prototype.convert
@@ -17,7 +18,7 @@ emulator.fs9p.update_file = async function(file,data){
     inode.size = buf.length
     const now = Math.round(Date.now() / 1000);
     inode.atime = inode.mtime = now;
-    this.postMessage({event:'exec',data:[`touch ${file}`]}) // update inode 
+    me.postMessage({event:'exec',data:[`touch /mnt/${file}`]}) // update inode 
     return new Promise( (resolve,reject) => resolve(buf) )
 
 }

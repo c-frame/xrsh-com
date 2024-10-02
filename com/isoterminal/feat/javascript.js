@@ -24,9 +24,8 @@ if( typeof emulator != 'undefined' ){
     const {script,PID} = e.detail
     let res = (new Function(`${script}`))()
     if( res && typeof res != 'string' ) res = JSON.stringify(res,null,2)
-    // write output to 9p with PID as filename
-    // *FIXME* not flexible / robust
-    this.emit('emulator.create_file', [PID, this.convert.toUint8Array(res)] )
+    // update output to 9p with PID as filename (in /mnt/run)
+    this.emit('fs9p.update_file', [`run/${PID}`, this.convert.toUint8Array(res)] )
   })
 
 }
