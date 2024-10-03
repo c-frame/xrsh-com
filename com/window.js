@@ -63,5 +63,9 @@ AFRAME.registerComponent('window', {
 
     this.el.setAttribute("grabbable","")
 
+  },
+
+  show: function(state){
+    this.el.dom.closest('.winbox').style.display = state ? '' : 'none'
   }
 })

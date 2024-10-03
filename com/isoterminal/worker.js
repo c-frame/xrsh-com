@@ -71,8 +71,8 @@ this.runISO = function(opts){
     })
   }
 
-  //importScripts("feat/javascript.js")
-  //importScripts("feat/index.html.js")
+  importScripts("feat/javascript.js")
+  importScripts("feat/index.html.js")
 }
 /* 
  * forward events/functions so non-worker world can reach them

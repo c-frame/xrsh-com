@@ -113,7 +113,13 @@ AFRAME.registerComponent('xterm', {
       overflow: hidden;
     `)
 
-    this.el.setAttribute("geometry",`primitive: plane; width:2; height:${this.data.rows*5/this.data.cols}*2`)
+    // setup slightly bigger black backdrop (this.el.getObject3D("mesh")) 
+    // and terminal text (this.el.planeText.getObject("mesh"))
+    this.el.setAttribute("geometry",`primitive: box; width:2.07; height:${this.data.rows*5.3/this.data.cols}*2; depth: -0.12`)
+    this.el.setAttribute("material","shader:flat; color:black; opacity:0.5; transparent:true; ")
+    this.el.planeText = document.createElement('a-entity')
+    this.el.planeText.setAttribute("geometry",`primitive: plane; width:2; height:${this.data.rows*5/this.data.cols}*2`)
+    this.el.appendChild(this.el.planeText)
 
     this.el.terminalElement = terminalElement
 
@@ -148,7 +154,7 @@ AFRAME.registerComponent('xterm', {
       if( this.el.sceneEl.renderer.xr.isPresenting ){
         // workaround
         // xterm relies on window.requestAnimationFrame (which is not called WebXR immersive mode)
-        this.term._core.viewport._innerRefresh()
+        //this.term._core.viewport._innerRefresh()
         this.term._core.renderer._renderDebouncer._innerRefresh() 
       }
     },150)
@@ -156,15 +162,6 @@ AFRAME.registerComponent('xterm', {
     this.term.open(terminalElement)
     this.term.focus()
     this.setRenderType('dom')
-
-    const refresh = term._core.renderer._renderDebouncer.refresh 
-    let scene     = this.el.sceneEl
-    term._core.renderer._renderDebouncer.refresh = function(){
-      refresh.apply(this,arguments)
-      if( scene.renderer.xr.isPresenting ){
-        this._innerRefresh()
-      }
-    }.bind(term._core.renderer._renderDebouncer)
     
     terminalElement.querySelector('.xterm-viewport').style.background = 'transparent'
 
@@ -191,7 +188,7 @@ AFRAME.registerComponent('xterm', {
 
   update: function(){ 
     if( this.renderType == 'canvas' ){
-      const material = this.el.getObject3D('mesh').material
+      const material = this.el.planeText.getObject3D('mesh').material
       if (!material.map ) return 
       if( this.cursorCanvas ) this.canvasContext.drawImage(this.cursorCanvas, 0,0)
       material.map.needsUpdate = true
@@ -227,16 +224,17 @@ AFRAME.registerComponent('xterm', {
           //canvasTexture.minFilter = THREE.LinearFilter
           //canvasTexture.magFilter = THREE.LinearFilter
           canvasTexture.needsUpdate = true; // Ensure the texture updates
-          let plane = this.el.getObject3D('mesh')
+          let plane = this.el.planeText.getObject3D("mesh") //this.el.getObject3D('mesh')
           if( plane.material ) plane.material.dispose() 
           plane.material = new THREE.MeshBasicMaterial({
               map: canvasTexture,  // Set the texture from the canvas
               transparent: false,   // Set transparency
-              side: THREE.DoubleSide // Set to double-sided rendering
+              //side: THREE.DoubleSide // Set to double-sided rendering
+              //blending: THREE.AdditiveBlending
           });
-          this.el.getObject3D('mesh').scale.x = 0.3
-          this.el.getObject3D('mesh').scale.y = 0.3 
-          this.el.getObject3D('mesh').scale.z = 0.3 
+          this.el.object3D.scale.x = 0.2
+          this.el.object3D.scale.y = 0.2 
+          this.el.object3D.scale.z = 0.2 
         },100)
       }
         

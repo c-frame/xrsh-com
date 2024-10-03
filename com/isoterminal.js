@@ -42,7 +42,9 @@ if( typeof AFRAME != 'undefined '){
       maximized:   { type: 'boolean',"default":false},
       transparent: { type:'boolean', "default":false }, // need good gpu
       xterm:       { type: 'boolean', "default":true }, // use xterm.js? (=slower)
-      memory:      { type: 'number', "default":48   }  // VM memory (in MB)
+      memory:      { type: 'number', "default":48    }, // VM memory (in MB)
+      bufferLatency:{ type: 'number', "default":200  }  // bufferlatency from worker to xterm 
+                                                        // (re-uploading the canvas per character is slooow)
     },
 
     init: function(){
@@ -210,8 +212,7 @@ if( typeof AFRAME != 'undefined '){
       instance.addEventListener('DOMready', () => {
         //instance.setAttribute("html-as-texture-in-xr", `domid: #${this.el.dom.id}`)
         //instance.winbox.resize(720,380)
-        let size = this.data.xterm ? 'width: 1024px; height:600px'
-                                   : 'width: 720px; height:455px'
+        let size = `width: ${Math.floor(this.data.cols*8.65)}; height: ${Math.floor(this.data.rows*21.1)}`
         instance.setAttribute("window", `title: xrsh.iso; uid: ${instance.uid}; attach: #overlay; dom: #${instance.dom.id}; ${size}; min: ${this.data.minimized}; max: ${this.data.maximized}`)
       })
 
@@ -257,15 +258,19 @@ if( typeof AFRAME != 'undefined '){
       instance.addEventListener('window.onresize', resize )
       instance.addEventListener('window.onmaximize', resize )
 
-      const focus = (e) => {
+      const focus = (showdom) => (e) => {
         if( this.el.components.xterm ){
           this.el.components.xterm.term.focus()
         }
+        if( this.el.components.window ){
+          this.el.components.window.show( showdom )
+        }
       }
-      //instance.addEventListener('obbcollisionstarted', focus )
 
-      this.el.sceneEl.addEventListener('enter-vr', focus )
-      this.el.sceneEl.addEventListener('enter-ar', focus )
+      this.el.sceneEl.addEventListener('enter-vr', focus(false) )
+      this.el.sceneEl.addEventListener('enter-ar', focus(false) )
+      this.el.sceneEl.addEventListener('exit-vr', focus(true) )
+      this.el.sceneEl.addEventListener('exit-ar', focus(true) )
 
       instance.object3D.quaternion.copy( AFRAME.scenes[0].camera.quaternion ) // face towards camera
     },

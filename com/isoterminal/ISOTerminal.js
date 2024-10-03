@@ -32,7 +32,6 @@ ISOTerminal.addEventListener = (event,cb) => {
 }
 
 ISOTerminal.prototype.exec = function(shellscript){
-  console.log("exec:"+shellscript)
   this.send(shellscript+"\n",1)
 }
 
@@ -197,8 +196,9 @@ ISOTerminal.prototype.start = function(opts){
     let line = ''
     let ready = false
     this.addEventListener(`serial0-output-byte`, async (e) => {
-        this.emit("serial-output-byte",e.detail) // send to xterm
         const byte = e.detail
+        //this.emit("serial-output-byte",byte) // send to xterm
+        this.bufferOutput(`serial-output-byte`, byte)
         var chr = String.fromCharCode(byte);
         if(chr < " " && chr !== "\n" && chr !== "\t" || chr > "~") return 
 
@@ -206,8 +206,8 @@ ISOTerminal.prototype.start = function(opts){
         {
             var new_line = line;
             line = "";
-        }
-        else if(chr >= " " && chr <= "~"){ line += chr }
+        } else if(chr >= " " && chr <= "~"){ line += chr }
+
         if( !ready && line.match(/^(\/ #|~%|\[.*\]>)/) ){
           this.emit('postReady',{})
           setTimeout( () => this.emit('ready',{}), 500 )
@@ -216,4 +216,18 @@ ISOTerminal.prototype.start = function(opts){
     });    
   });
 
+}
+
+ISOTerminal.prototype.bufferOutput = function(type,byte){
+  this.buffer = this.buffer || {str:""}
+  if( this.buffer.id ) this.buffer.str += String.fromCharCode(byte)
+  else{
+    this.emit(type, byte )                // leading call
+    this.buffer.id = setTimeout( () => {  // trailing calls
+      if( this.buffer.str ){
+        this.emit('serial-output-string', this.buffer.str )
+      }
+      this.buffer = {str:""}
+    }, this.opts.bufferLatency || 250)
+  }
 }
