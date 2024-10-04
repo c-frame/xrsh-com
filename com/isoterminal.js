@@ -33,22 +33,25 @@ if( typeof AFRAME != 'undefined '){
 
   AFRAME.registerComponent('isoterminal', {
     schema: {
-      iso:          { type:"string", "default":"https://forgejo.isvery.ninja/assets/xrsh-buildroot/main/xrsh.iso" },
-      overlayfs:    { type:"string"},
-      cols:         { type: 'number',"default": 80 },
-      rows:         { type: 'number',"default": 20 },
-      padding:      { type: 'number',"default": 18 },
-      minimized:    { type: 'boolean',"default":false},
-      maximized:    { type: 'boolean',"default":false},
-      transparent:  { type:'boolean', "default":false }, // need good gpu
-      xterm:        { type: 'boolean', "default":true }, // use xterm.js? (=slower)
-      memory:       { type: 'number',  "default":48  }, // VM memory (in MB)
-      bufferLatency:{ type: 'number', "default":300  }, // in ms: bufferlatency from webworker to xterm (batch-update every char to texture)
-      canvasLatency:{ type: 'number', "default":300  }  // in ms: time between canvas re-draws 
+      iso:            { type:"string", "default":"https://forgejo.isvery.ninja/assets/xrsh-buildroot/main/xrsh.iso" },
+      overlayfs:      { type:"string"},
+      cols:           { type: 'number',"default": 80 },
+      rows:           { type: 'number',"default": 20 },
+      padding:        { type: 'number',"default": 18 },
+      minimized:      { type: 'boolean',"default":false},
+      maximized:      { type: 'boolean',"default":false},
+      muteUntilPrompt:{ type: 'boolean',"default":true},   // mute stdout until a prompt is detected in ISO
+      HUD:            { type: 'boolean',"default":false},  // link to camera movement 
+      transparent:    { type:'boolean', "default":false }, // need good gpu
+      xterm:          { type: 'boolean', "default":true }, // use xterm.js? (=slower)
+      memory:         { type: 'number',  "default":64  },  // VM memory (in MB)
+      bufferLatency:  { type: 'number', "default":300  },  // in ms: bufferlatency from webworker to xterm (batch-update every char to texture)
+      canvasLatency:  { type: 'number', "default":300  }   // in ms: time between canvas re-draws 
     },
 
     init: function(){
       this.el.object3D.visible = false
+      this.initHud()
       fetch(this.data.iso,{method: 'HEAD'})
       .then( (res) => {
         if( res.status != 200 ) throw 'not found'
@@ -267,12 +270,21 @@ if( typeof AFRAME != 'undefined '){
         }
       }
 
+      this.el.addEventListener('obbcollisionstarted', focus(false) )
       this.el.sceneEl.addEventListener('enter-vr', focus(false) )
       this.el.sceneEl.addEventListener('enter-ar', focus(false) )
       this.el.sceneEl.addEventListener('exit-vr', focus(true) )
       this.el.sceneEl.addEventListener('exit-ar', focus(true) )
 
       instance.object3D.quaternion.copy( AFRAME.scenes[0].camera.quaternion ) // face towards camera
+    },
+
+    initHud: function(){
+      if( AFRAME.utils.device.isMobile() ) this.data.HUD = true 
+      if( this.data.HUD ){
+        document.querySelector('[camera]').appendChild( this.el )
+        this.el.setAttribute("position","0 -0.03 -0.4")
+      }
     },
 
     events:{

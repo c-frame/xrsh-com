@@ -103,8 +103,8 @@ AFRAME.registerComponent('xterm', {
   init: function () {
     const terminalElement = document.createElement('div')
     terminalElement.setAttribute('style', `
-      width:  ${Math.floor( window.innerWidth * 0.7 )}px;
-      height: ${Math.floor( window.innerHeight * 0.7 )}px;
+      width:  800px; 
+      height: ${Math.floor( 800 * 0.527 )}px;
       overflow: hidden;
     `)
 
@@ -133,6 +133,8 @@ AFRAME.registerComponent('xterm', {
       return theme
     }, {})
 
+    this.fontSize = 14
+
     const term = this.term = new Terminal({
       logLevel:"off",
       theme: theme,
@@ -141,12 +143,13 @@ AFRAME.registerComponent('xterm', {
       disableStdin: false,
       rows: this.data.rows,
       cols: this.data.cols,
-      fontSize: 14,
+      fontSize: this.fontSize,
       lineHeight: 1.15,
+      useFlowControl: true,
       rendererType: this.renderType // 'dom' // 'canvas' 
     })
 
-    this.tick = AFRAME.utils.throttle( () => {
+    this.tick = AFRAME.utils.throttleLeadingAndTrailing( () => {
       if( this.el.sceneEl.renderer.xr.isPresenting ){
         // workaround
         // xterm relies on window.requestAnimationFrame (which is not called WebXR immersive mode)
@@ -165,7 +168,7 @@ AFRAME.registerComponent('xterm', {
     const $screen = terminalElement.querySelector('.xterm-screen') 
     $screen.style.width = '100%'
 
-    term.on('refresh', AFRAME.utils.throttle( () => this.update(), 150 ) )
+    term.on('refresh', AFRAME.utils.throttleLeadingAndTrailing( () => this.update(), 150 ) )
     term.on('data', (data) => {
       this.el.emit('xterm-input', data)
     })
@@ -200,14 +203,14 @@ AFRAME.registerComponent('xterm', {
 
       if( type == 'dom'){
         this.el.dom.appendChild(this.el.terminalElement)
-        this.term.setOption('fontSize', 14 )
+        this.term.setOption('fontSize', this.fontSize )
         this.term.setOption('rendererType',type )
         this.renderType = type
       }
 
       if( type == 'canvas'){
         this.el.appendChild(this.el.terminalElement)
-        this.term.setOption('fontSize', 48 )
+        this.term.setOption('fontSize', this.fontSize * 3 )
         this.term.setOption('rendererType',type )
         this.renderType = type
         this.update()
@@ -218,8 +221,8 @@ AFRAME.registerComponent('xterm', {
           this.cursorCanvas = this.el.terminalElement.querySelector('.xterm-cursor-layer')
           // Create a texture from the canvas
           const canvasTexture = new THREE.Texture(this.canvas)
-          //canvasTexture.minFilter = THREE.LinearFilter
-          //canvasTexture.magFilter = THREE.LinearFilter
+          //canvasTexture.minFilter = THREE.NearestFilter //LinearFilter
+          //canvasTexture.magFilter = THREE.LinearMipMapLinearFilter //THREE.NearestFilter //LinearFilter
           canvasTexture.needsUpdate = true; // Ensure the texture updates
           let plane = this.el.planeText.getObject3D("mesh") //this.el.getObject3D('mesh')
           if( plane.material ) plane.material.dispose() 

@@ -14,8 +14,7 @@ ISOTerminal.prototype.boot = async function(e){
 
   if( this.serial_input == 0 ){
     if( !this.noboot ){
-      let boot = "source /etc/profile\n"
-      this.send(boot+"\n")
+      this.send("source /etc/profile # \\o/ FOSS powa!\n")
     }
   }
 
