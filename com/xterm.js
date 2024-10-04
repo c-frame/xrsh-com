@@ -92,14 +92,9 @@ const TERMINAL_THEME = {
 
 AFRAME.registerComponent('xterm', {
   schema: Object.assign({
-    cols: {
-      type: 'number',
-      default: 110,
-    },
-    rows: {
-      type: 'number',
-      default: Math.floor( (window.innerHeight * 0.7 ) * 0.054 )
-    },
+    cols: { type: 'number', default: 110, },
+    rows: { type: 'number', default: Math.floor( (window.innerHeight * 0.7 ) * 0.054 ) },
+    canvasLatency:{ type:'number', default: 200 }
   }, TERMINAL_THEME),
 
   write: function(message) {
@@ -139,6 +134,7 @@ AFRAME.registerComponent('xterm', {
     }, {})
 
     const term = this.term = new Terminal({
+      logLevel:"off",
       theme: theme,
       allowTransparency: true,
       cursorBlink: true,
@@ -157,7 +153,7 @@ AFRAME.registerComponent('xterm', {
         //this.term._core.viewport._innerRefresh()
         this.term._core.renderer._renderDebouncer._innerRefresh() 
       }
-    },150)
+    }, this.data.canvasLatency)
 
     this.term.open(terminalElement)
     this.term.focus()
@@ -191,6 +187,7 @@ AFRAME.registerComponent('xterm', {
       const material = this.el.planeText.getObject3D('mesh').material
       if (!material.map ) return 
       if( this.cursorCanvas ) this.canvasContext.drawImage(this.cursorCanvas, 0,0)
+      else console.log("no cursorCanvas")
       material.map.needsUpdate = true
       //material.needsUpdate = true
     }

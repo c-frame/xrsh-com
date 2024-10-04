@@ -91,7 +91,7 @@ AFRAME.registerComponent('codemirror', {
 
     // component events
     DOMready: function(e){
-      this.isoterminal.emulator.read_file( this.data.file )
+      this.isoterminal.worker.postMessage.promise({event:'read_file',data: this.data.file })
       .then( this.isoterminal.convert.Uint8ArrayToString )
       .then( (str) => {
         this.createEditor( str )

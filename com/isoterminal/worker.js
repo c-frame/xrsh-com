@@ -40,15 +40,24 @@ this.runISO = function(opts){
   // event forwarding
 
   emulator.add_listener("serial0-output-byte", function(byte){
-    this.postMessage({event:"serial0-output-byte",data:byte});
+    ISOTerminal.prototype.bufferOutput(byte, (str) => { // we buffer to prevent framerate dropping
+      if( !str ) return
+      this.postMessage({event:"serial0-output-string",data:str});
+    }, opts.bufferLatency )
   }.bind(this));
 
   emulator.add_listener("serial1-output-byte", function(byte){
-    this.postMessage({event:"serial1-output-byte",data:byte});
+    ISOTerminal.prototype.bufferOutput(byte, (str) => { // we buffer to prevent framerate dropping
+      if( !str ) return
+      this.postMessage({event:"serial1-output-string",data:str});
+    }, opts.bufferLatency )
   }.bind(this));
 
   emulator.add_listener("serial2-output-byte", function(byte){
-    this.postMessage({event:"serial2-output-byte",data:byte});
+    ISOTerminal.prototype.bufferOutput(byte, (str) => { // we buffer to prevent framerate dropping
+      if( !str ) return
+      this.postMessage({event:"serial2-output-string",data:str});
+    }, opts.bufferLatency )
   }.bind(this));
 
   emulator.add_listener("emulator-started", function(){
@@ -59,8 +68,8 @@ this.runISO = function(opts){
   /* 
    * forward events/functions so non-worker world can reach them
    */
-  this['emulator.create_file'] = function(){ emulator.create_file.apply(emulator, arguments[0]) }
-  this['emulator.read_file']   = function(){ emulator.read_file.apply(emulator, arguments[0])   }
+  this['emulator.create_file']   = function(){ emulator.create_file.apply(emulator, arguments[0]) }
+  this['emulator.read_file']     = function(){ emulator.read_file.apply(emulator, arguments[0])   }
 
   // filename will be read from 9pfs: "/mnt/"+filename
   emulator.readFromPipe = function(filename,cb){
@@ -73,6 +82,7 @@ this.runISO = function(opts){
 
   importScripts("feat/javascript.js")
   importScripts("feat/index.html.js")
+  importScripts("feat/autorestore.js")
 }
 /* 
  * forward events/functions so non-worker world can reach them

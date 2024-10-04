@@ -33,18 +33,18 @@ if( typeof AFRAME != 'undefined '){
 
   AFRAME.registerComponent('isoterminal', {
     schema: {
-      iso:         { type:"string", "default":"https://forgejo.isvery.ninja/assets/xrsh-buildroot/main/xrsh.iso" },
-      overlayfs:   { type:"string"},
-      cols:        { type: 'number',"default": 80 },
-      rows:        { type: 'number',"default": 20 },
-      padding:     { type: 'number',"default": 18 },
-      minimized:   { type: 'boolean',"default":false},
-      maximized:   { type: 'boolean',"default":false},
-      transparent: { type:'boolean', "default":false }, // need good gpu
-      xterm:       { type: 'boolean', "default":true }, // use xterm.js? (=slower)
-      memory:      { type: 'number', "default":48    }, // VM memory (in MB)
-      bufferLatency:{ type: 'number', "default":200  }  // bufferlatency from worker to xterm 
-                                                        // (re-uploading the canvas per character is slooow)
+      iso:          { type:"string", "default":"https://forgejo.isvery.ninja/assets/xrsh-buildroot/main/xrsh.iso" },
+      overlayfs:    { type:"string"},
+      cols:         { type: 'number',"default": 80 },
+      rows:         { type: 'number',"default": 20 },
+      padding:      { type: 'number',"default": 18 },
+      minimized:    { type: 'boolean',"default":false},
+      maximized:    { type: 'boolean',"default":false},
+      transparent:  { type:'boolean', "default":false }, // need good gpu
+      xterm:        { type: 'boolean', "default":true }, // use xterm.js? (=slower)
+      memory:       { type: 'number',  "default":48  }, // VM memory (in MB)
+      bufferLatency:{ type: 'number', "default":300  }, // in ms: bufferlatency from webworker to xterm (batch-update every char to texture)
+      canvasLatency:{ type: 'number', "default":300  }  // in ms: time between canvas re-draws 
     },
 
     init: function(){
@@ -187,7 +187,7 @@ if( typeof AFRAME != 'undefined '){
         jsconsole:     "com/isoterminal/feat/jsconsole.js",
         indexhtml:     "com/isoterminal/feat/index.html.js",
         indexjs:       "com/isoterminal/feat/index.js.js",
-        //autorestore: "com/isoterminal/feat/autorestore.js",
+        autorestore: "com/isoterminal/feat/autorestore.js",
       })
 
       this.el.setAttribute("selfcontainer","")
@@ -218,7 +218,7 @@ if( typeof AFRAME != 'undefined '){
 
       instance.addEventListener('window.oncreate', (e) => {
         instance.dom.classList.add('blink')
-        instance.setAttribute("xterm",`cols: ${this.data.cols}; rows: ${this.data.rows}`)
+        instance.setAttribute("xterm",`cols: ${this.data.cols}; rows: ${this.data.rows}; canvasLatency: ${this.data.canvasLatency}`)
         instance.addEventListener("xterm-input", (e) => this.isoterminal.send(e.detail,0) )
         // run iso
         let opts = {dom:instance.dom}

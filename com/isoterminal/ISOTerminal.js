@@ -126,30 +126,52 @@ ISOTerminal.prototype.start = function(opts){
     autostart: true,
   };
 
+  /*
+   * the WebWorker (which runs v86)
+   *
+   */
+
   this.worker = new Worker("com/isoterminal/worker.js");
   this.worker.onmessage = (e) => {
+    const xr = this.instance.sceneEl.renderer.xr
     const {event,data} = e.data
-    this.emit(event,data,"worker")
+    const cb = (event,data) => () => {
+      if( data.promiseId ){
+        this.workerPromise.resolver(data)     // forward to promise resolver 
+      }else this.emit(event,data,"worker")    // forward event to world
+      
+    }
+    // don't let workers cause framerate dropping
+    if( xr.isPresenting ){
+      xr.getSession().requestAnimationFrame(cb(event,data))
+    }else{
+      window.requestAnimationFrame(cb(event,data))
+    }
   }
+ 
+  /*
+   * postMessage.promise basically performs this.worker.postMessage
+   * in a promise way (to easily retrieve async output)
+   */
 
-  //this.term = new window.Terminal({
-  //  logLevel:"off",
-  //  rows: 50,
-  //  cols: 110
-  //})
-  //this.term.open( this.instance.dom )
-  //this.term.onData( (data) => {
-  //  for(let i = 0; i < data.length; i++){
-  //    this.worker.postMessage({event:"serial0-input", data: data.charCodeAt(i) })
-  //  }
-  //})
+  this.worker.postMessage.promise = function(data){
+    if( typeof data != 'object' ) data = {data}
+    this.resolvers = this.resolvers || {}
+    this.id        = this.id == undefined ? 0 : this.id
+    data.id = this.id++
+    // Send id and task to WebWorker
+    this.worker.postMessage(data)
+    return new Promise(resolve => this.resolvers[data.id] = resolve);
+  }.bind(this.worker.postMessage)
 
-  //this.instance.addEventListener('serial-output-byte', (e) => {
-  //  const byte = e.detail
-  //  this.term.write(byte)
-  //})
+  this.worker.postMessage.promise.resolver = function(data){
+    if( !data || !data.promiseId ) throw 'promiseId not given'
+    this.resolvers[ data.promiseId ](data);
+    delete this.resolvers[ data.promiseId ]; // Prevent memory leak
+  }.bind(this.worker.postMessage)
 
-  this.emit('runISO',opts)
+
+  this.emit('runISO',{...opts, bufferLatency: this.opts.bufferLatency })
   const loading = [
     'loading quantum bits and bytes',
     'preparing quantum flux capacitors',
@@ -194,40 +216,34 @@ ISOTerminal.prototype.start = function(opts){
     //}
 
     let line = ''
-    let ready = false
-    this.addEventListener(`serial0-output-byte`, async (e) => {
-        const byte = e.detail
-        //this.emit("serial-output-byte",byte) // send to xterm
-        this.bufferOutput(`serial-output-byte`, byte)
-        var chr = String.fromCharCode(byte);
-        if(chr < " " && chr !== "\n" && chr !== "\t" || chr > "~") return 
+    this.ready = false
 
-        if(chr === "\n")
-        {
-            var new_line = line;
-            line = "";
-        } else if(chr >= " " && chr <= "~"){ line += chr }
+    this.addEventListener(`serial0-output-string`, async (e) => {
+      const str = e.detail
 
-        if( !ready && line.match(/^(\/ #|~%|\[.*\]>)/) ){
-          this.emit('postReady',{})
-          setTimeout( () => this.emit('ready',{}), 500 )
-          ready = true
-        }
-    });    
+      // lets scan for a prompt so we can send a 'ready' event to the world
+      if( !this.ready && str.match(/\n(\/ #|~%|\[.*\]>)/) ){
+        this.emit('postReady',{})
+        this.ready = true
+        setTimeout( () => this.emit('ready',{}), 500 )
+      }
+      if( this.ready ) this.emit('serial-output-string', e.detail )
+    })
   });
 
 }
 
-ISOTerminal.prototype.bufferOutput = function(type,byte){
-  this.buffer = this.buffer || {str:""}
-  if( this.buffer.id ) this.buffer.str += String.fromCharCode(byte)
-  else{
-    this.emit(type, byte )                // leading call
-    this.buffer.id = setTimeout( () => {  // trailing calls
-      if( this.buffer.str ){
-        this.emit('serial-output-string', this.buffer.str )
-      }
-      this.buffer = {str:""}
-    }, this.opts.bufferLatency || 250)
+ISOTerminal.prototype.bufferOutput = function(byte,cb,latency){
+  const resetBuffer = () => ({str:""})
+  this.buffer = this.buffer || resetBuffer()
+  this.buffer.str += String.fromCharCode(byte)
+  if( !this.buffer.id ){ 
+    cb(this.buffer.str)                   // send out leading call
+    this.buffer = resetBuffer()
+    this.buffer.id = setTimeout( () => {  // accumulate succesive calls 
+      if( this.buffer.str ) cb(this.buffer.str)
+      this.buffer = resetBuffer()
+    }, this.latency || 250)
   }
 }
+
