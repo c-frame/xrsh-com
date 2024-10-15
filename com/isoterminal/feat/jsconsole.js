@@ -9,17 +9,17 @@ ISOTerminal.prototype.redirectConsole = function(handler){
        log.apply(log, args);
    };
    console.error = (...args)=>{
-       const textArg = args[0].message?args[0].message:args[0];
+       const textArg = args[0]
        handler( textArg+'\n', '\x1b[31merror\x1b[0m');
        err.apply(log, args);
    };
    console.dir = (...args)=>{
-       const textArg = args[0].message?args[0].message:args[0];
+       const textArg = args[0]
        handler( JSON.stringify(textArg,null,2)+'\n');
        dir.apply(log, args);
    };
    console.warn = (...args)=>{
-       const textArg = args[0].message?args[0].message:args[0];
+       const textArg = args[0]
        handler(textArg+'\n','\x1b[38;5;208mwarn\x1b[0m');
        err.apply(log, args);
    };
@@ -46,7 +46,6 @@ ISOTerminal.addEventListener('emulator-started', function(){
   });
 
   window.addEventListener('unhandledrejection', function(event) {
-    console.error('Unhandled promise rejection:')
     console.error(event);
   });
 

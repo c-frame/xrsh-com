@@ -22,7 +22,7 @@ ISOTerminal.prototype.emit = function(event,data,sender){
     // this feels complex, but actually keeps event- and function-names more concise in codebase
     this.dispatchEvent( evObj )
     if( sender !=  "instance" && this.instance                    ) this.instance.dispatchEvent(evObj)
-    if( sender !=  "worker"   && this.worker                      ) this.worker.postMessage({event,data}, this.getTransferable(data) )
+    if( sender !=  "worker"   && this.worker                      ) this.worker.postMessage({event,data}, PromiseWorker.prototype.getTransferable(data) )
     if( sender !== undefined  && typeof this[event] == 'function' ) this[event].apply(this, data && data.push ? data : [data] )
   //})
 }
@@ -128,46 +128,30 @@ ISOTerminal.prototype.start = function(opts){
     //disable_jit: false,
     filesystem: {},
     autostart: true,
+    debug: this.opts.debug ? true : false
   };
+
+  this
+  .setupWorker(opts)
+  .startVM(opts)
+}
+
+ISOTerminal.prototype.setupWorker = function(opts){
 
   /*
    * the WebWorker (which runs v86)
    *
    */
-
-  this.worker = new Worker("com/isoterminal/worker.js");
-  this.worker.onmessage = (e) => {
-    const {event,data} = e.data
-    const cb = (event,data) => () => {
-      if( data.promiseId ){
-        this.workerPromise.resolver(data)     // forward to promise resolver 
-      }else this.emit(event,data,"worker")    // forward event to world
-      
-    }
+  this.worker = new PromiseWorker( "com/isoterminal/worker.js", (cb,event,data) => {
+    if( !data.promiseId ) this.emit(event,data,"worker")  // forward event to world
     this.preventFrameDrop( cb(event,data) )
-  }
- 
-  /*
-   * postMessage.promise basically performs this.worker.postMessage
-   * in a promise way (to easily retrieve async output)
-   */
+  })
 
-  this.worker.postMessage.promise = function(data){
-    if( typeof data != 'object' ) data = {data}
-    this.resolvers = this.resolvers || {}
-    this.id        = this.id == undefined ? 0 : this.id
-    data.id = this.id++
-    // Send id and task to WebWorker
-    this.preventFrameDrop( () => this.worker.postMessage(data,getTransferable(data) ) )
-    return new Promise(resolve => this.resolvers[data.id] = resolve);
-  }.bind(this.worker.postMessage)
+  return this
+}
 
-  this.worker.postMessage.promise.resolver = function(data){
-    if( !data || !data.promiseId ) throw 'promiseId not given'
-    this.resolvers[ data.promiseId ](data);
-    delete this.resolvers[ data.promiseId ]; // Prevent memory leak
-  }.bind(this.worker.postMessage)
 
+ISOTerminal.prototype.startVM = function(opts){
 
   this.emit('runISO',{...opts, bufferLatency: this.opts.bufferLatency })
   const loading = [
@@ -228,10 +212,10 @@ ISOTerminal.prototype.start = function(opts){
 \r[38;5;165m local-first, polyglot, unixy WebXR IDE & runtime
 \r
 \r credits: NLnet           | @nlnet@nlnet.nl 
-\r          MrDoob          | THREE.js 
-\r          Diego Marcos    | AFRAME.js
 \r          Leon van Kammen | @lvk@mastodon.online
 \r          Fabien Benetou  | @utopiah@mastodon.pirateparty.be 
+\r          Mr Doob         | THREE.js 
+\r          Diego Marcos    | AFRAME.js
   `
 
   const text_color = "\r[38;5;129m" 
@@ -303,16 +287,3 @@ ISOTerminal.prototype.preventFrameDrop = function(cb){
   }
 }
 
-ISOTerminal.prototype.getTransferable = function(data){
-  function isTransferable(obj) {
-    return obj instanceof ArrayBuffer ||
-           obj instanceof MessagePort ||
-           obj instanceof ImageBitmap ||
-           (typeof OffscreenCanvas !== 'undefined' && obj instanceof OffscreenCanvas) ||
-           (typeof ReadableStream !== 'undefined' && obj instanceof ReadableStream) ||
-           (typeof WritableStream !== 'undefined' && obj instanceof WritableStream) ||
-           (typeof TransformStream !== 'undefined' && obj instanceof TransformStream);
-  }
-  if( isTransferable(data) ) console.log("Transferable!")
-  if( isTransferable(data) ) return isTransferable(data) ? [data] : undefined
-}

@@ -2,12 +2,14 @@ importScripts("libv86.js");
 importScripts("ISOTerminal.js")  // we don't instance it again here (just use its functions)
 
 this.runISO = function(opts){
+  this.opts = opts
+  if( opts.debug ) console.dir(opts)
+
   if( opts.cdrom   && !opts.cdrom.url.match(/^http/) ) opts.cdrom.url   = "../../"+opts.cdrom.url 
   if( opts.bzimage && !opts.cdrom.url.match(/^http/) ) opts.bzimage.url = "../../"+opts.bzimage.url 
 
-  console.dir(opts)
   let emulator = this.emulator = new V86(opts); 
-  console.log("worker:started emulator")
+  console.log("[worker.js] started emulator")
 
   // event forwarding
 
@@ -40,8 +42,8 @@ this.runISO = function(opts){
   /* 
    * forward events/functions so non-worker world can reach them
    */
-  this['emulator.create_file']   = function(){ emulator.create_file.apply(emulator, arguments[0]) }
-  this['emulator.read_file']     = function(){ emulator.read_file.apply(emulator, arguments[0])   }
+  this['emulator.create_file']   = async function(){ return emulator.create_file.apply(emulator, arguments[0]) }
+  this['emulator.read_file']     = async function(){ return emulator.read_file.apply(emulator, arguments[0])   }
 
   // filename will be read from 9pfs: "/mnt/"+filename
   emulator.readFromPipe = function(filename,cb){
@@ -64,7 +66,19 @@ this['serial0-input'] = function(c){ this.emulator.bus.send( 'serial0-input', c)
 this['serial1-input'] = function(c){ this.emulator.bus.send( 'serial1-input', c) } // to /dev/ttyS1
 this['serial2-input'] = function(c){ this.emulator.bus.send( 'serial2-input', c) } // to /dev/ttyS2
 
-this.onmessage = function(e){
+this.onmessage = async function(e){
   let {event,data} = e.data
-  if( this[event] ) this[event](data)
+  if( this[event] ){
+    if( this.opts?.debug ) console.log(`[worker.js] this.${event}(${JSON.stringify(data).substr(0,60)})`)
+    try{
+      let result = await this[event](data)
+      if( data.promiseId ){ // auto-callback to ISOTerminal.worker.promise(...)
+        this.postMessage({event,data: {...data,result}})
+      } 
+    }catch(e){
+      if( data.promiseId ){ // auto-callback to ISOTerminal.worker.promise(...)
+        this.postMessage({event,data: {...data,error:e}})
+      } 
+    }
+  }
 }

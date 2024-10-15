@@ -9,7 +9,7 @@ if( typeof emulator != 'undefined' ){
   this['emulator.save_state'] = async function(){ 
     console.log("saving session")
     let state = await emulator.save_state()
-    this.postMessage({event:"state_saved",data:state})
+    this.postMessage({event:"state_saved",data:state},[state])
   }
 
 

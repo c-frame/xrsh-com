@@ -5,13 +5,13 @@
  *                     ┌─────────┐   ┌────────────┐  ┌─────────────┐            exit-AR                                
  *            ┌───────►│ com/dom ┼──►│ com/window ├─►│ domrenderer │◄────────── exit-VR  ◄─┐                           
  *            │        └─────────┘   └────────────┘  └─────▲───────┘                       │                           
- *            │                                            │         ┌───────────────┐     │                           
+ *            │                                            │         ┌───────────────┐     │  renderer=dom                           
  * ┌──────────┴────────┐                             ┌─────┴──────┐  │  xterm.js     │  ┌─────────────────────────────┐
  * │  com/isoterminal  ├────────────────────────────►│com/xterm.js│◄─┤               │  │com/html-as-texture-in-XR.js │
  * └────────┬─┬────────┘                             └──┬──────┬▲─┘  │  xterm.css    │  └─────────────────────────────┘
  *          │ │        ┌────────┐             ┌─────────▼──┐   ││    └───────────────┘     │     ▲                     
  *          │ └───────►│ plane  ├─────►text───┼►canvas     │◄────────────────── enter-VR   │     │                     
- *          │          └────────┘             └────────────┘   ││               enter-AR ◄─┘     │                     
+ *          │          └────────┘             └────────────┘   ││ renderer=canvas     enter-AR ◄─┘     │                     
  *          │                                                  ││                                │                     
  *          │                                                  ││                                │                     
  *          │                      ISOTerminal.js              ││                                │                     
@@ -40,13 +40,15 @@ if( typeof AFRAME != 'undefined '){
       padding:        { type: 'number',"default": 18 },
       minimized:      { type: 'boolean',"default":false},
       maximized:      { type: 'boolean',"default":false},
-      muteUntilPrompt:{ type: 'boolean',"default":true},   // mute stdout until a prompt is detected in ISO
-      HUD:            { type: 'boolean',"default":false},  // link to camera movement 
-      transparent:    { type:'boolean', "default":false }, // need good gpu
-      xterm:          { type: 'boolean', "default":true }, // use xterm.js? (=slower)
-      memory:         { type: 'number',  "default":64  },  // VM memory (in MB)
-      bufferLatency:  { type: 'number', "default":300  },  // in ms: bufferlatency from webworker to xterm (batch-update every char to texture)
-      canvasLatency:  { type: 'number', "default":300  }   // in ms: time between canvas re-draws 
+      muteUntilPrompt:{ type: 'boolean',"default":true},     // mute stdout until a prompt is detected in ISO
+      HUD:            { type: 'boolean',"default":false},    // link to camera movement 
+      transparent:    { type:'boolean', "default":false },   // need good gpu
+      xterm:          { type: 'boolean', "default":true },   // use xterm.js? (=slower)
+      memory:         { type: 'number',  "default":64  },    // VM memory (in MB)
+      bufferLatency:  { type: 'number', "default":300  },    // in ms: bufferlatency from webworker to xterm (batch-update every char to texture)
+      canvasLatency:  { type: 'number', "default":500  },    // in ms: time between canvas re-draws 
+      renderer:       { type: 'string', "default":"canvas" },// 'dom' or 'canvas' (=faster) for immersive mode
+      debug:          { type: 'boolean', "default":false }
     },
 
     init: function(){
@@ -65,21 +67,22 @@ if( typeof AFRAME != 'undefined '){
     },
 
     requires:{
-      com:         "com/dom.js",
-      window:      "com/window.js",
-      v86:         "com/isoterminal/libv86.js",
+      com:           "com/dom.js",
+      window:        "com/window.js",
+      v86:           "com/isoterminal/libv86.js",
       // allow xrsh to selfcontain scene + itself
-      xhook:       "https://jpillora.com/xhook/dist/xhook.min.js",
-      selfcontain: "com/selfcontainer.js",
+      xhook:         "https://jpillora.com/xhook/dist/xhook.min.js",
+      selfcontain:   "com/selfcontainer.js",
       // html to texture
-      htmlinxr:    "com/html-as-texture-in-xr.js",
+      htmlinxr:      "com/html-as-texture-in-xr.js",
       // isoterminal features
-      ISOTerminal: "com/isoterminal/ISOTerminal.js",
-      localforage: "https://cdn.rawgit.com/mozilla/localForage/master/dist/localforage.js"
+      PromiseWorker: "com/isoterminal/PromiseWorker.js",
+      ISOTerminal:   "com/isoterminal/ISOTerminal.js",
+      localforage:   "https://cdn.rawgit.com/mozilla/localForage/master/dist/localforage.js"
     },
 
     dom: {
-      //scale: 0.5,
+      scale: 1.0,
       events:  ['click','keydown'],
       html:    (me) => `<div class="isoterminal">
                         </div>`,
@@ -114,12 +117,16 @@ if( typeof AFRAME != 'undefined '){
                         }
 
                         .wb-body:has(> .isoterminal){ 
-                          background: #000C; 
+                          background: #000C;
                           overflow:hidden;
                           border-radius:7px;
                         }
 
-                        .XR .wb-body:has(> .isoterminal){
+                        .XR .wb-body:has(> .isoterminal){ 
+                          background: transparent;
+                        }
+
+                        .XR .isoterminal{
                           background: #000;
                         }
                         .isoterminal *,
@@ -210,10 +217,12 @@ if( typeof AFRAME != 'undefined '){
       }
 
       // init isoterminal
-      this.isoterminal = new ISOTerminal(instance,this.data)
+      this.term = new ISOTerminal(instance,this.data)
 
       instance.addEventListener('DOMready', () => {
-        //instance.setAttribute("html-as-texture-in-xr", `domid: #${this.el.dom.id}`)
+        if( this.data.renderer == 'dom' ){
+          instance.setAttribute("html-as-texture-in-xr", `domid: #${this.el.dom.id}`)
+        }
         //instance.winbox.resize(720,380)
         let size = `width: ${Math.floor(this.data.cols*8.65)}; height: ${Math.floor(this.data.rows*21.1)}`
         instance.setAttribute("window", `title: xrsh.iso; uid: ${instance.uid}; attach: #overlay; dom: #${instance.dom.id}; ${size}; min: ${this.data.minimized}; max: ${this.data.maximized}`)
@@ -221,17 +230,17 @@ if( typeof AFRAME != 'undefined '){
 
       instance.addEventListener('window.oncreate', (e) => {
         instance.dom.classList.add('blink')
-        instance.setAttribute("xterm",`cols: ${this.data.cols}; rows: ${this.data.rows}; canvasLatency: ${this.data.canvasLatency}`)
-        instance.addEventListener("xterm-input", (e) => this.isoterminal.send(e.detail,0) )
+        instance.setAttribute("xterm",`cols: ${this.data.cols}; rows: ${this.data.rows}; canvasLatency: ${this.data.canvasLatency}; XRrenderer: ${this.data.renderer}`)
+        instance.addEventListener("xterm-input", (e) => this.term.send(e.detail,0) )
         // run iso
         let opts = {dom:instance.dom}
         for( let i in this.data ) opts[i] = this.data[i]
-        this.isoterminal.start(opts)
+        this.term.start(opts)
       })
 
       instance.setAttribute("dom",      "")
 
-      this.isoterminal.addEventListener('postReady', (e)=>{
+      this.term.addEventListener('postReady', (e)=>{
         // bugfix: send window dimensions to xterm (xterm.js does that from dom-sizechange to xterm via escape codes)
         let wb = instance.winbox
         if( this.data.maximized ){
@@ -240,12 +249,13 @@ if( typeof AFRAME != 'undefined '){
         }else wb.resize() 
       })
 
-      this.isoterminal.addEventListener('ready', (e)=>{
+      this.term.addEventListener('ready', (e) => {
         instance.dom.classList.remove('blink')
-        this.isoterminal.emit('status',"running")
+        this.term.emit('status',"running")
+        if( this.data.debug ) this.runTests()
       })
 
-      this.isoterminal.addEventListener('status', function(e){
+      this.term.addEventListener('status', function(e){
         let msg = e.detail
         const w = instance.winbox
         if(!w) return
@@ -265,7 +275,7 @@ if( typeof AFRAME != 'undefined '){
         if( this.el.components.xterm ){
           this.el.components.xterm.term.focus()
         }
-        if( this.el.components.window ){
+        if( this.el.components.window && this.data.renderer == 'canvas'){
           this.el.components.window.show( showdom )
         }
       }
@@ -285,6 +295,14 @@ if( typeof AFRAME != 'undefined '){
         document.querySelector('[camera]').appendChild( this.el )
         this.el.setAttribute("position","0 -0.03 -0.4")
       }
+    },
+
+    runTests: async function(){
+      await AFRAME.utils.require({
+        "test_util":       "tests/util.js",
+        "test_isoterminal":"tests/ISOTerminal.js"
+      })
+      console.test.run()
     },
 
     events:{

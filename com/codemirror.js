@@ -12,7 +12,7 @@ AFRAME.registerComponent('codemirror', {
     if( this.data.file && this.data.file[0] != '/'){
       this.data.file = "root/"+this.data.file
     }
-    this.isoterminal = this.data.term.components.isoterminal.isoterminal
+    this.isoterminal = this.data.term.components.isoterminal.term
     //this.el.innerHTML = ` `
     this.requireAll()
   },
@@ -84,16 +84,18 @@ AFRAME.registerComponent('codemirror', {
     // we don't do via shellcmd: isoterminal.exec(`echo '${str}' > ${file}`,1) 
     // as it would require all kindof ugly stringescaping
     console.log("updating "+file)
-    await this.isoterminal.emulator.fs9p.update_file( file, str)
+    await this.isoterminal.worker['emulator.create_file'](file, term.convert.toUint8Array(str) )
   },
 
   events:{
 
     // component events
     DOMready: function(e){
-      this.isoterminal.worker.postMessage.promise({event:'read_file',data: this.data.file })
+
+      this.isoterminal.worker['emulator.read_file'](this.data.file)
       .then( this.isoterminal.convert.Uint8ArrayToString )
       .then( (str) => {
+          console.log("creating editor")
         this.createEditor( str )
       })
       .catch( (e) => {

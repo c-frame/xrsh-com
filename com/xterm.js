@@ -92,6 +92,7 @@ const TERMINAL_THEME = {
 
 AFRAME.registerComponent('xterm', {
   schema: Object.assign({
+    XRrenderer: { type: 'string', default: 'canvas', },
     cols: { type: 'number', default: 110, },
     rows: { type: 'number', default: Math.floor( (window.innerHeight * 0.7 ) * 0.054 ) },
     canvasLatency:{ type:'number', default: 200 }
@@ -108,21 +109,33 @@ AFRAME.registerComponent('xterm', {
       overflow: hidden;
     `)
 
-    // setup slightly bigger black backdrop (this.el.getObject3D("mesh")) 
-    // and terminal text (this.el.planeText.getObject("mesh"))
-    this.el.setAttribute("geometry",`primitive: box; width:2.07; height:${this.data.rows*5.3/this.data.cols}*2; depth: -0.12`)
-    this.el.setAttribute("material","shader:flat; color:black; opacity:0.5; transparent:true; ")
-    this.el.planeText = document.createElement('a-entity')
-    this.el.planeText.setAttribute("geometry",`primitive: plane; width:2; height:${this.data.rows*5/this.data.cols}*2`)
-    this.el.appendChild(this.el.planeText)
-
     this.el.terminalElement = terminalElement
 
-    // we switch between dom/canvas rendering because canvas looks pixely in nonimmersive mode
-    this.el.sceneEl.addEventListener('enter-vr', this.enterImmersive.bind(this) )
-    this.el.sceneEl.addEventListener('enter-ar', this.enterImmersive.bind(this) )
-    this.el.sceneEl.addEventListener('exit-vr',  this.exitImmersive.bind(this) )
-    this.el.sceneEl.addEventListener('exit-ar',  this.exitImmersive.bind(this) )
+    if( this.data.XRrenderer == 'canvas' ){
+      // setup slightly bigger black backdrop (this.el.getObject3D("mesh")) 
+      // and terminal text (this.el.planeText.getObject("mesh"))
+      this.el.setAttribute("geometry",`primitive: box; width:2.07; height:${this.data.rows*5.3/this.data.cols}*2; depth: -0.12`)
+      this.el.setAttribute("material","shader:flat; color:black; opacity:0.5; transparent:true; ")
+      this.el.planeText = document.createElement('a-entity')
+      this.el.planeText.setAttribute("geometry",`primitive: plane; width:2; height:${this.data.rows*5/this.data.cols}*2`)
+      this.el.appendChild(this.el.planeText)
+
+      // we switch between dom/canvas rendering because canvas looks pixely in nonimmersive mode
+      this.el.sceneEl.addEventListener('enter-vr', this.enterImmersive.bind(this) )
+      this.el.sceneEl.addEventListener('enter-ar', this.enterImmersive.bind(this) )
+      this.el.sceneEl.addEventListener('exit-vr',  this.exitImmersive.bind(this) )
+      this.el.sceneEl.addEventListener('exit-ar',  this.exitImmersive.bind(this) )
+
+    }
+
+    this.tick = AFRAME.utils.throttleLeadingAndTrailing( () => {
+      if( this.el.sceneEl.renderer.xr.isPresenting ){
+        // workaround
+        // xterm relies on window.requestAnimationFrame (which is not called WebXR immersive mode)
+        //this.term._core.viewport._innerRefresh()
+        this.term._core.renderer._renderDebouncer._innerRefresh() 
+      }
+    }, this.data.canvasLatency)
 
     // Build up a theme object
     const theme = Object.keys(this.data).reduce((theme, key) => {
@@ -148,15 +161,6 @@ AFRAME.registerComponent('xterm', {
       useFlowControl: true,
       rendererType: this.renderType // 'dom' // 'canvas' 
     })
-
-    this.tick = AFRAME.utils.throttleLeadingAndTrailing( () => {
-      if( this.el.sceneEl.renderer.xr.isPresenting ){
-        // workaround
-        // xterm relies on window.requestAnimationFrame (which is not called WebXR immersive mode)
-        //this.term._core.viewport._innerRefresh()
-        this.term._core.renderer._renderDebouncer._innerRefresh() 
-      }
-    }, this.data.canvasLatency)
 
     this.term.open(terminalElement)
     this.term.focus()
