@@ -13,6 +13,8 @@ emulator.fs9p.update_file = async function(file,data){
     
     const inode = this.GetInode(p.id);
     const buf   = typeof data == 'string' ? convert.toUint8Array(data) : data || ""
+    if( buf.length == 0 ) return new Promise( (resolve,reject) => resolve(data) )
+
     try{
       await this.Write(p.id,0, buf.length, buf )
       // update inode
@@ -48,5 +50,3 @@ emulator.fs9p.append_file = async function(file,data){
 
 }
 
-this['fs9p.append_file'] = function(){ emulator.fs9p.append_file.apply(emulator.fs9p, arguments[0]) }
-this['fs9p.update_file'] = function(){ emulator.fs9p.update_file.apply(emulator.fs9p, arguments[0]) }

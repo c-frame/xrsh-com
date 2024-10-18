@@ -156,6 +156,7 @@ AFRAME.registerComponent('xterm', {
       disableStdin: false,
       rows: this.data.rows,
       cols: this.data.cols,
+      fontFamily: 'Cousine, monospace',
       fontSize: this.fontSize,
       lineHeight: 1.15,
       useFlowControl: true,

@@ -34,7 +34,7 @@ ISOTerminal.addEventListener('emulator-started', function(){
     str.trim().split("\n").map( (line) => {
       finalStr += '\x1b[38;5;165m/dev/browser: \x1b[0m'+prefix+line+'\n'
     })
-    this.emit('fs9p.append_file', ["/dev/browser/console",finalStr])
+    this.emit('append_file', ["/dev/browser/console",finalStr])
   })
 
   window.addEventListener('error', function(event) {

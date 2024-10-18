@@ -44,6 +44,8 @@ this.runISO = function(opts){
    */
   this['emulator.create_file']   = async function(){ return emulator.create_file.apply(emulator, arguments[0]) }
   this['emulator.read_file']     = async function(){ return emulator.read_file.apply(emulator, arguments[0])   }
+  this['emulator.append_file']   = async function(){ emulator.fs9p.append_file.apply(emulator.fs9p, arguments[0]) }
+  this['emulator.update_file']   = async function(){ emulator.fs9p.update_file.apply(emulator.fs9p, arguments[0]) }
 
   // filename will be read from 9pfs: "/mnt/"+filename
   emulator.readFromPipe = function(filename,cb){
@@ -62,9 +64,9 @@ this.runISO = function(opts){
  * forward events/functions so non-worker world can reach them
  */
 
-this['serial0-input'] = function(c){ this.emulator.bus.send( 'serial0-input', c) } // to /dev/ttyS0
-this['serial1-input'] = function(c){ this.emulator.bus.send( 'serial1-input', c) } // to /dev/ttyS1
-this['serial2-input'] = function(c){ this.emulator.bus.send( 'serial2-input', c) } // to /dev/ttyS2
+this['serial0-input'] = function(c){ emulator.bus.send( 'serial0-input', c) } // to /dev/ttyS0
+this['serial1-input'] = function(c){ emulator.bus.send( 'serial1-input', c) } // to /dev/ttyS1
+this['serial2-input'] = function(c){ emulator.bus.send( 'serial2-input', c) } // to /dev/ttyS2
 
 this.onmessage = async function(e){
   let {event,data} = e.data

@@ -4,6 +4,8 @@ AFRAME.registerComponent('codemirror', {
   schema: { 
     file: { type:"string"},
     term: { type:"selector", default: "[isoterminal]" },
+    width: { type:"number", default:900},
+    height: { type:"number", default:700},
   },
 
   init: function () {
@@ -32,8 +34,9 @@ AFRAME.registerComponent('codemirror', {
     html:    (me) => `<div class="codemirror">
                       </div>`,
 
-    css:     (me) => `.codemirror{
-                        width:100%;
+    css:     (me) => `.CodeMirror{
+                        width: ${me.com.data.width}px !important;
+                        height: ${me.com.data.height}px !important;
                      }
                      .codemirror *{
                        font-size: 14px;
@@ -42,7 +45,8 @@ AFRAME.registerComponent('codemirror', {
                        letter-spacing: 0 !important;
                        text-shadow: 0px 0px 10px #F075;
                      }
-                     .wb-body + .codemirror{ overflow:hidden; }
+                     #${me.dom.id} .wb-body { overflow:hidden; }
+
                      .CodeMirror {
                       margin-top:18px;
                      }
@@ -53,7 +57,7 @@ AFRAME.registerComponent('codemirror', {
   },
 
   createEditor: function(value){
-    this.el.setAttribute("window", `title: codemirror; uid: ${this.el.dom.id}; attach: #overlay; dom: #${this.el.dom.id};`)
+    this.el.setAttribute("window", `title: codemirror; uid: ${this.el.dom.id}; attach: #overlay; dom: #${this.el.dom.id}; width: ${this.data.width}px; height: ${this.data.height}px`)
     this.editor = CodeMirror( this.el.dom, {
       value,
       mode: "htmlmixed",
@@ -67,10 +71,9 @@ AFRAME.registerComponent('codemirror', {
       }           
     })
     this.editor.setOption("theme", "shadowfox")
-    this.editor.updateFile = AFRAME.utils.throttleLeadingAndTrailing( (file,str) => {
-      this.updateFile(file,str), 
-      2000 
-    })
+    this.editor.updateFile = AFRAME.utils.throttle( (file,str) => {
+      this.updateFile(file,str)
+    }, 1500)
     this.editor.on('change', (instance,changeObj) => {
       this.editor.updateFile( this.data.file, instance.getValue() )
     })
@@ -84,7 +87,8 @@ AFRAME.registerComponent('codemirror', {
     // we don't do via shellcmd: isoterminal.exec(`echo '${str}' > ${file}`,1) 
     // as it would require all kindof ugly stringescaping
     console.log("updating "+file)
-    await this.isoterminal.worker['emulator.create_file'](file, term.convert.toUint8Array(str) )
+    console.log(str)
+    await this.isoterminal.worker['emulator.update_file'](file, term.convert.toUint8Array(str) )
   },
 
   events:{

@@ -34,7 +34,10 @@ if( typeof emulator != 'undefined' ){
 
           this.addEventListener('state_restored', function(){
             // simulate / fastforward boot events
-            this.postBoot( () => this.send("l\n") )
+            this.postBoot( () => {
+              this.send("l\n") 
+              this.send("hook wakeup\n")
+            })
           })
 
           this.worker.postMessage({event:'emulator.restore_state',data:state})
