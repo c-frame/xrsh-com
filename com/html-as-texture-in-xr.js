@@ -2,7 +2,8 @@ if( !AFRAME.components['html-as-texture-in-xr'] ){
 
   AFRAME.registerComponent('html-as-texture-in-xr', {
     schema: {
-      domid: { type:"string"}
+      domid: { type:"string"},
+      faceuser: { type: "boolean", default: false}
     },
 
     dependencies:{
@@ -19,7 +20,9 @@ if( !AFRAME.components['html-as-texture-in-xr'] ){
       let s = await AFRAME.utils.require(this.dependencies)
       this.el.setAttribute("html",`html: ${this.data.domid}; cursor:#cursor; xrlayer: true`)
       this.el.setAttribute("visible",  AFRAME.utils.XD() == '3D' ? 'true' : 'false' )
-      this.el.setAttribute("position", AFRAME.utils.XD.getPositionInFrontOfCamera(0.5) )
+      if( this.data.faceuser ){
+        this.el.setAttribute("position", AFRAME.utils.XD.getPositionInFrontOfCamera(0.5) )
+      }
     },
 
     manifest: { // HTML5 manifest to identify app to xrsh

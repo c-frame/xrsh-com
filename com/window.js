@@ -63,9 +63,27 @@ AFRAME.registerComponent('window', {
 
     this.el.setAttribute("grabbable","")
 
+    if( this.el.object3D.position.x == 0 && 
+        this.el.object3D.position.y == 0 && 
+        this.el.object3D.position.z == 0 ){ // position next to previous window
+      var els = [...document.querySelectorAll('[window]')]
+      if( els.length < 2 ) return
+      let current = els[ els.length-1 ]
+      let last    = els[ els.length-2 ]
+      AFRAME.utils.positionObjectNextToNeighbor( current.object3D , last.object3D, els.length )
+    }
   },
 
   show: function(state){
     this.el.dom.closest('.winbox').style.display = state ? '' : 'none'
   }
 })
+
+AFRAME.utils.positionObjectNextToNeighbor = function positionObjectNextToNeighbor(object, lastNeighbor = null, neighbours, margin = 0.45, degree = 20) {
+  // *FIXME* this could be more sophisticated :)
+  object.position.x = lastNeighbor.position.x + ((neighbours-1) * margin)
+  object.position.y = lastNeighbor.position.y 
+  object.position.z = lastNeighbor.position.z
+  //object.rotation.y += THREE.MathUtils.degToRad( (neighbours-1) * degree);
+
+}

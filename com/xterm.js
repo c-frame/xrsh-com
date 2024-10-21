@@ -114,10 +114,12 @@ AFRAME.registerComponent('xterm', {
     if( this.data.XRrenderer == 'canvas' ){
       // setup slightly bigger black backdrop (this.el.getObject3D("mesh")) 
       // and terminal text (this.el.planeText.getObject("mesh"))
-      this.el.setAttribute("geometry",`primitive: box; width:2.07; height:${this.data.rows*5.3/this.data.cols}*2; depth: -0.12`)
+      const w = 2;
+      const h = (this.data.rows*5/this.data.cols)
+      this.el.setAttribute("geometry",`primitive: box; width:${w}; height:${h}; depth: -0.12`)
       this.el.setAttribute("material","shader:flat; color:black; opacity:0.5; transparent:true; ")
       this.el.planeText = document.createElement('a-entity')
-      this.el.planeText.setAttribute("geometry",`primitive: plane; width:2; height:${this.data.rows*5/this.data.cols}*2`)
+      this.el.planeText.setAttribute("geometry",`primitive: plane; width:${w}; height:${h}`)
       this.el.appendChild(this.el.planeText)
 
       // we switch between dom/canvas rendering because canvas looks pixely in nonimmersive mode

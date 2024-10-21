@@ -43,7 +43,7 @@ if( typeof AFRAME != 'undefined '){
       muteUntilPrompt:{ type: 'boolean',"default":true},     // mute stdout until a prompt is detected in ISO
       HUD:            { type: 'boolean',"default":false},    // link to camera movement 
       transparent:    { type:'boolean', "default":false },   // need good gpu
-      xterm:          { type: 'boolean', "default":true },   // use xterm.js? (=slower)
+      xterm:          { type: 'boolean', "default":false },   // use xterm.js? (=slower)
       memory:         { type: 'number',  "default":64  },    // VM memory (in MB)
       bufferLatency:  { type: 'number', "default":300  },    // in ms: bufferlatency from webworker to xterm (batch-update every char to texture)
       canvasLatency:  { type: 'number', "default":500  },    // in ms: time between canvas re-draws 
@@ -85,16 +85,20 @@ if( typeof AFRAME != 'undefined '){
       scale: 1.0,
       events:  ['click','keydown'],
       html:    (me) => `<div class="isoterminal">
+                          <input type="text" style="opacity:0; position:absolute; width:200px; height:200px;"/>
+                          <pre></pre>
                         </div>`,
 
       css:     (me) => `.isoterminal{
                           padding: ${me.com.data.padding}px;
                           width:100%;
                           height:100%;
+                          position:relative;
                         }
                         .isoterminal div{
                           display:block;
                           position:relative;
+                          line-height:18px;
                         }
                         @font-face {
                           font-family: 'Cousine';
@@ -119,7 +123,6 @@ if( typeof AFRAME != 'undefined '){
                         .wb-body:has(> .isoterminal){ 
                           background: #000C;
                           overflow:hidden;
-                          border-radius:7px;
                         }
 
                         .XR .wb-body:has(> .isoterminal){ 
@@ -188,6 +191,8 @@ if( typeof AFRAME != 'undefined '){
         this.requires.xtermcss = "//unpkg.com/xterm@3.12.0/dist/xterm.css",
         this.requires.xtermjs  = "//unpkg.com/xterm@3.12.0/dist/xterm.js",
         this.requires.xtermcss = "com/xterm.js"
+      }else{
+        this.requires.vt100    = "com/isoterminal/VT100.js"
       }
 
       await AFRAME.utils.require(this.requires)
@@ -220,9 +225,10 @@ if( typeof AFRAME != 'undefined '){
       this.term = new ISOTerminal(instance,this.data)
 
       instance.addEventListener('DOMready', () => {
-        if( this.data.renderer == 'dom' ){
-          instance.setAttribute("html-as-texture-in-xr", `domid: #${this.el.dom.id}`)
+        if( this.data.renderer == 'dom' || !this.data.xterm ){
+          instance.setAttribute("html-as-texture-in-xr", `domid: #${this.el.dom.id}; faceuser: true`)
         }
+        if( !this.data.xterm ) this.setupVT100(instance)
         //instance.winbox.resize(720,380)
         let size = `width: ${Math.floor(this.data.cols*8.65)}; height: ${Math.floor(this.data.rows*21.1)}`
         instance.setAttribute("window", `title: xrsh.iso; uid: ${instance.uid}; attach: #overlay; dom: #${instance.dom.id}; ${size}; min: ${this.data.minimized}; max: ${this.data.maximized}`)
@@ -230,8 +236,8 @@ if( typeof AFRAME != 'undefined '){
 
       instance.addEventListener('window.oncreate', (e) => {
         instance.dom.classList.add('blink')
-        instance.setAttribute("xterm",`cols: ${this.data.cols}; rows: ${this.data.rows}; canvasLatency: ${this.data.canvasLatency}; XRrenderer: ${this.data.renderer}`)
-        instance.addEventListener("xterm-input", (e) => this.term.send(e.detail,0) )
+        if( this.data.xterm ) this.setupXterm(instance)
+
         // run iso
         let opts = {dom:instance.dom}
         for( let i in this.data ) opts[i] = this.data[i]
@@ -303,6 +309,24 @@ if( typeof AFRAME != 'undefined '){
         "test_isoterminal":"tests/ISOTerminal.js"
       })
       console.test.run()
+    },
+
+    setupXterm: function(){
+      instance.setAttribute("xterm",`cols: ${this.data.cols}; rows: ${this.data.rows}; canvasLatency: ${this.data.canvasLatency}; XRrenderer: ${this.data.renderer}`)
+      instance.addEventListener("xterm-input", (e) => this.term.send(e.detail,0) )
+    },
+
+    setupVT100: function(instance){
+      this.vt100 = new VT100(100,50, this.el.dom, 100 )
+      this.vt100.curs_set(1,true)
+      this.el.addEventListener('serial-output-byte', (e) => {
+        const byte = e.detail
+        var chr = String.fromCharCode(byte);
+        this.vt100.addchr(chr)
+      })
+      this.el.addEventListener('serial-output-string', (e) => {
+        this.vt100.write(e.detail)
+      })
     },
 
     events:{
