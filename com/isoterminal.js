@@ -35,24 +35,27 @@ if( typeof AFRAME != 'undefined '){
     schema: {
       iso:            { type:"string", "default":"https://forgejo.isvery.ninja/assets/xrsh-buildroot/main/xrsh.iso" },
       overlayfs:      { type:"string"},
-      cols:           { type: 'number',"default": 80 },
-      rows:           { type: 'number',"default": 20 },
+      width:          { type: 'number',"default": -1 },
+      height:         { type: 'number',"default": -1 },
+      lineHeight:     { type: 'number',"default": 18 },
       padding:        { type: 'number',"default": 18 },
       minimized:      { type: 'boolean',"default":false},
-      maximized:      { type: 'boolean',"default":false},
+      maximized:      { type: 'boolean',"default":true},
       muteUntilPrompt:{ type: 'boolean',"default":true},     // mute stdout until a prompt is detected in ISO
       HUD:            { type: 'boolean',"default":false},    // link to camera movement 
       transparent:    { type:'boolean', "default":false },   // need good gpu
-      xterm:          { type: 'boolean', "default":false },   // use xterm.js? (=slower)
       memory:         { type: 'number',  "default":64  },    // VM memory (in MB)
-      bufferLatency:  { type: 'number', "default":300  },    // in ms: bufferlatency from webworker to xterm (batch-update every char to texture)
-      canvasLatency:  { type: 'number', "default":500  },    // in ms: time between canvas re-draws 
-      renderer:       { type: 'string', "default":"canvas" },// 'dom' or 'canvas' (=faster) for immersive mode
+      bufferLatency:  { type: 'number', "default":30  },    // in ms: bufferlatency from webworker to xterm (batch-update every char to texture)
       debug:          { type: 'boolean', "default":false }
     },
 
     init: function(){
       this.el.object3D.visible = false
+      if( this.data.width == -1  ) this.data.width = document.body.offsetWidth
+      if( this.data.height == -1 ) this.data.height = document.body.offsetHeight
+      this.data.width -= this.data.padding*2
+      this.data.height -= this.data.padding*2
+
       this.initHud()
       fetch(this.data.iso,{method: 'HEAD'})
       .then( (res) => {
@@ -70,6 +73,7 @@ if( typeof AFRAME != 'undefined '){
       com:           "com/dom.js",
       window:        "com/window.js",
       v86:           "com/isoterminal/libv86.js",
+      vt100:         "com/isoterminal/VT100.js",
       // allow xrsh to selfcontain scene + itself
       xhook:         "https://jpillora.com/xhook/dist/xhook.min.js",
       selfcontain:   "com/selfcontainer.js",
@@ -85,8 +89,9 @@ if( typeof AFRAME != 'undefined '){
       scale: 1.0,
       events:  ['click','keydown'],
       html:    (me) => `<div class="isoterminal">
-                          <input type="text" style="opacity:0; position:absolute; width:200px; height:200px;"/>
-                          <pre></pre>
+                          <div id="vt100" tabindex="0">
+                            <pre></pre>
+                          </div>
                         </div>`,
 
       css:     (me) => `.isoterminal{
@@ -98,7 +103,10 @@ if( typeof AFRAME != 'undefined '){
                         .isoterminal div{
                           display:block;
                           position:relative;
-                          line-height:18px;
+                          line-height: ${me.com.data.lineHeight}px;
+                        }
+                        #vt100 {
+                          outline: none !important;
                         }
                         @font-face {
                           font-family: 'Cousine';
@@ -114,6 +122,15 @@ if( typeof AFRAME != 'undefined '){
                         }
 
                         .isoterminal style{ display:none }
+
+                        blink{ 
+                          border:none;
+                          padding:none;
+                        }
+                        span blink:last-of-type{
+                          border-right: 8px solid #F07;
+                          padding-right: 3px;
+                        }
 
                         #overlay .winbox:has(> .isoterminal){ 
                           background:transparent;
@@ -132,28 +149,11 @@ if( typeof AFRAME != 'undefined '){
                         .XR .isoterminal{
                           background: #000;
                         }
-                        .isoterminal *,
-                        .isoterminal .xterm-dom-renderer-owner-1 .xterm-rows {
-                          background:transparent !important;
-                           font-size: 14px;
-                           font-family: "Cousine",Liberation Mono,DejaVu Sans Mono,Courier New,monospace;
-                           font-weight:500 !important;
-                           text-shadow: 0px 0px 10px #F075;
-                        }
-                        .isoterminal .xterm-rows.xterm-focus .xterm-cursor.xterm-cursor-block {
-                          background-color:#a5F !important;
-                        }
-                        .isoterminal .xterm-rows div{
-                          height:8px;
-                          height:18px;
-                        }
-                        .isoterminal .xterm-rows span{
-                          width:8px;
-                        }
-                        .isoterminal .xterm-helpers { 
-                          position:absolute; 
-                          opacity:0;
-                          top: -2000px;
+                        .isoterminal *{
+                          font-size: 14px;
+                          font-family: "Cousine",Liberation Mono,DejaVu Sans Mono,Courier New,monospace;
+                          font-weight:500 !important;
+                          text-shadow: 0px 0px 10px #F075;
                         }
 
                         @keyframes fade {
@@ -168,7 +168,6 @@ if( typeof AFRAME != 'undefined '){
                             to { opacity: 1.0; }
                         }
 
-                        .isoterminal .xterm-rows.xterm-focus .xterm-cursor.xterm-cursor-block,
                         .blink{
                           animation:fade 1000ms infinite;
                           -webkit-animation:fade 1000ms infinite;
@@ -179,21 +178,15 @@ if( typeof AFRAME != 'undefined '){
 
     initTerminal: async function(singleton){
 
-      if( this.data.xterm ){
-        // why 3.12?
-        // first versions used 1.5.4, a typescript rewrite which:
-        // * acts weird with oculus browser keyboard (does not repaint properly after typing)
-        // * does not use canvas anymore [which would be ideal for THREE.js texture]
-        // * does not allow switching between dom/canvas
-        // * only allows a standalone WebGL addon (conflicts with THREE)
-        // * heavily dependent on requestAnimationFrame (conflicts with THREE)
-        // * typescript-rewrite results in ~300k lib (instead of 96k)
-        this.requires.xtermcss = "//unpkg.com/xterm@3.12.0/dist/xterm.css",
-        this.requires.xtermjs  = "//unpkg.com/xterm@3.12.0/dist/xterm.js",
-        this.requires.xtermcss = "com/xterm.js"
-      }else{
-        this.requires.vt100    = "com/isoterminal/VT100.js"
-      }
+      // why not latest xterm or v3.12 with builtin-canvas support?
+      // first versions used 1.5.4, a typescript rewrite which:
+      // * acts weird with oculus browser keyboard (does not repaint properly after typing)
+      // * does not use canvas anymore [which would be ideal for THREE.js texture]
+      // * does not allow switching between dom/canvas
+      // * only allows a standalone WebGL addon (conflicts with THREE)
+      // * heavily dependent on requestAnimationFrame (conflicts with THREE)
+      // * typescript-rewrite results in ~300k lib (instead of 96k)
+      // * v3.12 had slightly better performance but still very heavy
 
       await AFRAME.utils.require(this.requires)
       await AFRAME.utils.require({ // ISOTerminal plugins
@@ -225,18 +218,15 @@ if( typeof AFRAME != 'undefined '){
       this.term = new ISOTerminal(instance,this.data)
 
       instance.addEventListener('DOMready', () => {
-        if( this.data.renderer == 'dom' || !this.data.xterm ){
-          instance.setAttribute("html-as-texture-in-xr", `domid: #${this.el.dom.id}; faceuser: true`)
-        }
-        if( !this.data.xterm ) this.setupVT100(instance)
+        instance.setAttribute("html-as-texture-in-xr", `domid: #${this.el.dom.id}; faceuser: true`)
+        setTimeout( () => this.setupVT100(instance),100)
         //instance.winbox.resize(720,380)
-        let size = `width: ${Math.floor(this.data.cols*8.65)}; height: ${Math.floor(this.data.rows*21.1)}`
+        let size = `width: ${this.data.width}; height: ${this.data.height}`
         instance.setAttribute("window", `title: xrsh.iso; uid: ${instance.uid}; attach: #overlay; dom: #${instance.dom.id}; ${size}; min: ${this.data.minimized}; max: ${this.data.maximized}`)
       })
 
       instance.addEventListener('window.oncreate', (e) => {
         instance.dom.classList.add('blink')
-        if( this.data.xterm ) this.setupXterm(instance)
 
         // run iso
         let opts = {dom:instance.dom}
@@ -245,15 +235,6 @@ if( typeof AFRAME != 'undefined '){
       })
 
       instance.setAttribute("dom",      "")
-
-      this.term.addEventListener('postReady', (e)=>{
-        // bugfix: send window dimensions to xterm (xterm.js does that from dom-sizechange to xterm via escape codes)
-        let wb = instance.winbox
-        if( this.data.maximized ){
-          wb.restore()
-          wb.maximize()
-        }else wb.resize() 
-      })
 
       this.term.addEventListener('ready', (e) => {
         instance.dom.classList.remove('blink')
@@ -278,9 +259,6 @@ if( typeof AFRAME != 'undefined '){
       instance.addEventListener('window.onmaximize', resize )
 
       const focus = (showdom) => (e) => {
-        if( this.el.components.xterm ){
-          this.el.components.xterm.term.focus()
-        }
         if( this.el.components.window && this.data.renderer == 'canvas'){
           this.el.components.window.show( showdom )
         }
@@ -311,14 +289,22 @@ if( typeof AFRAME != 'undefined '){
       console.test.run()
     },
 
-    setupXterm: function(){
-      instance.setAttribute("xterm",`cols: ${this.data.cols}; rows: ${this.data.rows}; canvasLatency: ${this.data.canvasLatency}; XRrenderer: ${this.data.renderer}`)
-      instance.addEventListener("xterm-input", (e) => this.term.send(e.detail,0) )
-    },
-
     setupVT100: function(instance){
-      this.vt100 = new VT100(100,50, this.el.dom, 100 )
-      this.vt100.curs_set(1,true)
+      const el = this.el.dom.querySelector('#vt100')
+      this.vt100 = new VT100( 
+        Math.floor(this.data.width/this.data.lineHeight),
+        Math.floor(this.data.height*0.8/this.data.lineHeight), 
+        el, 
+        100 
+      )
+      this.vt100.curs_set( 1, true)
+      el.focus()
+      this.vt100.getch( (ch,t) => {
+        console.log(ch)
+        this.term.send( ch )
+        this.vt100.curs_set( 0, true)
+      })
+
       this.el.addEventListener('serial-output-byte', (e) => {
         const byte = e.detail
         var chr = String.fromCharCode(byte);
@@ -327,6 +313,14 @@ if( typeof AFRAME != 'undefined '){
       this.el.addEventListener('serial-output-string', (e) => {
         this.vt100.write(e.detail)
       })
+
+
+      //this.el.dom.querySelector('input').addEventListener('keyup', (e) => {
+      //  VT100.handle_onkeypress_( {charCode : e.charCode || e.keyCode, keyCode: e.keyCode}, (chars) => {
+      //    debugger
+      //    chars.map( (c) => this.term.send(str) )
+      //  })
+      //})
     },
 
     events:{

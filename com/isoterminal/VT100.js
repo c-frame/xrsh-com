@@ -86,7 +86,7 @@ function VT100(wd, ht, el_or_id, max_scroll_lines, fg, bg)
 		fg = VT100.COLOR_WHITE;
 	}
 	if (typeof(bg) == 'undefined') {
-		bg = VT100.COLOR_BLACK;
+		bg = VT100.COLOR_TRANSPARENT //COLOR_BLACK;
 	}
 
 	var r;
@@ -116,13 +116,14 @@ function VT100(wd, ht, el_or_id, max_scroll_lines, fg, bg)
 	this.key_buf_ = [];
 	this.echo_ = false;
 	this.esc_state_ = 0;
-	this.log_level_ = VT100.WARN;
+	this.log_level_ = VT100.DEBUG //WARN;
 
 	this.clear_all();
 	this.refresh();
 }
 
 // public constants -- colours and colour pairs
+VT100.COLOR_TRANSPARENT = -1;
 VT100.COLOR_BLACK = 0;
 VT100.COLOR_BLUE = 1;
 VT100.COLOR_GREEN = 2;
@@ -164,96 +165,98 @@ VT100.the_vt_ = undefined;
 // class methods
 
 // this is actually an event handler
-VT100.handle_onkeypress_ = function VT100_handle_onkeypress(event)
+VT100.handle_onkeypress_ = function VT100_handle_onkeypress(event,cb)
 {
 	//dump("event target: " + event.target.id + "\n");
 	//dump("event originalTarget: " + event.originalTarget.id + "\n");
 	var vt = VT100.the_vt_, ch;
 	if (vt === undefined)
 		return true;
-	if (VT100.browser_ie_ || VT100.browser_opera_) {
-		ch = event.keyCode;
-		if (ch == 13)
-			ch = 10;
-		else if (ch > 255 || (ch < 32 && ch != 8))
-			return true;
-		ch = String.fromCharCode(ch);
-	} else {
-		ch = event.charCode;
-		//dump("ch: " + ch + "\n");
-		//dump("ctrl?: " + event.ctrlKey + "\n");
-		vt.debug("onkeypress:: keyCode: " + event.keyCode + ", ch: " + event.charCode);
-		if (ch) {
-			if (ch > 255)
-				return true;
-			if (event.ctrlKey && event.shiftKey) {
-				// Don't send the copy/paste commands.
-				var charStr = String.fromCharCode(ch);
-				if (charStr == 'C' || charStr == 'V') {
-					return false;
-				}
-			}
-			if (event.ctrlKey) {
-				ch = String.fromCharCode(ch - 96);
-			} else {
-				ch = String.fromCharCode(ch);
-				if (ch == '\r')
-					ch = '\n';
-			}
-		} else {
-			switch (event.keyCode) {
-			    case event.DOM_VK_BACK_SPACE:
-				ch = '\b';
-				break;
-			    case event.DOM_VK_TAB:
-				ch = '\t';
-				break;
-			    case event.DOM_VK_RETURN:
-			    case event.DOM_VK_ENTER:
-				ch = '\r';
-				break;
-			    case event.DOM_VK_UP:
-				if (this.cursor_key_mode_ == VT100.CK_CURSOR)
-					ch = '\x1b[A';
-				else
-					ch = '\x1bOA';
-				break;
-			    case event.DOM_VK_DOWN:
-				if (this.cursor_key_mode_ == VT100.CK_CURSOR)
-					ch = '\x1b[B';
-				else
-					ch = '\x1bOB';
-				break;
-			    case event.DOM_VK_RIGHT:
-				if (this.cursor_key_mode_ == VT100.CK_CURSOR)
-					ch = '\x1b[C';
-				else
-					ch = '\x1bOC';
-				break;
-			    case event.DOM_VK_LEFT:
-				if (this.cursor_key_mode_ == VT100.CK_CURSOR)
-					ch = '\x1b[D';
-				else
-					ch = '\x1bOD';
-				break;
-			    case event.DOM_VK_DELETE:
-				ch = '\x1b[3~';
-				break;
-			    case event.DOM_VK_HOME:
-				ch = '\x1b[H';
-				break;
-			    case event.DOM_VK_ESCAPE:
-				ch = '\x1b';
-				break;
-			    default:
-				return true;
-			}
-		}
-		// Stop the event from doing anything else.
-		event.preventDefault();
-	}
+	//if ( event.keyCode != undefined || !event.charCode){
+	//	ch = event.keyCode;
+	//	if (ch == 13)
+	//		ch = 10;
+	//	else if (ch > 255 || (ch < 32 && ch != 8))
+	//		return true;
+	//	ch = String.fromCharCode(ch);
+	//} else {
+  ch = event.charCode;
+  //dump("ch: " + ch + "\n");
+  //dump("ctrl?: " + event.ctrlKey + "\n");
+  vt.debug("onkeypress:: keyCode: " + event.keyCode + ", ch: " + event.charCode);
+  if (ch) {
+    if (ch > 255)
+      return true;
+    if (event.ctrlKey && event.shiftKey) {
+      // Don't send the copy/paste commands.
+      var charStr = String.fromCharCode(ch);
+      if (charStr == 'C' || charStr == 'V') {
+        return false;
+      }
+    }
+    if (event.ctrlKey) {
+      ch = String.fromCharCode(ch - 96);
+    } else {
+      ch = String.fromCharCode(ch);
+      if (ch == '\r')
+        ch = '\n';
+    }
+  } else {
+    switch (event.key) {
+        case "Backspace":
+      ch = '\b';
+      break;
+        case "Tab":
+      ch = '\t';
+      break;
+        case event.DOM_VK_RETURN:
+        case event.DOM_VK_ENTER:
+      ch = '\r';
+      break;
+        case event.DOM_VK_UP:
+      if (this.cursor_key_mode_ == VT100.CK_CURSOR)
+        ch = '\x1b[A';
+      else
+        ch = '\x1bOA';
+      break;
+        case event.DOM_VK_DOWN:
+      if (this.cursor_key_mode_ == VT100.CK_CURSOR)
+        ch = '\x1b[B';
+      else
+        ch = '\x1bOB';
+      break;
+        case event.DOM_VK_RIGHT:
+      if (this.cursor_key_mode_ == VT100.CK_CURSOR)
+        ch = '\x1b[C';
+      else
+        ch = '\x1bOC';
+      break;
+        case event.DOM_VK_LEFT:
+      if (this.cursor_key_mode_ == VT100.CK_CURSOR)
+        ch = '\x1b[D';
+      else
+        ch = '\x1bOD';
+      break;
+        case event.DOM_VK_DELETE:
+      ch = '\x1b[3~';
+      break;
+        case event.DOM_VK_HOME:
+      ch = '\x1b[H';
+      break;
+        case event.DOM_VK_ESCAPE:
+      ch = '\x1b';
+      break;
+        default:
+      return true;
+    }
+  }
+  // Stop the event from doing anything else.
+  event.preventDefault();
 	vt.key_buf_.push(ch);
-	setTimeout(VT100.go_getch_, 0);
+  if( cb ){
+    cb(vt.key_buf_)
+    vt.key_buf_ = []
+  }else setTimeout(VT100.go_getch_, 0);
 	return false;
 }
 
@@ -345,7 +348,7 @@ VT100.prototype.html_colours_ = function VT100_html_colours_(attr)
 		f: '#' + (fg & 4 ? co1 : co0) +
 			 (fg & 2 ? co1 : co0) +
 			 (fg & 1 ? co1 : co0),
-		b: '#' + (bg & 4 ? co1 : co0) +
+		b: attr.bg == VT100.COLOR_TRANSPARENT ? 'transparent' : '#' + (bg & 4 ? co1 : co0) +
 			 (bg & 2 ? co1 : co0) +
 			 (bg & 1 ? co1 : co0)
 	    };
@@ -545,12 +548,10 @@ VT100.prototype.curs_set = function(vis, grab, eventist)
 			this.grab_events_ = true;
 			VT100.the_vt_ = this;
 			eventist.addEventListener("keypress", VT100.handle_onkeypress_, false);
-			if (VT100.browser_ie_)
-				document.onkeydown = VT100.handle_onkeydown_;
+			eventist.addEventListener("keydown", VT100.handle_onkeypress_, false);
 		} else {
 			eventist.removeEventListener("keypress", VT100.handle_onkeypress_, false);
-			if (VT100.browser_ie_)
-				document.onkeydown = VT100.handle_onkeydown_;
+			eventist.removeEventListener("keydown", VT100.handle_onkeypress_, false);
 			this.grab_events_ = false;
 			VT100.the_vt_ = undefined;
 		}
@@ -831,7 +832,7 @@ VT100.prototype.write = function VT100_write(stuff)
 			} else {
 				code = this.escape(ch);
 			}
-			this.debug("  write:: ch: " + ch.charCodeAt(0) + ", '" + code + "'");
+      this.debug("  write:: ch: " + ch.charCodeAt(0) + ", '" + code + "'");
 			codes += code;
 		}
 
