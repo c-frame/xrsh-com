@@ -1,8 +1,15 @@
-// https://raw.githubusercontent.com/vsinitsyn/vt100/refs/heads/coffeescript/public/javascripts/VT100.js
+// https://raw.githubusercontent.com/vetupinitsyn/vt100/refs/heads/coffeescript/public/javascripts/VT100.js
 // 
 // VT100.js -- a text terminal emulator in JavaScript with a ncurses-like
 // interface and a POSIX-like interface. (The POSIX-like calls are
 // implemented on top of the ncurses-like calls, not the other way round.)
+// 
+// required markup:
+//
+//   <div id="term" tabindex="0">
+//      <pre></pre>
+//   </div>
+
 //
 // Released under the GNU LGPL v2.1, by Frank Bi <bi@zompower.tk>
 //
@@ -77,8 +84,10 @@
 //			interpreted and acted on.
 
 // constructor
-function VT100(wd, ht, el_or_id, max_scroll_lines, fg, bg)
+function VT100(opts)
 {
+  this.opts = opts
+  let {cols, rows, el_or_id, max_scroll_lines, fg, bg, nodim} = opts
 	if (!max_scroll_lines) {
 		max_scroll_lines = 1000;
 	}
@@ -92,20 +101,20 @@ function VT100(wd, ht, el_or_id, max_scroll_lines, fg, bg)
 	var r;
 	var c;
 	var scr = typeof el_or_id == 'string' ? document.getElementById(el_or_id) : el_or_id
-	this.wd_ = wd;
-	this.ht_ = ht;
+	this.wd_ = cols;
+	this.ht_ = rows;
 	// Keep up to max_scroll_lines of scrollback history.
 	this.max_ht_ = max_scroll_lines;
 	this._set_colors(fg, bg);
-	this.text_ = new Array(ht);
-	this.attr_ = new Array(ht);
-	this.redraw_ = new Array(ht);
-	this.scroll_region_ = [0, ht-1];
+	this.text_ = new Array(rows);
+	this.attr_ = new Array(rows);
+	this.redraw_ = new Array(rows);
+	this.scroll_region_ = [0, rows-1];
 	this.start_row_id = 0;
-	this.num_rows_ = ht;
-	for (r = 0; r < ht; ++r) {
-		this.text_[r] = new Array(wd);
-		this.attr_[r] = new Array(wd);
+	this.num_rows_ = rows;
+	for (r = 0; r < rows; ++r) {
+		this.text_[r] = new Array(cols);
+		this.attr_[r] = new Array(cols);
 		this.redraw_[r] = 1;
 	}
 	this.scr_ = scr;
@@ -116,10 +125,14 @@ function VT100(wd, ht, el_or_id, max_scroll_lines, fg, bg)
 	this.key_buf_ = [];
 	this.echo_ = false;
 	this.esc_state_ = 0;
-	this.log_level_ = VT100.DEBUG //WARN;
+	this.log_level_ = VT100.WARN 
 
 	this.clear_all();
-	this.refresh();
+
+  // rate limit this.refresh
+  this.refresh = this.throttleSmart( VT100.prototype.refresh.bind(this), 100)
+
+  this.setupTouchInputFallback() // smartphone
 }
 
 // public constants -- colours and colour pairs
@@ -172,6 +185,7 @@ VT100.handle_onkeypress_ = function VT100_handle_onkeypress(event,cb)
 	var vt = VT100.the_vt_, ch;
 	if (vt === undefined)
 		return true;
+
 	//if ( event.keyCode != undefined || !event.charCode){
 	//	ch = event.keyCode;
 	//	if (ch == 13)
@@ -180,11 +194,11 @@ VT100.handle_onkeypress_ = function VT100_handle_onkeypress(event,cb)
 	//		return true;
 	//	ch = String.fromCharCode(ch);
 	//} else {
-  ch = event.charCode;
   //dump("ch: " + ch + "\n");
   //dump("ctrl?: " + event.ctrlKey + "\n");
-  vt.debug("onkeypress:: keyCode: " + event.keyCode + ", ch: " + event.charCode);
-  if (ch) {
+  vt.debug("onkeypress:: ch: " + event.code + " ,key: "+event.key);
+  if (event.key.length == 1) {
+    ch = event.key.charCodeAt(0)
     if (ch > 255)
       return true;
     if (event.ctrlKey && event.shiftKey) {
@@ -203,51 +217,52 @@ VT100.handle_onkeypress_ = function VT100_handle_onkeypress(event,cb)
     }
   } else {
     switch (event.key) {
-        case "Backspace":
-      ch = '\b';
-      break;
-        case "Tab":
-      ch = '\t';
-      break;
-        case event.DOM_VK_RETURN:
-        case event.DOM_VK_ENTER:
-      ch = '\r';
-      break;
-        case event.DOM_VK_UP:
-      if (this.cursor_key_mode_ == VT100.CK_CURSOR)
+      case "Backspace":
+        ch = '\b';
+        break;
+      case "Tab":
+        ch = '\t';
+        break;
+      case "Enter":
+        ch = '\n';
+        break;
+      case "ArrowUp":
+        if (this.cursor_key_mode_ == VT100.CK_CURSOR)
         ch = '\x1b[A';
-      else
+        else
         ch = '\x1bOA';
-      break;
-        case event.DOM_VK_DOWN:
-      if (this.cursor_key_mode_ == VT100.CK_CURSOR)
+        break;
+      case "ArrowDown":
+        if (this.cursor_key_mode_ == VT100.CK_CURSOR)
         ch = '\x1b[B';
-      else
+        else
         ch = '\x1bOB';
-      break;
-        case event.DOM_VK_RIGHT:
-      if (this.cursor_key_mode_ == VT100.CK_CURSOR)
+        break;
+      case "ArrowRight":
+        if (this.cursor_key_mode_ == VT100.CK_CURSOR)
         ch = '\x1b[C';
-      else
+        else
         ch = '\x1bOC';
-      break;
-        case event.DOM_VK_LEFT:
-      if (this.cursor_key_mode_ == VT100.CK_CURSOR)
+        break;
+      case "ArrowLeft":
+        if (this.cursor_key_mode_ == VT100.CK_CURSOR)
         ch = '\x1b[D';
-      else
+        else
         ch = '\x1bOD';
-      break;
-        case event.DOM_VK_DELETE:
-      ch = '\x1b[3~';
-      break;
-        case event.DOM_VK_HOME:
-      ch = '\x1b[H';
-      break;
-        case event.DOM_VK_ESCAPE:
-      ch = '\x1b';
-      break;
-        default:
-      return true;
+        break;
+      case "Delete":
+        ch = '\x1b[3~';
+        break;
+      case "Home":
+        ch = '\x1b[H';
+        break;
+      case "Escape":
+        ch = '\x1b';
+      case "Control":
+        break;
+      default:
+        return true
+        break;
     }
   }
   // Stop the event from doing anything else.
@@ -311,39 +326,39 @@ VT100.prototype.html_colours_ = function VT100_html_colours_(attr)
 	var fg, bg, co0, co1;
 	fg = attr.fg;
 	bg = attr.bg;
-	switch (attr.mode & (VT100.A_REVERSE | VT100.A_DIM | VT100.A_BOLD)) {
-	    case 0:
-	    case VT100.A_DIM | VT100.A_BOLD:
-		co0 = '00';
-		if (bg == VT100.COLOR_WHITE)
-			co1 = 'ff';
-		else
-			co1 = 'c0';
-		break;
-	    case VT100.A_BOLD:
-		co0 = '00';  co1 = 'ff';
-		break;
-	    case VT100.A_DIM:
-		if (fg == VT100.COLOR_BLACK)
-			co0 = '40';
-		else
-			co0 = '00';
-		co1 = '40';
-		break;
-	    case VT100.A_REVERSE:
-	    case VT100.A_REVERSE | VT100.A_DIM | VT100.A_BOLD:
-		co0 = 'c0';  co1 = '40';
-		break;
-	    case VT100.A_REVERSE | VT100.A_BOLD:
-		co0 = 'c0';  co1 = '00';
-		break;
-	    default:
-		if (fg == VT100.COLOR_BLACK)
-			co0 = '80';
-		else
-			co0 = 'c0';
-		co1 = 'c0';
-	}
+  switch (attr.mode & (VT100.A_REVERSE | VT100.A_DIM | VT100.A_BOLD)) {
+    case 0:
+    case VT100.A_DIM | VT100.A_BOLD:
+      co0 = '00';
+      if (bg == VT100.COLOR_WHITE)
+      co1 = 'ff';
+      else
+      co1 = 'c0';
+      break;
+    case VT100.A_BOLD:
+      co0 = '00';  co1 = 'ff';
+      break;
+    case VT100.A_DIM:
+      if (fg == VT100.COLOR_BLACK)
+        co0 = '40';
+      else
+        co0 = '00';
+        co1 = '40';
+      break;
+    case VT100.A_REVERSE:
+    case VT100.A_REVERSE | VT100.A_DIM | VT100.A_BOLD:
+      co0 = 'c0';  co1 = 'ff';
+      break;
+    case VT100.A_REVERSE | VT100.A_BOLD:
+      co0 = 'c0';  co1 = '00';
+      break;
+    default:
+      if (fg == VT100.COLOR_BLACK)
+      co0 = '80';
+      else
+      co0 = 'c0';
+      co1 = 'c0';
+  }
 	return {
 		f: '#' + (fg & 4 ? co1 : co0) +
 			 (fg & 2 ? co1 : co0) +
@@ -1283,6 +1298,52 @@ VT100.prototype.warn = function VT100_warn(message) {
 	}
 }
 
+VT100.prototype.throttleSmart = function throttleSmart(fn, wait) {
+  let timeout, lastArgs; 
+  return (...args) => { 
+    lastArgs = lastArgs || []
+    if (!timeout) { 
+      fn(...args); timeout = setTimeout(() => { fn(...lastArgs); timeout = null; }, wait); 
+    } else lastArgs = args; 
+  };
+}
+
+VT100.prototype.setupTouchInputFallback = function(){
+  this.scr_.addEventListener('touchend', () => {
+    if( !this.input ){
+      this.form  = document.createElement("form")
+      this.form.addEventListener("submit", (e) => {
+        e.preventDefault()
+        this.key_buf_.push('\n')
+        setTimeout(VT100.go_getch_, 0);
+      })
+      this.input = document.createElement("input")
+      this.input.setAttribute("cols", this.opts.cols )
+      this.input.setAttribute("rows", this.opts.rows )
+      this.input.style.opacity = '0'
+      this.input.style.position = 'absolute'
+      this.input.style.left = '-9999px'
+      this.form.appendChild(this.input)
+      this.scr_.parentElement.appendChild(this.form)
+
+      this.input.handler = () => {
+        let ch = this.input.value
+        // detect backspace
+        //if( e.inputType == 'deleteContentBackward' ) ch = '\b'
+        this.input.value = ''
+        if( !ch ) return
+        this.key_buf_.push(ch);
+        setTimeout(VT100.go_getch_, 0);
+        this.input.valueLast = this.input.value
+      }
+      this.input.addEventListener('input', this.input.handler ) 
+
+    }
+    setTimeout( () => this.input.focus(), 10 )
+  })
+}
+
 function dump(x) {
 	// Do nothing
+  console.log(x)
 }

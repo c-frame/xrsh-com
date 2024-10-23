@@ -37,6 +37,7 @@ if( typeof AFRAME != 'undefined '){
       overlayfs:      { type:"string"},
       width:          { type: 'number',"default": -1 },
       height:         { type: 'number',"default": -1 },
+      depth:          { type: 'number',"default": 0.03 },
       lineHeight:     { type: 'number',"default": 18 },
       padding:        { type: 'number',"default": 18 },
       minimized:      { type: 'boolean',"default":false},
@@ -44,19 +45,18 @@ if( typeof AFRAME != 'undefined '){
       muteUntilPrompt:{ type: 'boolean',"default":true},     // mute stdout until a prompt is detected in ISO
       HUD:            { type: 'boolean',"default":false},    // link to camera movement 
       transparent:    { type:'boolean', "default":false },   // need good gpu
-      memory:         { type: 'number',  "default":64  },    // VM memory (in MB)
-      bufferLatency:  { type: 'number', "default":30  },    // in ms: bufferlatency from webworker to xterm (batch-update every char to texture)
+      memory:         { type: 'number',  "default":40  },    // VM memory (in MB) [NOTE: quest or smartphone might crash > 40mb ]
+      bufferLatency:  { type: 'number', "default":1  },    // in ms: bufferlatency from webworker to xterm (batch-update every char to texture)
       debug:          { type: 'boolean', "default":false }
     },
 
     init: function(){
       this.el.object3D.visible = false
-      if( this.data.width == -1  ) this.data.width = document.body.offsetWidth
-      if( this.data.height == -1 ) this.data.height = document.body.offsetHeight
-      this.data.width -= this.data.padding*2
-      this.data.height -= this.data.padding*2
 
+      this.calculateDimension()
       this.initHud()
+      this.setupBox()
+
       fetch(this.data.iso,{method: 'HEAD'})
       .then( (res) => {
         if( res.status != 200 ) throw 'not found'
@@ -79,17 +79,17 @@ if( typeof AFRAME != 'undefined '){
       selfcontain:   "com/selfcontainer.js",
       // html to texture
       htmlinxr:      "com/html-as-texture-in-xr.js",
-      // isoterminal features
+      // isoterminal global features
       PromiseWorker: "com/isoterminal/PromiseWorker.js",
       ISOTerminal:   "com/isoterminal/ISOTerminal.js",
-      localforage:   "https://cdn.rawgit.com/mozilla/localForage/master/dist/localforage.js"
+      localforage:   "com/isoterminal/localforage.js",
     },
 
     dom: {
-      scale: 1.0,
+      scale: 0.66,
       events:  ['click','keydown'],
       html:    (me) => `<div class="isoterminal">
-                          <div id="vt100" tabindex="0">
+                          <div id="term" tabindex="0">
                             <pre></pre>
                           </div>
                         </div>`,
@@ -105,7 +105,7 @@ if( typeof AFRAME != 'undefined '){
                           position:relative;
                           line-height: ${me.com.data.lineHeight}px;
                         }
-                        #vt100 {
+                        #term {
                           outline: none !important;
                         }
                         @font-face {
@@ -126,10 +126,6 @@ if( typeof AFRAME != 'undefined '){
                         blink{ 
                           border:none;
                           padding:none;
-                        }
-                        span blink:last-of-type{
-                          border-right: 8px solid #F07;
-                          padding-right: 3px;
                         }
 
                         #overlay .winbox:has(> .isoterminal){ 
@@ -218,8 +214,10 @@ if( typeof AFRAME != 'undefined '){
       this.term = new ISOTerminal(instance,this.data)
 
       instance.addEventListener('DOMready', () => {
-        instance.setAttribute("html-as-texture-in-xr", `domid: #${this.el.dom.id}; faceuser: true`)
-        setTimeout( () => this.setupVT100(instance),100)
+        this.setupVT100(instance)
+        setTimeout( () => {
+          instance.setAttribute("html-as-texture-in-xr", `domid: #term; faceuser: true`)
+        },100)
         //instance.winbox.resize(720,380)
         let size = `width: ${this.data.width}; height: ${this.data.height}`
         instance.setAttribute("window", `title: xrsh.iso; uid: ${instance.uid}; attach: #overlay; dom: #${instance.dom.id}; ${size}; min: ${this.data.minimized}; max: ${this.data.maximized}`)
@@ -231,6 +229,8 @@ if( typeof AFRAME != 'undefined '){
         // run iso
         let opts = {dom:instance.dom}
         for( let i in this.data ) opts[i] = this.data[i]
+        opts.cols = this.cols
+        opts.rows = this.rows
         this.term.start(opts)
       })
 
@@ -262,6 +262,7 @@ if( typeof AFRAME != 'undefined '){
         if( this.el.components.window && this.data.renderer == 'canvas'){
           this.el.components.window.show( showdom )
         }
+        this.el.emit('focus',e.detail)
       }
 
       this.el.addEventListener('obbcollisionstarted', focus(false) )
@@ -290,17 +291,20 @@ if( typeof AFRAME != 'undefined '){
     },
 
     setupVT100: function(instance){
-      const el = this.el.dom.querySelector('#vt100')
-      this.vt100 = new VT100( 
-        Math.floor(this.data.width/this.data.lineHeight),
-        Math.floor(this.data.height*0.8/this.data.lineHeight), 
-        el, 
-        100 
-      )
+      const el = this.el.dom.querySelector('#term')
+      const opts = {
+        cols: this.cols, 
+        rows: this.rows,
+        el_or_id: el,
+        max_scroll_lines: 100, 
+        nodim: true
+      }
+      this.vt100 = new VT100( opts )
+      this.vt100.el = el
       this.vt100.curs_set( 1, true)
       el.focus()
+      this.el.addEventListener('focus', () => el.focus())
       this.vt100.getch( (ch,t) => {
-        console.log(ch)
         this.term.send( ch )
         this.vt100.curs_set( 0, true)
       })
@@ -321,6 +325,27 @@ if( typeof AFRAME != 'undefined '){
       //    chars.map( (c) => this.term.send(str) )
       //  })
       //})
+    },
+
+    setupBox: function(){
+      // setup slightly bigger black backdrop (this.el.getObject3D("mesh")) 
+      const w = this.data.width/950;
+      const h = this.data.height/950;
+      this.el.box = document.createElement('a-entity')
+      this.el.box.setAttribute("geometry",`primitive: box; width:${w}; height:${h}; depth: -${this.data.depth}`)
+      this.el.box.setAttribute("material","shader:flat; color:black; opacity:0.9; transparent:true; ")
+      this.el.box.setAttribute("position",`0 0 ${(this.data.depth/2)-0.001}`)
+      this.el.appendChild(this.el.box)
+    },
+
+    calculateDimension: function(){
+      if( this.data.width == -1  ) this.data.width = document.body.offsetWidth
+      if( this.data.height == -1 ) this.data.height = document.body.offsetHeight
+      if( this.data.height > this.data.width ) this.data.height = this.data.width // mobile smartphone fix
+      this.data.width -= this.data.padding*2
+      this.data.height -= this.data.padding*2
+      this.cols = Math.floor(this.data.width/this.data.lineHeight*1.9)
+      this.rows = Math.floor(this.data.height*0.5/this.data.lineHeight*1.7) // keep extra height for mobile browser bottom-bar (android)
     },
 
     events:{

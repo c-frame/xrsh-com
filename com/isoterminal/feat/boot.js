@@ -4,7 +4,11 @@ ISOTerminal.addEventListener('ready', function(e){
 
 ISOTerminal.prototype.boot = async function(e){
   // set environment
-  let env = ['export BROWSER=1']
+  let env = [
+    `export LINES=${this.opts.rows}`,
+    `export COLUMNS=${this.opts.cols}`,
+    'export BROWSER=1',
+  ]
   for ( let i in document.location ){
     if( typeof document.location[i] == 'string' ){
       env.push( 'export '+String(i).toUpperCase()+'="'+decodeURIComponent( document.location[i]+'"') )

@@ -1,15 +1,31 @@
 if( typeof emulator != 'undefined' ){
   // inside worker-thread
+  importScripts("localforage.js")  // we don't instance it again here (just use its functions)
   
   this['emulator.restore_state'] = async function(data){ 
-    await emulator.restore_state(data)
-    console.log("restored state")
-    this.postMessage({event:"state_restored",data:false})
+    return new Promise( (resolve,reject) => {
+      localforage.getItem("state", async (err,stateBase64) => {
+        if( stateBase64 && !err ){
+          state = ISOTerminal.prototype.convert.base64ToArrayBuffer( stateBase64 )
+          await emulator.restore_state(state)
+          console.log("restored state")
+        }else return reject("worker.js: emulator.restore_state (could not get state from localforage)")
+        resolve()
+      })
+    })
   }
   this['emulator.save_state'] = async function(){ 
     console.log("saving session")
     let state = await emulator.save_state()
-    this.postMessage({event:"state_saved",data:state},[state])
+    localforage.setDriver([
+      localforage.INDEXEDDB,
+      localforage.WEBSQL,
+      localforage.LOCALSTORAGE
+    ]).then( () => {
+      localforage.setItem("state", ISOTerminal.prototype.convert.arrayBufferToBase64(state) )
+      console.log("state saved")
+    })
+    console.dir(state)
   }
 
 
@@ -30,29 +46,20 @@ if( typeof emulator != 'undefined' ){
       localforage.getItem("state", async (err,stateBase64) => {
         if( stateBase64 && !err && confirm('continue last session?') ){
           this.noboot = true // see feat/boot.js
-          state = this.convert.base64ToArrayBuffer( stateBase64 )
-
-          this.addEventListener('state_restored', function(){
+          try{
+            await this.worker['emulator.restore_state']()
             // simulate / fastforward boot events
             this.postBoot( () => {
               this.send("l\n") 
               this.send("hook wakeup\n")
             })
-          })
-
-          this.worker.postMessage({event:'emulator.restore_state',data:state})
+          }catch(e){ console.error(e) }
         } 
       })
 
       this.save = async () => {
-        const state = await this.worker.postMessage({event:"emulator.save_state",data:false})
+        await this.worker['emulator.save_state']()
       }
-
-      this.addEventListener('state_saved', function(e){
-        const state = e.detail
-        localforage.setItem("state", this.convert.arrayBufferToBase64(state) )
-        console.log("state saved")
-      })
 
       window.addEventListener("beforeunload", function (e) {
         var confirmationMessage = "Sure you want to leave?\nTIP: enter 'save' to continue this session later";

@@ -61,11 +61,11 @@ ISOTerminal.prototype.convert = {
       const bytes = new Uint8Array(buffer);
       const len = bytes.byteLength;
       for (let i = 0; i < len; i++) binary += String.fromCharCode(bytes[i]);
-      return window.btoa(binary);
+      return btoa(binary);
   },
 
   base64ToArrayBuffer: function(base64) {
-      const binaryString = window.atob(base64);
+      const binaryString = atob(base64);
       const len = binaryString.length;
       const bytes = new Uint8Array(len);
 
@@ -211,11 +211,14 @@ ISOTerminal.prototype.startVM = function(opts){
 \r[38;5;165m ▬▬▬▬▬▬▬▬ https://xrsh.isvery.ninja ▬▬▬▬▬▬▬▬▬▬▬▬
 \r[38;5;165m local-first, polyglot, unixy WebXR IDE & runtime
 \r
-\r credits: NLnet           | @nlnet@nlnet.nl 
-\r          Leon van Kammen | @lvk@mastodon.online
-\r          Fabien Benetou  | @utopiah@mastodon.pirateparty.be 
-\r          Mr Doob         | THREE.js 
-\r          Diego Marcos    | AFRAME.js
+\r credits
+\r ------- 
+\r @nlnet@nlnet.nl 
+\r @lvk@mastodon.online
+\r @utopiah@mastodon.pirateparty.be 
+\r https://www.w3.org/TR/webxr
+\r https://three.org 
+\r https://aframe.org 
   `
 
   const text_color = "\r[38;5;129m" 

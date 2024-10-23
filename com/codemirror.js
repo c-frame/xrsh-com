@@ -36,7 +36,7 @@ AFRAME.registerComponent('codemirror', {
 
     css:     (me) => `.CodeMirror{
                         width: ${me.com.data.width}px !important;
-                        height: ${me.com.data.height}px !important;
+                        height: ${me.com.data.height-30}px !important;
                      }
                      .codemirror *{
                        font-size: 14px;
@@ -45,7 +45,10 @@ AFRAME.registerComponent('codemirror', {
                        letter-spacing: 0 !important;
                        text-shadow: 0px 0px 10px #F075;
                      }
-                     #${me.dom.id} .wb-body { overflow:hidden; }
+
+                    .wb-body:has(> .codemirror){ 
+                      overflow:hidden; 
+                    }
 
                      .CodeMirror {
                       margin-top:18px;
@@ -78,9 +81,28 @@ AFRAME.registerComponent('codemirror', {
       this.editor.updateFile( this.data.file, instance.getValue() )
     })
 
+    this
+    .handleFocus()
+
     setTimeout( () => {
       this.el.setAttribute("html-as-texture-in-xr", `domid: #${this.el.dom.id}`)  // only show aframe-html in xr 
     },1500)
+  },
+
+  handleFocus: function(){
+    const focus = (showdom) => (e) => {
+      if( this.editor ){
+        this.editor.focus()
+      }
+      if( this.el.components.window && this.data.renderer == 'canvas'){
+        this.el.components.window.show( showdom )
+      }
+    }
+    this.el.addEventListener('obbcollisionstarted', focus(false) )
+    this.el.sceneEl.addEventListener('enter-vr', focus(false) )
+    this.el.sceneEl.addEventListener('enter-ar', focus(false) )
+    this.el.sceneEl.addEventListener('exit-vr', focus(true) )
+    this.el.sceneEl.addEventListener('exit-ar', focus(true) )
   },
 
   updateFile: async function(file,str){
