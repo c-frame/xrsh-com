@@ -13,6 +13,8 @@
 //
 // Released under the GNU LGPL v2.1, by Frank Bi <bi@zompower.tk>
 //
+//
+// 2024-08-xx upgraded things to work in WebXR (xterm.js too heavy)
 // 2007-08-12	- refresh():
 //		  - factor out colour code to html_colours_()
 //		  - fix handling of A_REVERSE | A_DIM
@@ -118,6 +120,8 @@ function VT100(opts)
 		this.redraw_[r] = 1;
 	}
 	this.scr_ = scr;
+  this.scr_.style.display = 'inline'
+  this.setupTouchInputFallback() // smartphone
 	this.cursor_vis_ = true;
 	this.cursor_key_mode_ = VT100.CK_CURSOR;
 	this.grab_events_ = false;
@@ -131,8 +135,6 @@ function VT100(opts)
 
   // rate limit this.refresh
   this.refresh = this.throttleSmart( VT100.prototype.refresh.bind(this), 100)
-
-  this.setupTouchInputFallback() // smartphone
 }
 
 // public constants -- colours and colour pairs
@@ -552,8 +554,9 @@ VT100.prototype.clearpos = function VT100_clearpos(row, col)
 VT100.prototype.curs_set = function(vis, grab, eventist)
 {
 	this.info("curs_set:: vis: " + vis + ", grab: " + grab);
-	if (vis !== undefined)
+	if (vis !== undefined){
 		this.cursor_vis_ = (vis > 0);
+  }
 	if (eventist === undefined)
 		eventist = this.scr_;
 	if (grab === true || grab === false) {
@@ -656,7 +659,8 @@ VT100.prototype.refresh = function VT100_refresh()
 		for (c = 0; c < wd; ++c) {
 			added_end_tag = false;
 			n_at = this.attr_[r][c];
-			if (cv && r == cr && c == cc) {
+      const drawCursor = cv && r == cr && c == cc
+			if (drawCursor){
 				// Draw the cursor here.
 				n_at = this._cloneAttr(n_at);
 				n_at.mode ^= VT100.A_REVERSE;
@@ -681,7 +685,9 @@ VT100.prototype.refresh = function VT100_refresh()
 					start_tag += ';font-weight: bolder';
 				if (n_at.mode & VT100.A_UNDERLINE)
 					start_tag += ';text-decoration:underline';
-				start_tag += ';">';
+        if ( drawCursor )
+          start_tag += '" class="cursor'
+				start_tag += '">';
 				row_html += start_tag;
 				end_tag = "</span>" + end_tag;
 				at = n_at;
@@ -721,6 +727,7 @@ VT100.prototype.refresh = function VT100_refresh()
 		div_element.innerHTML = row_html;
 		//dump("adding row html: " + row_html + "\n");
 	}
+  this.curs_set(1)
 }
 
 VT100.prototype.set_max_scroll_lines = function(max_lines)
@@ -816,455 +823,460 @@ VT100.prototype.standout = function()
 
 VT100.prototype.write = function VT100_write(stuff)
 {
-	var ch, x, r, c, i, j, cv;
-	var ht = this.ht_;
-	var codes = "";
-	var prev_esc_state_ = 0;
-	var undrawn_rows;
-	var ht_minus1 = ht - 1;
-	var start_row_offset = ht - this.row_;
-	var start_num_rows = this.num_rows_;
-	for (i = 0; i < stuff.length; ++i) {
-		// Refresh when there are undrawn rows that are about to be
-		// scrolled off the screen, need to draw these rows before
-		// the scrolling occurs, otherwise they will never be visible.
-		undrawn_rows = (this.num_rows_ - start_num_rows) + start_row_offset;
-		if (undrawn_rows >= ht) {
-			cv = this.cursor_vis_;
-			this.cursor_vis_ = false;
-			this.refresh();
-			this.cursor_vis_ = cv;
-			start_row_offset = ht - this.row_;
-			start_num_rows = this.num_rows_;
-			//dump("refreshed\n");
-		}
-		ch = stuff.charAt(i);
-		//alert(this.esc_state_);
+  var ch, x, r, c, i, j, cv;
+  var ht = this.ht_;
+  var codes = "";
+  var prev_esc_state_ = 0;
+  var undrawn_rows;
+  var ht_minus1 = ht - 1;
+  var start_row_offset = ht - this.row_;
+  var start_num_rows = this.num_rows_;
+  for (i = 0; i < stuff.length; ++i) {
+    // Refresh when there are undrawn rows that are about to be
+    // scrolled off the screen, need to draw these rows before
+    // the scrolling occurs, otherwise they will never be visible.
+    undrawn_rows = (this.num_rows_ - start_num_rows) + start_row_offset;
+    if (undrawn_rows >= ht) {
+      cv = this.cursor_vis_;
+      this.cursor_vis_ = false;
+      this.refresh();
+      this.cursor_vis_ = cv;
+      start_row_offset = ht - this.row_;
+      start_num_rows = this.num_rows_;
+      //dump("refreshed\n");
+    }
+    ch = stuff.charAt(i);
+    //alert(this.esc_state_);
 
-		if (this.log_level_ >= VT100.INFO) {
-			if (ch == '\x1b') {
-				code = "ESC";
-			} else {
-				code = this.escape(ch);
-			}
+    if (this.log_level_ >= VT100.INFO) {
+      if (ch == '\x1b') {
+        code = "ESC";
+      } else {
+        code = this.escape(ch);
+      }
       this.debug("  write:: ch: " + ch.charCodeAt(0) + ", '" + code + "'");
-			codes += code;
-		}
+      codes += code;
+    }
 
-		switch (ch) {
-		    case '\x00':
-		    case '\x7f':
-			continue;
-		    case '\x07':  /* bell, ignore it (UNLESS waiting for OSC terminator, see below */
-			if (this.esc_state_ != 8) {
-			    this.debug("          ignoring bell character: " + ch);
-			    continue;
-			}
-			break;
-		    // This is NOT an Escape sequence
-		    //case '\a':
-		    case '\b':
-		    case '\t':
-		    case '\r':
-			this.addch(ch);
-			continue;
-		    case '\n':
-		    case '\v':
-		    case '\f': // what a mess
-			r = this.row_;
-			if (r >= this.scroll_region_[1]) {
-				this.scroll();
-				this.move(this.scroll_region_[1], 0);
-			} else {
-				this.move(r + 1, 0);
-			}
-			continue;
-		    case '\x18':
-		    case '\x1a':
-			this.esc_state_ = 0;
-			this.debug("          set escape state: 0");
-			continue;
-		    case '\x1b':
-			this.esc_state_ = 1;
-			this.debug("          set escape state: 1");
-			continue;
-		    case '\x9b':
-			this.esc_state_ = 2;
-			this.debug("          set escape state: 2");
-			continue;
-		    case '\x9d':
-			this.osc_Ps = this.osc_Pt = "";
-			this.esc_state_ = 7;
-			this.debug("          set escape state: 7");
-			continue;
-		}
-		prev_esc_state_ = this.esc_state_;
-		// not a recognized control character
-		switch (this.esc_state_) {
-		    case 0: // not in escape sequence
-			this.addch(ch);
-			break;
-		    case 1: // just saw ESC
-			switch (ch) {
-			    case '[':
-				this.esc_state_ = 2;
-				this.debug("          set escape state: 2");
-				break;
-			    case ']':
-				this.osc_Ps = this.osc_Pt = "";
-				this.esc_state_ = 7;
-				this.debug("          set escape state: 7");
-				break;
-			    case '(':
-			    case ')':
-				this.esc_state_ = 10;
-				this.debug("          set escape state: 10");
-				break;
-			    case '=':
-				/* Set keypade mode (ignored) */
-				this.info("          set keypade mode: ignored");
-				this.esc_state_ = 0;
-				break;
-			    case '>':
-				/* Reset keypade mode (ignored) */
-				this.info("          reset keypade mode: ignored");
-				this.esc_state_ = 0;
-				break;
-			    case 'H':
-				/* Set tab at cursor column (ignored) */
-				this.info("          set tab cursor column: ignored");
-				this.esc_state_ = 0;
-				break;
-			    case 'D':
-				/* Scroll display down one line */
-				this.scroll();
-				this.esc_state_ = 0;
-				break;
-			    case 'D':
-				/* Scroll display down one line */
-				this.scroll();
-				this.esc_state_ = 0;
-			    case 'M':
-				/* Scroll display up one line */
-				this.scrollup();
-				this.esc_state_ = 0;
-				break;
-			}
-			break;
-		    case 2: // just saw CSI
-			switch (ch) {
-			    case 'K':
-				/* Erase in Line */
-				this.esc_state_ = 0;
-				this.clrtoeol();
-				continue;
-			    case 'H':
-				/* Move to (0,0). */
-				this.esc_state_ = 0;
-				this.move(0, 0);
-				continue;
-			    case 'J':
-				/* Clear to the bottom. */
-				this.esc_state_ = 0;
-				this.clrtobot();
-				continue;
-			    case 'r':
-				/* Reset scrolling region. */
-				this.esc_state_ = 0;
-				this.set_scrolling_region(0, this.ht_ - 1);
-				continue;
-			    case '?':
-				/* Special VT100 mode handling. */
-				this.esc_state_ = 5;
-				this.debug("          special vt100 mode");
-				continue;
-			}
-			// Drop through to next case.
-			this.csi_parms_ = [0];
-			//this.debug("          set escape state: 3");
-			this.esc_state_ = 3;
-		    case 3: // saw CSI and parameters
-			switch (ch) {
-			    case '0':
-			    case '1':
-			    case '2':
-			    case '3':
-			    case '4':
-			    case '5':
-			    case '6':
-			    case '7':
-			    case '8':
-			    case '9':
-				x = this.csi_parms_.pop();
-				this.csi_parms_.push(x * 10 + ch * 1);
-				this.debug("    csi_parms_: " + this.csi_parms_);
-				continue;
-			    case ';':
-				if (this.csi_parms_.length < 17)
-					this.csi_parms_.push(0);
-				continue;
-			}
-			this.esc_state_ = 0;
-			switch (ch) {
-			    case 'A':
-				// Cursor Up 		<ESC>[{COUNT}A
-				this.move(this.row_ - Math.max(1, this.csi_parms_[0]),
-					  this.col_);
-				break;
-			    case 'B':
-				// Cursor Down 		<ESC>[{COUNT}B
-				this.move(this.row_ + Math.max(1, this.csi_parms_[0]),
-					  this.col_);
-				break;
-			    case 'C':
-				// Cursor Forward 	<ESC>[{COUNT}C
-				this.move(this.row_,
-					  this.col_ + Math.max(1, this.csi_parms_[0]));
-				break;
-			    case 'D':
-				// Cursor Backward 	<ESC>[{COUNT}D
-				this.move(this.row_,
-					  this.col_ - Math.max(1, this.csi_parms_[0]));
-				break;
-			    /* TODO: E and F are untested, G and d are not tested thoroughly */
-			    case 'E':
-				// Cursor Next Line
-				this.move(this.row_ + Math.max(1, this.csi_parms_[0]),
-				          0);
-				break;
-			    case 'F':
-				// Cursor Previous Line
-				this.move(this.row_ - Math.max(1, this.csi_parms_[0]),
-				          0);
-				break;
-			    case 'G':
-				// Cursor Horizontal Absolute
-				this.move(this.row_,
-				          this.csi_parms_[0] - 1);
-				break;
-			    case 'd':
-				// Line Position Absolute
-				this.move(this.csi_parms_[0] - 1,
-				          this.col_);
-				break;
-			    case 'f':
-			    case 'H':
-				// Cursor Home 		<ESC>[{ROW};{COLUMN}H
-				this.csi_parms_.push(0);
-				this.move(this.csi_parms_[0] - 1,
-					  this.csi_parms_[1] - 1);
-				break;
-			    case 'J':
-				switch (this.csi_parms_[0]) {
-				    case 0:
-					this.clrtobot();
-					break;
-				    case 2:
-					this.clear();
-					this.move(0, 0);
-				}
-				break;
-			    case 'm':
-				for (j=0; j<this.csi_parms_.length; ++j) {
-					x = this.csi_parms_[j];
-					switch (x) {
-					    case 0:
-						this.standend();
-						this.fgset(this.bkgd_.fg);
-						this.bgset(this.bkgd_.bg);
-						break;
-					    case 1:
-						this.attron(VT100.A_BOLD);
-						break;
-					    case 2:
-						this.attroff(VT100.A_BOLD);
-						break;
-					    case 4:
-						this.attron(VT100.A_UNDERLINE);
-						break;
-					    case 5:
-						this.attron(VT100.A_BLINK);
-						break;
-					    case 7:
-						this.attron(VT100.A_REVERSE);
-						break;
-					    case 8:
-						this.attron(VT100.A_INVIS);
-						break;
-					    case 30:
-						this.fgset(VT100.COLOR_BLACK);
-						break;
-					    case 31:
-						this.fgset(VT100.COLOR_RED);
-						break;
-					    case 32:
-						this.fgset(VT100.COLOR_GREEN);
-						break;
-					    case 33:
-						this.fgset(VT100.COLOR_YELLOW);
-						break;
-					    case 34:
-						this.fgset(VT100.COLOR_BLUE);
-						break;
-					    case 35:
-						this.fgset(VT100.COLOR_MAGENTA);
-						break;
-					    case 36:
-						this.fgset(VT100.COLOR_CYAN);
-						break;
-					    case 37:
-						this.fgset(VT100.COLOR_WHITE);
-						break;
-					    case 39:
-						this.fgset(this.bkgd_.fg);
-						break;
-					    case 40:
-						this.bgset(VT100.COLOR_BLACK);
-						break;
-					    case 41:
-						this.bgset(VT100.COLOR_RED);
-						break;
-					    case 42:
-						this.bgset(VT100.COLOR_GREEN);
-						break;
-					    case 43:
-						this.bgset(VT100.COLOR_YELLOW);
-						break;
-					    case 44:
-						this.bgset(VT100.COLOR_BLUE);
-						break;
-					    case 45:
-						this.bgset(VT100.COLOR_MAGENTA);
-						break;
-					    case 46:
-						this.bgset(VT100.COLOR_CYAN);
-						break;
-					    case 47:
-						this.bgset(VT100.COLOR_WHITE);
-						break;
-					    case 49:
-						this.bgset(this.bkgd_.bg);
-						break;
-					}
-				}
-				break;
-			    case 'r':
-				// 1,24r - set scrolling region
-				this.set_scrolling_region(this.csi_parms_[0] - 1,
-							  this.csi_parms_[1] - 1);
-				break;
-			    case '[':
-				this.debug("           set escape state: 4");
-				this.esc_state_ = 4;
-				break;
-			    case 'g':
-				// 0g: clear tab at cursor (ignored)
-				// 3g: clear all tabs (ignored)
-				if (this.csi_parms_[0] == 3)
-					this.clear_all();
-				break;
-			    default:
-				this.warn("        unknown command: " + ch);
-				this.csi_parms_ = [];
-				break;
-			}
-			break;
-		    case 4: // saw CSI [
-			this.esc_state_ = 0; // gobble char.
-			break;
-		    case 5: // Special mode handling, saw <ESC>[?
-			// Expect a number - the reset type
-			this.csi_parms_ = [ch];
-			this.esc_state_ = 6;
-			break;
-		    case 6: // Reset mode handling, saw <ESC>[?1
-			// Expect a letter - the mode target, example:
-			// <ESC>[?1h : Set cursor key mode to application
-			// <ESC>[?3h : Set number of columns to 132
-			// <ESC>[?4h : Set smooth scrolling
-			// <ESC>[?5h : Set reverse video on screen
-			// <ESC>[?6h : Set origin to relative
-			// <ESC>[?7h : Set auto-wrap mode
-			// <ESC>[?8h : Set auto-repeat mode
-			// <ESC>[?9h : Set interlacing mode
-			// <ESC>[?1l : Set cursor key mode to cursor
-			// <ESC>[?2l : Set VT52 (versus ANSI) compatible
-			// <ESC>[?3l : Set number of columns to 80
-			// <ESC>[?4l : Set jump scrolling
-			// <ESC>[?5l : Set normal video on screen
-			// <ESC>[?6l : Set origin to absolute
-			// <ESC>[?7l : Reset auto-wrap mode
-			// <ESC>[?8l : Reset auto-repeat mode
-			// <ESC>[?9l : Reset interlacing mode
-			// XXX: Ignored for now.
-			//dump("Saw reset mode: <ESC>[?" + this.csi_parms_[0] + ch + "\n");
-			if (ch != 'h' && ch != 'l') {
-			    this.csi_parms_.push(ch);
-			    continue;
-			}
-			var command = this.csi_parms_.join('')  + ch;
-			if (command == '1h') {
-				this.cursor_key_mode_ = VT100.CK_APPLICATION;
-			} else if (command == '1l') {
-				this.cursor_key_mode_ = VT100.CK_CURSOR;
-			}
-			this.esc_state_ = 0;
-			//this.debug("          set escape state: 0");
-			break;
-		    /*
-		     * OSC commands (http://invisible-island.net/xterm/ctlseqs/ctlseqs.html)
-		     * There are two of them:
-		     * OSC Ps ; Pt ST
-		     * OSC Ps ; Pt BEL
-		     *
-		     * OSC is 0x9d, ST is either 0x9c or 0x1b \
-		     * esc_state_ == 7		OSC found
-		     *            == 8		; found
-		     *            == 9		ESC occured in OSC, awaiting \
-		     * Ps and Pt are stored in osc_Ps and osc_Pt, respectively
-		     */
-		    case 7:
-			if (ch == ';') {
-			    this.debug("           set escape state: 8");
-			    this.esc_state_ = 8;
-			}
-			else {
-			    this.osc_Ps += ch;
-			}
-			break;
-		    case 8:
-			if (ch == '\x07' || ch == '\x9c') {
-			    this.esc_state_ = 0;
-			    //alert(this.osc_Ps + ' ' + this.osc_Pt);
-			}
-			else if (ch == '\x1b') {
-			    this.debug("           set escape state: 8");
-			    this.esc_state_ = 9;
-			}
-			else {
-			    this.osc_Pt += ch;
-			}
-			break;
-		    case 9:
-			if (ch != '\\') {
-			    this.warn("        unknown command: " + ch)
-			} else {
-			    this.esc_state_ = 0;
-			    //alert(this.osc_Ps + ' ' + this.osc_Pt);
-			}
-			break;
-		    case 10:
-			/* Just ignore them for now */
-			this.esc_state = 0;
-			break;
-		}
-		if ((prev_esc_state_ > 0 && this.esc_state_ == 0) ||
-		    (prev_esc_state_ == 0 && this.esc_state_ > 0)) {
-			this.info("codes: " + this.escape(codes));
-			codes = "";
-		}
-	}
-	this.refresh();
+    switch (ch) {
+      case '\x00':
+      case '\x7f':
+        continue;
+      case '\x07':  /* bell, ignore it (UNLESS waiting for OSC terminator, see below */
+        if (this.esc_state_ != 8) {
+          this.debug("          ignoring bell character: " + ch);
+          continue;
+        }
+        break;
+      // This is NOT an Escape sequence
+      //case '\a':
+      case '\b':
+      case '\t':
+      case '\r':
+        this.addch(ch);
+        continue;
+      case '\n':
+      case '\v':
+      case '\f': // what a mess
+        r = this.row_;
+        if (r >= this.scroll_region_[1]) {
+          this.scroll();
+          this.move(this.scroll_region_[1], 0);
+        } else {
+          this.move(r + 1, 0);
+        }
+        continue;
+      case '\x18':
+      case '\x1a':
+        this.esc_state_ = 0;
+        this.debug("          set escape state: 0");
+        continue;
+      case '\x1b':
+        this.esc_state_ = 1;
+        this.debug("          set escape state: 1");
+        continue;
+      case '\x9b':
+        this.esc_state_ = 2;
+        this.debug("          set escape state: 2");
+        continue;
+      case '\x9d':
+        this.osc_Ps = this.osc_Pt = "";
+        this.esc_state_ = 7;
+        this.debug("          set escape state: 7");
+        continue;
+    }
+    prev_esc_state_ = this.esc_state_;
+    // not a recognized control character
+    switch (this.esc_state_) {
+      case 0: // not in escape sequence
+        this.addch(ch);
+        break;
+      case 1: // just saw ESC
+        switch (ch) {
+          case '[':
+            this.esc_state_ = 2;
+            this.debug("          set escape state: 2");
+            break;
+          case ']':
+            this.osc_Ps = this.osc_Pt = "";
+            this.esc_state_ = 7;
+            this.debug("          set escape state: 7");
+            break;
+          case '(':
+          case ')':
+            this.esc_state_ = 10;
+            this.debug("          set escape state: 10");
+            break;
+          case '=':
+            /* Set keypade mode (ignored) */
+            this.info("          set keypade mode: ignored");
+            this.esc_state_ = 0;
+            break;
+          case '>':
+            /* Reset keypade mode (ignored) */
+            this.info("          reset keypade mode: ignored");
+            this.esc_state_ = 0;
+            break;
+          case 'H':
+            /* Set tab at cursor column (ignored) */
+            this.info("          set tab cursor column: ignored");
+            this.esc_state_ = 0;
+            break;
+          case 'D':
+            /* Scroll display down one line */
+            this.scroll();
+            this.esc_state_ = 0;
+            break;
+          case 'D':
+            /* Scroll display down one line */
+            this.scroll();
+            this.esc_state_ = 0;
+          case 'M':
+            /* Scroll display up one line */
+            this.scrollup();
+            this.esc_state_ = 0;
+            break;
+        }
+        break;
+      case 2: // just saw CSI
+        switch (ch) {
+          case 'K':
+            /* Erase in Line */
+            this.esc_state_ = 0;
+            this.clrtoeol();
+            continue;
+          case 'H':
+            /* Move to (0,0). */
+            this.esc_state_ = 0;
+            this.move(0, 0);
+            continue;
+          case 'J':
+            /* Clear to the bottom. */
+            this.esc_state_ = 0;
+            this.clrtobot();
+            continue;
+          case 'r':
+            /* Reset scrolling region. */
+            this.esc_state_ = 0;
+            this.set_scrolling_region(0, this.ht_ - 1);
+            continue;
+          case '?':
+            /* Special VT100 mode handling. */
+            this.esc_state_ = 5;
+            this.debug("          special vt100 mode");
+            continue;
+        }
+        // Drop through to next case.
+        this.csi_parms_ = [0];
+        //this.debug("          set escape state: 3");
+        this.esc_state_ = 3;
+      case 3: // saw CSI and parameters
+        switch (ch) {
+          case '0':
+          case '1':
+          case '2':
+          case '3':
+          case '4':
+          case '5':
+          case '6':
+          case '7':
+          case '8':
+          case '9':
+            x = this.csi_parms_.pop();
+            this.csi_parms_.push(x * 10 + ch * 1);
+            this.debug("    csi_parms_: " + this.csi_parms_);
+            continue;
+          case ';':
+            if (this.csi_parms_.length < 17)
+            this.csi_parms_.push(0);
+            continue;
+        }
+        this.esc_state_ = 0;
+        switch (ch) {
+          case 'A':
+            // Cursor Up 		<ESC>[{COUNT}A
+            this.move(this.row_ - Math.max(1, this.csi_parms_[0]),
+              this.col_);
+            break;
+          case 'B':
+            // Cursor Down 		<ESC>[{COUNT}B
+            this.move(this.row_ + Math.max(1, this.csi_parms_[0]),
+              this.col_);
+            break;
+          case 'C':
+            // Cursor Forward 	<ESC>[{COUNT}C
+            this.move(this.row_,
+              this.col_ + Math.max(1, this.csi_parms_[0]));
+            break;
+          case 'D':
+            // Cursor Backward 	<ESC>[{COUNT}D
+            this.move(this.row_,
+              this.col_ - Math.max(1, this.csi_parms_[0]));
+            break;
+          /* TODO: E and F are untested, G and d are not tested thoroughly */
+          case 'E':
+            // Cursor Next Line
+            this.move(this.row_ + Math.max(1, this.csi_parms_[0]),
+            0);
+            break;
+          case 'F':
+            // Cursor Previous Line
+            this.move(this.row_ - Math.max(1, this.csi_parms_[0]),
+            0);
+            break;
+          case 'G':
+            // Cursor Horizontal Absolute
+            this.move(this.row_,
+              this.csi_parms_[0] - 1);
+            break;
+          case 'd':
+            // Line Position Absolute
+            this.move(this.csi_parms_[0] - 1,
+              this.col_);
+            break;
+          case 'f':
+          case 'H':
+            // Cursor Home 		<ESC>[{ROW};{COLUMN}H
+            this.csi_parms_.push(0);
+            this.move(this.csi_parms_[0] - 1,
+              this.csi_parms_[1] - 1);
+            break;
+          case 'J':
+            switch (this.csi_parms_[0]) {
+              case 0:
+                this.clrtobot();
+                break;
+              case 2:
+                this.clear();
+                this.move(0, 0);
+            }
+            break;
+          case 'm':
+            for (j=0; j<this.csi_parms_.length; ++j) {
+              x = this.csi_parms_[j];
+              if( x > 89 && x < 98 && this.opts.rainbow ){
+                const rainbow = this.opts.rainbow
+                this.fgset( rainbow[ Math.floor( Math.random() * 1000 ) % rainbow.length ] )
+              }
+              switch (x) {
+                case 0:
+                  this.standend();
+                  this.fgset(this.bkgd_.fg);
+                  this.bgset(this.bkgd_.bg);
+                break;
+                case 1:
+                  this.attron(VT100.A_BOLD);
+                break;
+                case 2:
+                  this.attroff(VT100.A_BOLD);
+                break;
+                case 4:
+                  this.attron(VT100.A_UNDERLINE);
+                break;
+                case 5:
+                  this.attron(VT100.A_BLINK);
+                break;
+                case 7:
+                  this.attron(VT100.A_REVERSE);
+                break;
+                case 8:
+                  this.attron(VT100.A_INVIS);
+                break;
+                case 30:
+                  this.fgset(VT100.COLOR_BLACK);
+                break;
+                case 31:
+                  this.fgset(VT100.COLOR_RED);
+                break;
+                case 32:
+                  this.fgset(VT100.COLOR_GREEN);
+                break;
+                case 33:
+                  this.fgset(VT100.COLOR_YELLOW);
+                break;
+                case 34:
+                  this.fgset(VT100.COLOR_BLUE);
+                break;
+                case 35:
+                  this.fgset(VT100.COLOR_MAGENTA);
+                break;
+                case 36:
+                  this.fgset(VT100.COLOR_CYAN);
+                break;
+                case 37:
+                  this.fgset(VT100.COLOR_WHITE);
+                break;
+                case 39:
+                  this.fgset(this.bkgd_.fg);
+                break;
+                case 40:
+                  this.bgset(VT100.COLOR_BLACK);
+                break;
+                case 41:
+                  this.bgset(VT100.COLOR_RED);
+                break;
+                case 42:
+                  this.bgset(VT100.COLOR_GREEN);
+                break;
+                case 43:
+                  this.bgset(VT100.COLOR_YELLOW);
+                break;
+                case 44:
+                  this.bgset(VT100.COLOR_BLUE);
+                break;
+                case 45:
+                  this.bgset(VT100.COLOR_MAGENTA);
+                break;
+                case 46:
+                  this.bgset(VT100.COLOR_CYAN);
+                break;
+                case 47:
+                  this.bgset(VT100.COLOR_WHITE);
+                break;
+                case 49:
+                  this.bgset(this.bkgd_.bg);
+                break;
+              }
+            }
+            break;
+          case 'r':
+            // 1,24r - set scrolling region
+            this.set_scrolling_region(this.csi_parms_[0] - 1,
+              this.csi_parms_[1] - 1);
+            break;
+          case '[':
+            this.debug("           set escape state: 4");
+            this.esc_state_ = 4;
+            break;
+          case 'g':
+            // 0g: clear tab at cursor (ignored)
+            // 3g: clear all tabs (ignored)
+            if (this.csi_parms_[0] == 3)
+            this.clear_all();
+            break;
+          default:
+            this.warn("        unknown command: " + ch);
+            this.csi_parms_ = [];
+            return
+            break;
+        }
+        break;
+      case 4: // saw CSI [
+        this.esc_state_ = 0; // gobble char.
+        break;
+      case 5: // Special mode handling, saw <ESC>[?
+        // Expect a number - the reset type
+        this.csi_parms_ = [ch];
+        this.esc_state_ = 6;
+        break;
+      case 6: // Reset mode handling, saw <ESC>[?1
+        // Expect a letter - the mode target, example:
+        // <ESC>[?1h : Set cursor key mode to application
+        // <ESC>[?3h : Set number of columns to 132
+        // <ESC>[?4h : Set smooth scrolling
+        // <ESC>[?5h : Set reverse video on screen
+        // <ESC>[?6h : Set origin to relative
+        // <ESC>[?7h : Set auto-wrap mode
+        // <ESC>[?8h : Set auto-repeat mode
+        // <ESC>[?9h : Set interlacing mode
+        // <ESC>[?1l : Set cursor key mode to cursor
+        // <ESC>[?2l : Set VT52 (versus ANSI) compatible
+        // <ESC>[?3l : Set number of columns to 80
+        // <ESC>[?4l : Set jump scrolling
+        // <ESC>[?5l : Set normal video on screen
+        // <ESC>[?6l : Set origin to absolute
+        // <ESC>[?7l : Reset auto-wrap mode
+        // <ESC>[?8l : Reset auto-repeat mode
+        // <ESC>[?9l : Reset interlacing mode
+        // XXX: Ignored for now.
+        //dump("Saw reset mode: <ESC>[?" + this.csi_parms_[0] + ch + "\n");
+        if (ch != 'h' && ch != 'l') {
+          this.csi_parms_.push(ch);
+          continue;
+        }
+        var command = this.csi_parms_.join('')  + ch;
+        if (command == '1h') {
+          this.cursor_key_mode_ = VT100.CK_APPLICATION;
+        } else if (command == '1l') {
+          this.cursor_key_mode_ = VT100.CK_CURSOR;
+        }
+        this.esc_state_ = 0;
+        //this.debug("          set escape state: 0");
+        break;
+      /*
+         * OSC commands (http://invisible-island.net/xterm/ctlseqs/ctlseqs.html)
+         * There are two of them:
+         * OSC Ps ; Pt ST
+         * OSC Ps ; Pt BEL
+         *
+         * OSC is 0x9d, ST is either 0x9c or 0x1b \
+         * esc_state_ == 7		OSC found
+         *            == 8		; found
+         *            == 9		ESC occured in OSC, awaiting \
+         * Ps and Pt are stored in osc_Ps and osc_Pt, respectively
+      */
+      case 7:
+        if (ch == ';') {
+          this.debug("           set escape state: 8");
+          this.esc_state_ = 8;
+        }
+        else {
+          this.osc_Ps += ch;
+        }
+        break;
+      case 8:
+        if (ch == '\x07' || ch == '\x9c') {
+          this.esc_state_ = 0;
+          //alert(this.osc_Ps + ' ' + this.osc_Pt);
+        }
+        else if (ch == '\x1b') {
+          this.debug("           set escape state: 8");
+          this.esc_state_ = 9;
+        }
+        else {
+          this.osc_Pt += ch;
+        }
+        break;
+      case 9:
+        if (ch != '\\') {
+          this.warn("        unknown command: " + ch)
+        } else {
+          this.esc_state_ = 0;
+          //alert(this.osc_Ps + ' ' + this.osc_Pt);
+        }
+        break;
+      case 10:
+        /* Just ignore them for now */
+        this.esc_state = 0;
+        break;
+    }
+    if ((prev_esc_state_ > 0 && this.esc_state_ == 0) ||
+      (prev_esc_state_ == 0 && this.esc_state_ > 0)) {
+      this.info("codes: " + this.escape(codes));
+      codes = "";
+    }
+  }
+  this.refresh();
 }
 
 
@@ -1309,38 +1321,52 @@ VT100.prototype.throttleSmart = function throttleSmart(fn, wait) {
 }
 
 VT100.prototype.setupTouchInputFallback = function(){
-  this.scr_.addEventListener('touchend', () => {
-    if( !this.input ){
-      this.form  = document.createElement("form")
-      this.form.addEventListener("submit", (e) => {
-        e.preventDefault()
-        this.key_buf_.push('\n')
-        setTimeout(VT100.go_getch_, 0);
-      })
-      this.input = document.createElement("input")
-      this.input.setAttribute("cols", this.opts.cols )
-      this.input.setAttribute("rows", this.opts.rows )
-      this.input.style.opacity = '0'
-      this.input.style.position = 'absolute'
-      this.input.style.left = '-9999px'
-      this.form.appendChild(this.input)
-      this.scr_.parentElement.appendChild(this.form)
+  if( !this.input ){
+    this.input = document.createElement("input")
+    this.input.setAttribute("cols", this.opts.cols )
+    this.input.setAttribute("rows", this.opts.rows )
+    this.input.style.opacity = '0'
+    this.input.style.position = 'absolute'
+    this.input.style.left = '-9999px'
+    this.form  = document.createElement("form")
+    this.form.addEventListener("submit", (e) => {
+      e.preventDefault()
+      this.key_buf_.push('\n')
+      setTimeout(VT100.go_getch_, 0);
+    })
+    this.form.appendChild(this.input)
+    this.scr_.parentElement.appendChild(this.form)
 
-      this.input.handler = () => {
-        let ch = this.input.value
-        // detect backspace
-        //if( e.inputType == 'deleteContentBackward' ) ch = '\b'
-        this.input.value = ''
-        if( !ch ) return
-        this.key_buf_.push(ch);
-        setTimeout(VT100.go_getch_, 0);
-        this.input.valueLast = this.input.value
-      }
-      this.input.addEventListener('input', this.input.handler ) 
+    this.input.addEventListener('blur', () => {
+      this.key_buf_.push('\n')
+      setTimeout(VT100.go_getch_, 0);
+    })
 
+    this.input.addEventListener("keydown", VT100.handle_onkeypress_, false);
+
+    this.input.handler = (e) => {
+      let ch
+      let isEnter = String(e?.code).toLowerCase() == "enter" || e?.code == 13 
+      ch = isEnter ? '\n' : this.input.value.substr(-1)
+      if( this.input.lastValue && this.input.value.length < this.input.lastValue.length ) ch = '\b' // naive
+      // detect backspace
+      if( !ch ) return
+      this.key_buf_.push(ch);
+      setTimeout(VT100.go_getch_, 0);
+      this.input.lastValue = this.input.value
     }
-    setTimeout( () => this.input.focus(), 10 )
-  })
+    this.input.addEventListener('input', (e) => this.input.handler(e) ) 
+
+    this.scr_.addEventListener('touchend', (e) => this.focus() )
+    this.scr_.addEventListener('click', (e) => this.focus() )
+  }
+  this.focus()
+}
+
+VT100.prototype.focus = function(){
+  setTimeout( () => {
+    this.input.focus()
+  }, 10 )
 }
 
 function dump(x) {

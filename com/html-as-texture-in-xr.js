@@ -21,7 +21,7 @@ if( !AFRAME.components['html-as-texture-in-xr'] ){
       this.el.setAttribute("html",`html: ${this.data.domid}; cursor:#cursor; xrlayer: true`)
       this.el.setAttribute("visible",  AFRAME.utils.XD() == '3D' ? 'true' : 'false' )
       if( this.data.faceuser ){
-        this.el.setAttribute("position", AFRAME.utils.XD.getPositionInFrontOfCamera(0.8) )
+        this.el.setAttribute("position", AFRAME.utils.XD.getPositionInFrontOfCamera(0.4) )
       }
     },
 

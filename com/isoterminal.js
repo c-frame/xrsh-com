@@ -40,7 +40,6 @@ if( typeof AFRAME != 'undefined '){
       depth:          { type: 'number',"default": 0.03 },
       lineHeight:     { type: 'number',"default": 18 },
       padding:        { type: 'number',"default": 18 },
-      minimized:      { type: 'boolean',"default":false},
       maximized:      { type: 'boolean',"default":true},
       muteUntilPrompt:{ type: 'boolean',"default":true},     // mute stdout until a prompt is detected in ISO
       HUD:            { type: 'boolean',"default":false},    // link to camera movement 
@@ -97,11 +96,11 @@ if( typeof AFRAME != 'undefined '){
       css:     (me) => `.isoterminal{
                           padding: ${me.com.data.padding}px;
                           width:100%;
-                          height:100%;
+                          height:90%;
                           position:relative;
                         }
                         .isoterminal div{
-                          display:block;
+                          display:inline-block;
                           position:relative;
                           line-height: ${me.com.data.lineHeight}px;
                         }
@@ -131,6 +130,17 @@ if( typeof AFRAME != 'undefined '){
                         #overlay .winbox:has(> .isoterminal){ 
                           background:transparent;
                           box-shadow:none;
+                        }
+
+                        .cursor {
+                          background: #70F !important;
+                          animation:fade 1000ms infinite;
+                          -webkit-animation:fade 1000ms infinite;
+                        }
+
+                        .XR .cursor {
+                          animation:none;
+                          -webkit-animation:none;
                         }
 
                         .wb-body:has(> .isoterminal){ 
@@ -259,10 +269,10 @@ if( typeof AFRAME != 'undefined '){
       instance.addEventListener('window.onmaximize', resize )
 
       const focus = (showdom) => (e) => {
+        this.el.emit('focus',e.detail)
         if( this.el.components.window && this.data.renderer == 'canvas'){
           this.el.components.window.show( showdom )
         }
-        this.el.emit('focus',e.detail)
       }
 
       this.el.addEventListener('obbcollisionstarted', focus(false) )
@@ -296,17 +306,18 @@ if( typeof AFRAME != 'undefined '){
         cols: this.cols, 
         rows: this.rows,
         el_or_id: el,
-        max_scroll_lines: 100, 
-        nodim: true
+        max_scroll_lines: this.rows, 
+        nodim: true,
+        rainbow: [VT100.COLOR_MAGENTA, VT100.COLOR_CYAN ],
+        xr: AFRAME.scenes[0].renderer.xr
       }
       this.vt100 = new VT100( opts )
       this.vt100.el = el
       this.vt100.curs_set( 1, true)
-      el.focus()
-      this.el.addEventListener('focus', () => el.focus())
+      this.vt100.focus()
+      this.el.addEventListener('focus', () => this.vt100.focus() )
       this.vt100.getch( (ch,t) => {
         this.term.send( ch )
-        this.vt100.curs_set( 0, true)
       })
 
       this.el.addEventListener('serial-output-byte', (e) => {
@@ -317,14 +328,6 @@ if( typeof AFRAME != 'undefined '){
       this.el.addEventListener('serial-output-string', (e) => {
         this.vt100.write(e.detail)
       })
-
-
-      //this.el.dom.querySelector('input').addEventListener('keyup', (e) => {
-      //  VT100.handle_onkeypress_( {charCode : e.charCode || e.keyCode, keyCode: e.keyCode}, (chars) => {
-      //    debugger
-      //    chars.map( (c) => this.term.send(str) )
-      //  })
-      //})
     },
 
     setupBox: function(){
@@ -339,13 +342,13 @@ if( typeof AFRAME != 'undefined '){
     },
 
     calculateDimension: function(){
-      if( this.data.width == -1  ) this.data.width = document.body.offsetWidth
-      if( this.data.height == -1 ) this.data.height = document.body.offsetHeight
+      if( this.data.width == -1  ) this.data.width = document.body.offsetWidth;
+      if( this.data.height == -1 ) this.data.height = Math.floor( document.body.offsetHeight - 30 )
       if( this.data.height > this.data.width ) this.data.height = this.data.width // mobile smartphone fix
       this.data.width -= this.data.padding*2
       this.data.height -= this.data.padding*2
-      this.cols = Math.floor(this.data.width/this.data.lineHeight*1.9)
-      this.rows = Math.floor(this.data.height*0.5/this.data.lineHeight*1.7) // keep extra height for mobile browser bottom-bar (android)
+      this.cols = Math.floor(this.data.width/this.data.lineHeight*2)
+      this.rows = Math.floor(this.data.height*0.53/this.data.lineHeight*1.7) 
     },
 
     events:{
