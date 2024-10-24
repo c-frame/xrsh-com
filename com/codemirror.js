@@ -4,8 +4,8 @@ AFRAME.registerComponent('codemirror', {
   schema: { 
     file: { type:"string"},
     term: { type:"selector", default: "[isoterminal]" },
-    width: { type:"number", default:900},
-    height: { type:"number", default:700},
+    width: { type:"number", default:700},
+    height: { type:"number", default:500},
   },
 
   init: function () {
