@@ -100,7 +100,7 @@ if( typeof AFRAME != 'undefined '){
                           position:relative;
                         }
                         .isoterminal div{
-                          display:inline-block;
+                          display:block;
                           position:relative;
                           line-height: ${me.com.data.lineHeight}px;
                         }
