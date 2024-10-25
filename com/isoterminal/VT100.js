@@ -551,25 +551,28 @@ VT100.prototype.clearpos = function VT100_clearpos(row, col)
 	this.redraw_[row] = 1;
 }
 
-VT100.prototype.curs_set = function(vis, grab, eventist)
+VT100.prototype.curs_set = function(vis, grab, offscreenKB)
 {
+  // offscreenKB is a div which receives keys from physical kb's 
+  // but not from touch keyboards (they require an input-field)
+  // hence setupTouchInputFallback()..this is how we seperate the two
 	this.info("curs_set:: vis: " + vis + ", grab: " + grab);
 	if (vis !== undefined){
 		this.cursor_vis_ = (vis > 0);
   }
-	if (eventist === undefined)
-		eventist = this.scr_;
+	if (offscreenKB === undefined)
+		offscreenKB = this.scr_;
 	if (grab === true || grab === false) {
 		if (grab === this.grab_events_)
 			return;
 		if (grab) {
 			this.grab_events_ = true;
 			VT100.the_vt_ = this;
-			eventist.addEventListener("keypress", VT100.handle_onkeypress_, false);
-			eventist.addEventListener("keydown", VT100.handle_onkeypress_, false);
+			offscreenKB.addEventListener("keypress", VT100.handle_onkeypress_, false);
+			offscreenKB.addEventListener("keydown", VT100.handle_onkeypress_, false);
 		} else {
-			eventist.removeEventListener("keypress", VT100.handle_onkeypress_, false);
-			eventist.removeEventListener("keydown", VT100.handle_onkeypress_, false);
+			offscreenKB.removeEventListener("keypress", VT100.handle_onkeypress_, false);
+			offscreenKB.removeEventListener("keydown", VT100.handle_onkeypress_, false);
 			this.grab_events_ = false;
 			VT100.the_vt_ = undefined;
 		}
@@ -1337,18 +1340,19 @@ VT100.prototype.setupTouchInputFallback = function(){
     this.form.appendChild(this.input)
     this.scr_.parentElement.appendChild(this.form)
 
-    this.input.addEventListener('blur', () => {
-      this.key_buf_.push('\n')
-      setTimeout(VT100.go_getch_, 0);
-    })
-
     this.input.addEventListener("keydown", VT100.handle_onkeypress_, false);
 
     this.input.handler = (e) => {
       let ch
       let isEnter = String(e?.code).toLowerCase() == "enter" || e?.code == 13 
-      ch = isEnter ? '\n' : this.input.value.substr(-1)
-      if( this.input.lastValue && this.input.value.length < this.input.lastValue.length ) ch = '\b' // naive
+      let isBackspace = String(e?.code).toLowerCase() == "backspace" || e?.code == 8 
+      if( isEnter ){
+        ch = '\n'
+      }else if( isBackspace ){
+        ch = '\b' // naive
+      }else{ 
+        ch = this.input.value.substr(-1)
+      }
       // detect backspace
       if( !ch ) return
       this.key_buf_.push(ch);
@@ -1360,13 +1364,31 @@ VT100.prototype.setupTouchInputFallback = function(){
     this.scr_.addEventListener('touchend', (e) => this.focus() )
     this.scr_.addEventListener('click', (e) => this.focus() )
   }
+  this.useFallbackInput = true
   this.focus()
 }
 
 VT100.prototype.focus = function(){
   setTimeout( () => {
-    this.input.focus()
+    const el = this[ this.useFallbackInput ? 'input' : 'scr_' ]
+    el.focus()
+    console.dir(el)
   }, 10 )
+}
+
+window.keyboard = function(n){
+  let msg = 'unknown keyboard'
+  if( n == 0 ){
+    msg = "using onscreen keyboard"
+    VT100.the_vt_.useFallbackInput = true
+    VT100.the_vt_.focus()
+  }
+  if( n == 1 ){
+    msg = "using offscreen keyboard"
+    VT100.the_vt_.useFallbackInput = false
+    VT100.the_vt_.focus()
+  }
+  return msg
 }
 
 function dump(x) {
