@@ -109,8 +109,7 @@ AFRAME.registerComponent('codemirror', {
     // we don't do via shellcmd: isoterminal.exec(`echo '${str}' > ${file}`,1) 
     // as it would require all kindof ugly stringescaping
     console.log("updating "+file)
-    console.log(str)
-    await this.isoterminal.worker['emulator.update_file'](file, term.convert.toUint8Array(str) )
+    await this.isoterminal.worker['emulator.update_file'](file, this.isoterminal.convert.toUint8Array(str) )
   },
 
   events:{
