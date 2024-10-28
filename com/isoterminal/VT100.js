@@ -1340,6 +1340,15 @@ VT100.prototype.setupTouchInputFallback = function(){
     this.form.appendChild(this.input)
     this.scr_.parentElement.appendChild(this.form)
 
+    this.input.addEventListener('blur', () => {
+      if( this.input.value != '' ){
+        ch = '\n'
+        this.key_buf_.push(ch);
+        setTimeout(VT100.go_getch_, 0);
+        this.input.value = ''
+      }
+    })
+
     this.input.addEventListener("keydown", VT100.handle_onkeypress_, false);
 
     this.input.handler = (e) => {
