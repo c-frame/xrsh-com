@@ -70,7 +70,7 @@ AFRAME.registerComponent('window', {
       if( els.length < 2 ) return
       let current = els[ els.length-1 ]
       let last    = els[ els.length-2 ]
-      AFRAME.utils.positionObjectNextToNeighbor( current.object3D , last.object3D, els.length )
+      AFRAME.utils.positionObjectNextToNeighbor( current.object3D , last.object3D, 0.02 )
     }
   },
 
@@ -79,11 +79,10 @@ AFRAME.registerComponent('window', {
   }
 })
 
-AFRAME.utils.positionObjectNextToNeighbor = function positionObjectNextToNeighbor(object, lastNeighbor = null, neighbours, margin = 0.45, degree = 20) {
+AFRAME.utils.positionObjectNextToNeighbor = function positionObjectNextToNeighbor(object, lastNeighbor = null, margin ){
   // *FIXME* this could be more sophisticated :)
-  object.position.x = lastNeighbor.position.x + ((neighbours-1) * margin)
-  object.position.y = lastNeighbor.position.y 
-  object.position.z = lastNeighbor.position.z
-  //object.rotation.y += THREE.MathUtils.degToRad( (neighbours-1) * degree);
+  object.position.x = lastNeighbor.position.x + margin 
+  object.position.y = lastNeighbor.position.y - margin 
+  object.position.z = lastNeighbor.position.z + margin
 
 }
