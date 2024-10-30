@@ -25,7 +25,6 @@ if( typeof emulator != 'undefined' ){
       localforage.setItem("state", ISOTerminal.prototype.convert.arrayBufferToBase64(state) )
       console.log("state saved")
     })
-    console.dir(state)
   }
 
 
