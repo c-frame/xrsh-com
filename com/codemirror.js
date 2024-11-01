@@ -109,7 +109,7 @@ AFRAME.registerComponent('codemirror', {
     // we don't do via shellcmd: isoterminal.exec(`echo '${str}' > ${file}`,1) 
     // as it would require all kindof ugly stringescaping
     console.log("updating "+file)
-    await this.isoterminal.worker['emulator.update_file'](file, this.isoterminal.convert.toUint8Array(str) )
+    await this.isoterminal.worker.update_file(file, this.isoterminal.convert.toUint8Array(str) )
   },
 
   events:{
@@ -117,7 +117,7 @@ AFRAME.registerComponent('codemirror', {
     // component events
     DOMready: function(e){
 
-      this.isoterminal.worker['emulator.read_file'](this.data.file)
+      this.isoterminal.worker.read_file(this.data.file)
       .then( this.isoterminal.convert.Uint8ArrayToString )
       .then( (str) => {
           console.log("creating editor")

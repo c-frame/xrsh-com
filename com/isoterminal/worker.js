@@ -42,10 +42,10 @@ this.runISO = function(opts){
   /* 
    * forward events/functions so non-worker world can reach them
    */
-  this['emulator.create_file']   = async function(){ return emulator.create_file.apply(emulator, arguments[0]) }
-  this['emulator.read_file']     = async function(){ return emulator.read_file.apply(emulator, arguments[0])   }
-  this['emulator.append_file']   = async function(){ emulator.fs9p.append_file.apply(emulator.fs9p, arguments[0]) }
-  this['emulator.update_file']   = async function(){ emulator.fs9p.update_file.apply(emulator.fs9p, arguments[0]) }
+  this.create_file   = async function(){ return emulator.create_file.apply(emulator, arguments[0]) }
+  this.read_file     = async function(){ return emulator.read_file.apply(emulator, arguments[0])   }
+  this.append_file   = async function(){ emulator.fs9p.append_file.apply(emulator.fs9p, arguments[0]) }
+  this.update_file   = async function(){ emulator.fs9p.update_file.apply(emulator.fs9p, arguments[0]) }
 
   // filename will be read from 9pfs: "/mnt/"+filename
   emulator.readFromPipe = function(filename,cb){

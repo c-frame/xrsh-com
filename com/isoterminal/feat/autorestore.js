@@ -2,7 +2,7 @@ if( typeof emulator != 'undefined' ){
   // inside worker-thread
   importScripts("localforage.js")  // we don't instance it again here (just use its functions)
   
-  this['emulator.restore_state'] = async function(data){ 
+  this.restore_state = async function(data){ 
     return new Promise( (resolve,reject) => {
       localforage.getItem("state", async (err,stateBase64) => {
         if( stateBase64 && !err ){
@@ -14,7 +14,7 @@ if( typeof emulator != 'undefined' ){
       })
     })
   }
-  this['emulator.save_state'] = async function(){ 
+  this.save_state = async function(){ 
     console.log("saving session")
     let state = await emulator.save_state()
     localforage.setDriver([
@@ -46,7 +46,7 @@ if( typeof emulator != 'undefined' ){
         if( stateBase64 && !err && confirm('continue last session?') ){
           this.noboot = true // see feat/boot.js
           try{
-            await this.worker['emulator.restore_state']()
+            await this.worker.restore_state()
             // simulate / fastforward boot events
             this.postBoot( () => {
               this.send("l\n") 
@@ -57,7 +57,7 @@ if( typeof emulator != 'undefined' ){
       })
 
       this.save = async () => {
-        await this.worker['emulator.save_state']()
+        await this.worker.save_state()
       }
 
       window.addEventListener("beforeunload", function (e) {
