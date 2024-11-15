@@ -121,7 +121,7 @@ function VT100(opts)
 	}
 	this.scr_ = scr;
   this.scr_.style.display = 'inline'
-  this.setupTouchInputFallback() // smartphone
+  this.setupTouchInputFallback() // smartphone/android 
 	this.cursor_vis_ = true;
 	this.cursor_key_mode_ = VT100.CK_CURSOR;
 	this.grab_events_ = false;
@@ -218,7 +218,7 @@ VT100.handle_onkeypress_ = function VT100_handle_onkeypress(event,cb)
         ch = '\n';
     }
   } else {
-    switch (event.key) {
+    switch (event.code) {
       case "Backspace":
         ch = '\b';
         break;
@@ -267,13 +267,17 @@ VT100.handle_onkeypress_ = function VT100_handle_onkeypress(event,cb)
         break;
     }
   }
-  // Stop the event from doing anything else.
-  event.preventDefault();
-	vt.key_buf_.push(ch);
+
+  // Workaround: top the event from doing anything else.
+  // (prevent input from adding characters instead of via VM)
+  event.preventDefault()
+  vt.key_buf_.push(ch);
+
   if( cb ){
     cb(vt.key_buf_)
     vt.key_buf_ = []
   }else setTimeout(VT100.go_getch_, 0);
+
 	return false;
 }
 
@@ -287,6 +291,7 @@ VT100.handle_onkeydown_ = function VT100_handle_onkeydown()
 	    default:
 		return true;
 	}
+  event.preventDefault()
 	vt.key_buf_.push(ch);
 	setTimeout(VT100.go_getch_, 0);
 	return false;
@@ -1079,7 +1084,7 @@ VT100.prototype.write = function VT100_write(stuff)
               x = this.csi_parms_[j];
               if( x > 89 && x < 98 && this.opts.rainbow ){
                 const rainbow = this.opts.rainbow
-                this.fgset( rainbow[ Math.floor( Math.random() * 1000 ) % rainbow.length ] )
+                this.fgset( rainbow[ x % rainbow.length ] )
               }
               switch (x) {
                 case 0:
@@ -1325,18 +1330,28 @@ VT100.prototype.throttleSmart = function throttleSmart(fn, wait) {
 
 VT100.prototype.setupTouchInputFallback = function(){
   if( !this.input ){
+    this.upload = document.createElement("input")
+    this.upload.setAttribute("type", "file")
+    this.upload.style.opacity = '0'
+    this.upload.style.position = 'absolute'
+    this.upload.style.left = '-9999px'
+
     this.input = document.createElement("input")
+    this.input.setAttribute("type", "text")
     this.input.setAttribute("cols", this.opts.cols )
     this.input.setAttribute("rows", this.opts.rows )
     this.input.style.opacity = '0'
     this.input.style.position = 'absolute'
     this.input.style.left = '-9999px'
+
     this.form  = document.createElement("form")
     this.form.addEventListener("submit", (e) => {
       e.preventDefault()
       this.key_buf_.push('\n')
       setTimeout(VT100.go_getch_, 0);
+      return false
     })
+    this.form.appendChild(this.upload)
     this.form.appendChild(this.input)
     this.scr_.parentElement.appendChild(this.form)
 
@@ -1353,8 +1368,8 @@ VT100.prototype.setupTouchInputFallback = function(){
 
     this.input.handler = (e) => {
       let ch
-      let isEnter = String(e?.code).toLowerCase() == "enter" || e?.code == 13 
-      let isBackspace = String(e?.code).toLowerCase() == "backspace" || e?.code == 8 
+      let isEnter = String(e?.key).toLowerCase() == "enter" || e?.code == 13 
+      let isBackspace = String(e?.key).toLowerCase() == "backspace" || e?.code == 8 
       if( isEnter ){
         ch = '\n'
       }else if( isBackspace ){
@@ -1372,6 +1387,7 @@ VT100.prototype.setupTouchInputFallback = function(){
 
     this.scr_.addEventListener('touchend', (e) => this.focus() )
     this.scr_.addEventListener('click', (e) => this.focus() )
+    
   }
   this.useFallbackInput = true
   this.focus()
@@ -1381,7 +1397,6 @@ VT100.prototype.focus = function(){
   setTimeout( () => {
     const el = this[ this.useFallbackInput ? 'input' : 'scr_' ]
     el.focus()
-    console.dir(el)
   }, 10 )
 }
 

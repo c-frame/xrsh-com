@@ -21,7 +21,6 @@ emulator.fs9p.update_file = async function(file,data){
       inode.size = buf.length
       const now = Math.round(Date.now() / 1000);
       inode.atime = inode.mtime = now;
-      me.postMessage({event:'exec',data:[`touch /mnt/${file}`]}) // update inode 
       return new Promise( (resolve,reject) => resolve(buf) )
     }catch(e){
       console.error({file,data})

@@ -110,6 +110,7 @@ AFRAME.registerComponent('codemirror', {
     // as it would require all kindof ugly stringescaping
     console.log("updating "+file)
     await this.isoterminal.worker.update_file(file, this.isoterminal.convert.toUint8Array(str) )
+    this.isoterminal.exec("touch "+file) // *FIXME* notify filesystem (why does inotifyd need this? v86's 9pfees is cached?)
   },
 
   events:{

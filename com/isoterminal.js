@@ -55,6 +55,7 @@ if( typeof AFRAME != 'undefined '){
       this.calculateDimension()
       this.initHud()
       this.setupBox()
+      this.setupPasteDrop()
 
       fetch(this.data.iso,{method: 'HEAD'})
       .then( (res) => {
@@ -71,10 +72,11 @@ if( typeof AFRAME != 'undefined '){
     requires:{
       com:           "com/dom.js",
       window:        "com/window.js",
+      pastedrop:     "com/pastedrop.js",
       v86:           "com/isoterminal/libv86.js",
       vt100:         "com/isoterminal/VT100.js",
       // allow xrsh to selfcontain scene + itself
-      xhook:         "https://jpillora.com/xhook/dist/xhook.min.js",
+      xhook:         "com/lib/xhook.min.js",
       selfcontain:   "com/selfcontainer.js",
       // html to texture
       htmlinxr:      "com/html-as-texture-in-xr.js",
@@ -201,7 +203,8 @@ if( typeof AFRAME != 'undefined '){
         jsconsole:     "com/isoterminal/feat/jsconsole.js",
         indexhtml:     "com/isoterminal/feat/index.html.js",
         indexjs:       "com/isoterminal/feat/index.js.js",
-        autorestore: "com/isoterminal/feat/autorestore.js",
+        autorestore:   "com/isoterminal/feat/autorestore.js",
+        pastedropFeat: "com/isoterminal/feat/pastedrop.js",
       })
 
       this.el.setAttribute("selfcontainer","")
@@ -244,7 +247,8 @@ if( typeof AFRAME != 'undefined '){
         this.term.start(opts)
       })
 
-      instance.setAttribute("dom",      "")
+      instance.setAttribute("dom",    "")
+      instance.setAttribute("pastedrop",  "")
 
       this.term.addEventListener('ready', (e) => {
         instance.dom.classList.remove('blink')
@@ -302,7 +306,7 @@ if( typeof AFRAME != 'undefined '){
 
     setupVT100: function(instance){
       const el = this.el.dom.querySelector('#term')
-      const opts = {
+      this.term.opts.vt100 = {
         cols: this.cols, 
         rows: this.rows,
         el_or_id: el,
@@ -311,7 +315,8 @@ if( typeof AFRAME != 'undefined '){
         rainbow: [VT100.COLOR_MAGENTA, VT100.COLOR_CYAN ],
         xr: AFRAME.scenes[0].renderer.xr
       }
-      this.vt100 = new VT100( opts )
+      this.term.emit('initVT100',this)
+      this.vt100 = new VT100( this.term.opts.vt100 )
       this.vt100.el = el
       this.vt100.curs_set( 1, true)
       this.vt100.focus()
@@ -328,6 +333,24 @@ if( typeof AFRAME != 'undefined '){
       this.el.addEventListener('serial-output-string', (e) => {
         this.vt100.write(e.detail)
       })
+
+      // translate file upload into pasteFile
+      this.vt100.upload.addEventListener('change', (e) => {
+        const file = this.vt100.upload.files[0];
+        const item = {...file, getAsFile: () => file }
+        this.el.emit('pasteFile', { item, type: file.type });
+      })
+
+      return this
+    },
+
+    setupPasteDrop: function(){
+      this.el.addEventListener('pasteFile', (e) => {
+        e.preventDefault()                 // prevent bubbling up to window (which is triggering this initially)
+        if( !this.term.pasteFile ) return  // skip if feat/pastedrop.js is not loaded 
+        this.term.pasteFile(e.detail) 
+      })
+      return this
     },
 
     setupBox: function(){

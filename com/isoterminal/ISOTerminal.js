@@ -17,14 +17,14 @@ function ISOTerminal(instance,opts){
 ISOTerminal.prototype.emit = function(event,data,sender){
   data = data || false 
   const evObj = new CustomEvent(event, {detail: data} )
-  //this.preventFrameDrop( () => {
+  this.preventFrameDrop( () => {
     // forward event to worker/instance/AFRAME element or component-function
     // this feels complex, but actually keeps event- and function-names more concise in codebase
     this.dispatchEvent( evObj )
     if( sender !=  "instance" && this.instance                    ) this.instance.dispatchEvent(evObj)
     if( sender !=  "worker"   && this.worker                      ) this.worker.postMessage({event,data}, PromiseWorker.prototype.getTransferable(data) )
     if( sender !== undefined  && typeof this[event] == 'function' ) this[event].apply(this, data && data.push ? data : [data] )
-  //})
+  })
 }
 
 ISOTerminal.addEventListener = (event,cb) => {
@@ -35,6 +35,10 @@ ISOTerminal.addEventListener = (event,cb) => {
 
 ISOTerminal.prototype.exec = function(shellscript){
   this.send(shellscript+"\n",1)
+}
+
+ISOTerminal.prototype.hook = function(hookname,args){
+  this.exec(`{ type hook || source /etc/profile.sh; }; hook ${hookname} "${args.join('" "')}"`)
 }
 
 ISOTerminal.prototype.serial_input = 0; // can be set to 0,1,2,3 to define stdinput tty (xterm plugin)
@@ -48,7 +52,9 @@ ISOTerminal.prototype.send = function(str, ttyNr){
   }else{
     this.convert.toUint8Array( str ).map( (c) => {
       this.preventFrameDrop( 
-        () => this.worker.postMessage({event:`serial${ttyNr}-input`,data:c})
+        () => {
+        this.worker.postMessage({event:`serial${ttyNr}-input`,data:c})
+        }
       )
     })
   }
@@ -187,7 +193,6 @@ ISOTerminal.prototype.startVM = function(opts){
     "Learned helplessness fades when we realize tech isn’t too complex to understand",
     "FOSS empowers users to customize and improve their tools",
     "Engaging with FOSS helps build confidence and self-reliance in tech",
-    "FOSS tools are accessible and often better than closed alternatives",
     "FOSS shows that anyone can shape the digital world with curiosity and effort",
     "Linux can revive old computers, extending their life and reducing e-waste",
     "Many lightweight Linux distributions run smoothly on older hardware",

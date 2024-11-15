@@ -14,7 +14,7 @@ ISOTerminal.prototype.boot = async function(e){
       env.push( 'export '+String(i).toUpperCase()+'="'+decodeURIComponent( document.location[i]+'"') )
     }
   }
-  await this.emit("emulator.create_file", ["profile.browser", this.convert.toUint8Array( env.join('\n') ) ] )
+  this.worker.create_file("profile.browser", this.convert.toUint8Array( env.join('\n') ) )
 
   if( this.serial_input == 0 ){
     if( !this.noboot ){

@@ -6,7 +6,7 @@ if( typeof emulator != 'undefined' ){
     const convert = ISOTerminal.prototype.convert
     const buf     = await this.emulator.read_file("dev/browser/js")
     const script  = convert.Uint8ArrayToString(buf)
-    let PID="?"
+    let PID=null
     try{
       if( script.match(/^PID/) ){ 
         PID = script.match(/^PID=([0-9]+);/)[1] 
@@ -35,7 +35,9 @@ if( typeof emulator != 'undefined' ){
       }
     }
     // update output to 9p with PID as filename (in /mnt/run)
-    this.emit('fs9p.update_file', [`run/${PID}`, this.convert.toUint8Array(res)] )
+    if( PID ){
+      this.worker.update_file(`run/${PID}`, this.convert.toUint8Array(res) )
+    }
   })
 
 }
