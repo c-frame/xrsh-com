@@ -205,6 +205,7 @@ if( typeof AFRAME != 'undefined '){
         indexjs:       "com/isoterminal/feat/index.js.js",
         autorestore:   "com/isoterminal/feat/autorestore.js",
         pastedropFeat: "com/isoterminal/feat/pastedrop.js",
+        httpfs:        "com/isoterminal/feat/httpfs.js",
       })
 
       this.el.setAttribute("selfcontainer","")

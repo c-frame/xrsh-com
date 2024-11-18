@@ -37,13 +37,18 @@ AFRAME.registerComponent('selfcontainer', {
     // selfcontain every webrequest to store (and serve if stored)
     let curry = function(me){
       return function(request, response, cb){
+
         let data = request ? window.store[ request.url ] || false : false 
         if( data ){ // return inline version
-          console.log('selfcontained cache: '+request.url)
+          console.log('selfcontainer.js: serving '+request.url+' from cache')
           let res = new Response()
           res[ data.binary ? 'data' : 'text' ] = data.binary ? () => me.convert.base64ToArrayBuffer(data.text) : data.text 
           cb(res)
         }else{
+
+          if( request.url.match(/(^file:\/\/xrsh)/) ) return cb(response)
+
+          console.log("selfcontainer.js: caching "+request.url)
           if( response.text ){
             data = {text: response.text}
           }else{
