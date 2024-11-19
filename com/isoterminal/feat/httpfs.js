@@ -21,7 +21,9 @@ if( typeof emulator != 'undefined' ){
           response.status = 404
           callback(response)
         })
+        return
       }
+      callback()
     })
 
   })

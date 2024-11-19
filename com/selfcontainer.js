@@ -34,6 +34,7 @@ AFRAME.registerComponent('selfcontainer', {
 
   installProxyServer: function(){
     if( !window.store ) window.store = {}
+
     // selfcontain every webrequest to store (and serve if stored)
     let curry = function(me){
       return function(request, response, cb){
