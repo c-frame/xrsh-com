@@ -234,7 +234,7 @@ if( typeof AFRAME != 'undefined '){
         },100)
         //instance.winbox.resize(720,380)
         let size = `width: ${this.data.width}; height: ${this.data.height}`
-        instance.setAttribute("window", `title: xrsh.iso; uid: ${instance.uid}; attach: #overlay; dom: #${instance.dom.id}; ${size}; min: ${this.data.minimized}; max: ${this.data.maximized}`)
+        instance.setAttribute("window", `title: xrsh.iso; uid: ${instance.uid}; attach: #overlay; dom: #${instance.dom.id}; ${size}; min: ${this.data.minimized}; max: ${this.data.maximized}; class: no-full, no-resize, no-move`)
       })
 
       instance.addEventListener('window.oncreate', (e) => {

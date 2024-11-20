@@ -9,7 +9,8 @@ AFRAME.registerComponent('window', {
     max:       {type:'boolean',"default":false},
     min:       {type:'boolean',"default":false},
     x:         {type:'string',"default":"center"},
-    y:         {type:'string',"default":"center"}
+    y:         {type:'string',"default":"center"},
+    "class":   {type:'array',"default":[]},
   },
 
   dependencies:{
@@ -28,6 +29,7 @@ AFRAME.registerComponent('window', {
 
     this.el.dom.style.display = 'none'
     let winbox = this.el.winbox = new WinBox( this.data.title, {
+      class: this.data.class,
       height:this.data.height,
       width:this.data.width,
       x: this.data.x,
