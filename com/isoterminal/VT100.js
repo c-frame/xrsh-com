@@ -266,6 +266,9 @@ VT100.handle_onkeypress_ = function VT100_handle_onkeypress(event,cb)
         return true
         break;
     }
+    // custom map override
+    if( vt.opts.map[ event.code ].ch                    ) ch = vt.opts.map[ event.code ].ch
+    if( vt.opts.map[ event.code ].ctrl && event.ctrlKey ) ch = vt.opts.map[ event.code ].ctrl 
   }
 
   // Workaround: top the event from doing anything else.

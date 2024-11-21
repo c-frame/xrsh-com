@@ -314,7 +314,11 @@ if( typeof AFRAME != 'undefined '){
         max_scroll_lines: this.rows, 
         nodim: true,
         rainbow: [VT100.COLOR_MAGENTA, VT100.COLOR_CYAN ],
-        xr: AFRAME.scenes[0].renderer.xr
+        xr: AFRAME.scenes[0].renderer.xr,
+        map: {
+          'ArrowRight': { ch: false, ctrl: '\x1b\x66' },  // this triggers ash-shell forward-word
+          'ArrowLeft':  { ch: false, ctrl: '\x1b\x62' }   //                         backward-word
+        }
       }
       this.term.emit('initVT100',this)
       this.vt100 = new VT100( this.term.opts.vt100 )
