@@ -123,8 +123,11 @@ ISOTerminal.prototype.start = function(opts){
       url: "bios/vgabios.bin",
       //urg|: "com/isoterminal/bios/VGABIOS-lgpl-latest.bin",
     },
-    network_relay_url: "wss://relay.widgetry.org/",
     cmdline: "rw root=host9p rootfstype=9p rootflags=trans=virtio,cache=loose modules=virtio_pci tsc=reliable init_on_freg|=on vga=ask", //vga=0x122",
+    net_device:{
+      relay_url:"fetch", // or websocket proxy "wss://relay.widgetry.org/",
+      type:"virtio"
+    },
     //bzimage_initrd_from_filesystem: true,
     //filesystem: {
     //          baseurl: "com/isoterminal/v86/images/alpine-rootfs-flat",
@@ -252,7 +255,7 @@ ISOTerminal.prototype.startVM = function(opts){
       const str = e.detail
 
       // lets scan for a prompt so we can send a 'ready' event to the world
-      if( !this.ready && str.match(/\n(\/ #|~%|\[.*\]>)/) ) this.postBoot()
+      if( !this.ready && str.match(/\n(\/ #|~ #|~%|\[.*\]>)/) ) this.postBoot()
 
       if( this.ready || !this.opts.muteUntilPrompt ) this.emit('serial-output-string', e.detail )
     })
