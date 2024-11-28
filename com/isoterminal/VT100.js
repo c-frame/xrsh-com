@@ -129,7 +129,7 @@ function VT100(opts)
 	this.key_buf_ = [];
 	this.echo_ = false;
 	this.esc_state_ = 0;
-	this.log_level_ = VT100.WARN 
+	this.log_level_ = VT100.WARN //VT100.DEBUG 
 
 	this.clear_all();
 
@@ -262,14 +262,20 @@ VT100.handle_onkeypress_ = function VT100_handle_onkeypress(event,cb)
         ch = '\x1b';
       case "Control":
         break;
+      case "PageDown":
+        ch = '\x1b[6~';
+        break;
+      case "PageUp":
+        ch = '\x1b[5~';
+        break;
       default:
         return true
         break;
     }
-    // custom map override
-    if( vt.opts.map[ event.code ].ch                    ) ch = vt.opts.map[ event.code ].ch
-    if( vt.opts.map[ event.code ].ctrl && event.ctrlKey ) ch = vt.opts.map[ event.code ].ctrl 
   }
+  // custom map override
+  if( vt.opts.map[ event.code ]?.ch                    ) ch = vt.opts.map[ event.code ].ch
+  if( vt.opts.map[ event.code ]?.ctrl && event.ctrlKey ) ch = vt.opts.map[ event.code ].ctrl 
 
   // Workaround: top the event from doing anything else.
   // (prevent input from adding characters instead of via VM)
