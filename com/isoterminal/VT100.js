@@ -100,6 +100,8 @@ function VT100(opts)
 		bg = VT100.COLOR_TRANSPARENT //COLOR_BLACK;
 	}
 
+  console.dir(opts)
+
 	var r;
 	var c;
 	var scr = typeof el_or_id == 'string' ? document.getElementById(el_or_id) : el_or_id
@@ -120,7 +122,9 @@ function VT100(opts)
 		this.redraw_[r] = 1;
 	}
 	this.scr_ = scr;
-  this.scr_.style.display = 'inline'
+  this.scr_.style.display = 'block'
+  this.scr_.style.overflowY = 'scroll'
+  this.scr_.style.height = '100%'
   this.setupTouchInputFallback() // smartphone/android 
 	this.cursor_vis_ = true;
 	this.cursor_key_mode_ = VT100.CK_CURSOR;
@@ -659,10 +663,10 @@ VT100.prototype.refresh = function VT100_refresh()
 
 	// XXX: Remove older rows if past max_ht_ rows.
 	var num_rows = this.num_rows_ - this.start_row_id;
-	if (num_rows >= (this.max_ht_ + 100)) {
-		// Remove one group of rows (i.e. a 100 rows).
-		this.scr_.removeChild(this.scr_.firstChild);
-		this.start_row_id += 100;
+	if ( this.scr_.firstChild && num_rows >= (this.max_ht_ + 100)) {
+    // Remove one group of rows (i.e. a 100 rows).
+    this.scr_.removeChild(this.scr_.firstChild);
+    this.start_row_id += 100;
 	}
 
 	for (r = 0; r < ht; ++r) {
@@ -744,6 +748,7 @@ VT100.prototype.refresh = function VT100_refresh()
 		div_element.innerHTML = row_html;
 		//dump("adding row html: " + row_html + "\n");
 	}
+  this.scr_.scrollTop = this.scr_.scrollHeight
   this.curs_set(1)
 }
 

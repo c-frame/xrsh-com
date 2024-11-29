@@ -44,7 +44,7 @@ if( typeof AFRAME != 'undefined '){
       muteUntilPrompt:{ type: 'boolean',"default":true},     // mute stdout until a prompt is detected in ISO
       HUD:            { type: 'boolean',"default":false},    // link to camera movement 
       transparent:    { type:'boolean', "default":false },   // need good gpu
-      memory:         { type: 'number',  "default":40  },    // VM memory (in MB) [NOTE: quest or smartphone might crash > 40mb ]
+      memory:         { type: 'number',  "default":64  },    // VM memory (in MB) [NOTE: quest or smartphone might crash > 40mb ]
       bufferLatency:  { type: 'number', "default":1  },    // in ms: bufferlatency from webworker to xterm (batch-update every char to texture)
       debug:          { type: 'boolean', "default":false }
     },
@@ -311,7 +311,7 @@ if( typeof AFRAME != 'undefined '){
         cols: this.cols, 
         rows: this.rows,
         el_or_id: el,
-        max_scroll_lines: this.rows, 
+        max_scroll_lines: this.rows*2, 
         nodim: true,
         rainbow: [VT100.COLOR_MAGENTA, VT100.COLOR_CYAN ],
         xr: AFRAME.scenes[0].renderer.xr,
@@ -376,7 +376,7 @@ if( typeof AFRAME != 'undefined '){
       this.data.width -= this.data.padding*2
       this.data.height -= this.data.padding*2
       this.cols = Math.floor(this.data.width/this.data.lineHeight*2)
-      this.rows = Math.floor(this.data.height*0.53/this.data.lineHeight*1.7) 
+      this.rows = Math.floor( (this.data.height*0.93)/this.data.lineHeight) 
     },
 
     events:{

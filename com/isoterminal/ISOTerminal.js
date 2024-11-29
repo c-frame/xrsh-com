@@ -227,6 +227,8 @@ ISOTerminal.prototype.startVM = function(opts){
 \r https://www.w3.org/TR/webxr
 \r https://three.org 
 \r https://aframe.org 
+\r https://busybox.net
+\r https://buildroot.org
   `
 
   const text_color = "\r[38;5;129m" 
