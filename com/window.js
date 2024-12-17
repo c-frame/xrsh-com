@@ -27,6 +27,20 @@ AFRAME.registerComponent('window', {
     await AFRAME.utils.require(this.dependencies)
     if( !this.el.dom ) return console.error('window element requires dom-component as dependency')
 
+    const close = () => {
+      let e = {halt:false}
+      this.el.emit('window.onclose',e)
+      if( e.halt ) return true 
+      this.data.dom.style.display = 'none';
+      if( this.el.parentNode ) this.el.remove() //parentElement.remove( this.el )
+      this.data.dom.parentElement.remove()
+      return false
+    }
+    this.el.addEventListener('close', () => {
+      close()
+      this.el.winbox.close()
+    })
+
     this.el.dom.style.display = 'none'
     let winbox = this.el.winbox = new WinBox( this.data.title, {
       class: this.data.class,
@@ -51,15 +65,8 @@ AFRAME.registerComponent('window', {
           this.el.components['obb-collider'].update()
         },1000)
       },
-      onclose: () => {
-        let e = {halt:false}
-        this.el.emit('window.onclose',e)
-        if( e.halt ) return true 
-        this.data.dom.style.display = 'none';
-        if( this.el.parentNode ) this.el.remove() //parentElement.remove( this.el )
-        this.data.dom.parentElement.remove()
-        return false
-      },
+      onclose: close
+       
     });
     this.data.dom.style.display = '' // show
 

@@ -229,9 +229,6 @@ if( typeof AFRAME != 'undefined '){
 
       instance.addEventListener('DOMready', () => {
         this.setupVT100(instance)
-        setTimeout( () => {
-          instance.setAttribute("html-as-texture-in-xr", `domid: #term; faceuser: true`)
-        },100)
         //instance.winbox.resize(720,380)
         let size = `width: ${this.data.width}; height: ${this.data.height}`
         instance.setAttribute("window", `title: xrsh.iso; uid: ${instance.uid}; attach: #overlay; dom: #${instance.dom.id}; ${size}; min: ${this.data.minimized}; max: ${this.data.maximized}; class: no-full, no-resize, no-move`)
@@ -239,6 +236,8 @@ if( typeof AFRAME != 'undefined '){
 
       instance.addEventListener('window.oncreate', (e) => {
         instance.dom.classList.add('blink')
+        // canvas to texture texture
+        instance.setAttribute("html-as-texture-in-xr", `domid: .winbox#${instance.uid}; faceuser: true`)
 
         // run iso
         let opts = {dom:instance.dom}
