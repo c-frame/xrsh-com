@@ -35,22 +35,27 @@ if( typeof AFRAME != 'undefined '){
     schema: {
       iso:            { type:"string", "default":"https://forgejo.isvery.ninja/assets/xrsh-buildroot/main/xrsh.iso" },
       overlayfs:      { type:"string"},
-      width:          { type: 'number',"default": -1 },
-      height:         { type: 'number',"default": -1 },
+      width:          { type: 'number',"default": 700 },
+      height:         { type: 'number',"default": 500 },
       depth:          { type: 'number',"default": 0.03 },
       lineHeight:     { type: 'number',"default": 18 },
       padding:        { type: 'number',"default": 18 },
-      maximized:      { type: 'boolean',"default":true},
+      maximized:      { type: 'boolean',"default":false},
+      minimized:      { type: 'boolean',"default":false},
       muteUntilPrompt:{ type: 'boolean',"default":true},     // mute stdout until a prompt is detected in ISO
       HUD:            { type: 'boolean',"default":false},    // link to camera movement 
       transparent:    { type:'boolean', "default":false },   // need good gpu
-      memory:         { type: 'number',  "default":64  },    // VM memory (in MB) [NOTE: quest or smartphone might crash > 40mb ]
+      memory:         { type: 'number',  "default":40  },    // VM memory (in MB) [NOTE: quest or smartphone might crash > 40mb ]
       bufferLatency:  { type: 'number', "default":1  },    // in ms: bufferlatency from webworker to xterm (batch-update every char to texture)
-      debug:          { type: 'boolean', "default":false }
+      debug:          { type: 'boolean', "default":false },
+      emulator:       { type: 'string', "default": "vt100" }  
     },
 
     init: function(){
       this.el.object3D.visible = false
+      if( window.innerWidth < this.data.width ){
+        this.data.maximized = true
+      }
 
       this.calculateDimension()
       this.initHud()
@@ -74,7 +79,6 @@ if( typeof AFRAME != 'undefined '){
       window:        "com/window.js",
       pastedrop:     "com/pastedrop.js",
       v86:           "com/isoterminal/libv86.js",
-      vt100:         "com/isoterminal/VT100.js",
       // allow xrsh to selfcontain scene + itself
       xhook:         "com/lib/xhook.min.js",
       selfcontain:   "com/selfcontainer.js",
@@ -90,6 +94,8 @@ if( typeof AFRAME != 'undefined '){
       scale: 0.66,
       events:  ['click','keydown'],
       html:    (me) => `<div class="isoterminal">
+                          <div style="white-space: pre;"></div>
+                          <canvas style="display: none"></canvas>
                           <div id="term" tabindex="0">
                             <pre></pre>
                           </div>
@@ -195,9 +201,10 @@ if( typeof AFRAME != 'undefined '){
       // * heavily dependent on requestAnimationFrame (conflicts with THREE)
       // * typescript-rewrite results in ~300k lib (instead of 96k)
       // * v3.12 had slightly better performance but still very heavy
-
+      //
       await AFRAME.utils.require(this.requires)
-      await AFRAME.utils.require({ // ISOTerminal plugins
+
+      let features = { // ISOTerminal plugins
         boot:          "com/isoterminal/feat/boot.js",
         javascript:    "com/isoterminal/feat/javascript.js",
         jsconsole:     "com/isoterminal/feat/jsconsole.js",
@@ -206,7 +213,12 @@ if( typeof AFRAME != 'undefined '){
         autorestore:   "com/isoterminal/feat/autorestore.js",
         pastedropFeat: "com/isoterminal/feat/pastedrop.js",
         httpfs:        "com/isoterminal/feat/httpfs.js",
-      })
+      }
+      if( this.data.emulator == "vt100" ){
+        features['VT100js'] = "com/isoterminal/VT100.js"
+        features['vt100']   = "com/isoterminal/feat/vt100.js"
+      } 
+      await AFRAME.utils.require(features)
 
       this.el.setAttribute("selfcontainer","")
 
@@ -228,10 +240,10 @@ if( typeof AFRAME != 'undefined '){
       this.term = new ISOTerminal(instance,this.data)
 
       instance.addEventListener('DOMready', () => {
-        this.setupVT100(instance)
+        this.term.emit('term_init', {instance, aEntity:this})
         //instance.winbox.resize(720,380)
         let size = `width: ${this.data.width}; height: ${this.data.height}`
-        instance.setAttribute("window", `title: xrsh.iso; uid: ${instance.uid}; attach: #overlay; dom: #${instance.dom.id}; ${size}; min: ${this.data.minimized}; max: ${this.data.maximized}; class: no-full, no-resize, no-move`)
+        instance.setAttribute("window", `title: xrsh.iso; uid: ${instance.uid}; attach: #overlay; dom: #${instance.dom.id}; ${size}; min: ${this.data.minimized}; max: ${this.data.maximized}; class: no-full, no-resize`)
       })
 
       instance.addEventListener('window.oncreate', (e) => {
@@ -302,50 +314,6 @@ if( typeof AFRAME != 'undefined '){
         "test_isoterminal":"tests/ISOTerminal.js"
       })
       console.test.run()
-    },
-
-    setupVT100: function(instance){
-      const el = this.el.dom.querySelector('#term')
-      this.term.opts.vt100 = {
-        cols: this.cols, 
-        rows: this.rows,
-        el_or_id: el,
-        max_scroll_lines: this.rows*2, 
-        nodim: true,
-        rainbow: [VT100.COLOR_MAGENTA, VT100.COLOR_CYAN ],
-        xr: AFRAME.scenes[0].renderer.xr,
-        map: {
-          'ArrowRight': { ch: false, ctrl: '\x1b\x66' },  // this triggers ash-shell forward-word
-          'ArrowLeft':  { ch: false, ctrl: '\x1b\x62' }   //                         backward-word
-        }
-      }
-      this.term.emit('initVT100',this)
-      this.vt100 = new VT100( this.term.opts.vt100 )
-      this.vt100.el = el
-      this.vt100.curs_set( 1, true)
-      this.vt100.focus()
-      this.el.addEventListener('focus', () => this.vt100.focus() )
-      this.vt100.getch( (ch,t) => {
-        this.term.send( ch )
-      })
-
-      this.el.addEventListener('serial-output-byte', (e) => {
-        const byte = e.detail
-        var chr = String.fromCharCode(byte);
-        this.vt100.addchr(chr)
-      })
-      this.el.addEventListener('serial-output-string', (e) => {
-        this.vt100.write(e.detail)
-      })
-
-      // translate file upload into pasteFile
-      this.vt100.upload.addEventListener('change', (e) => {
-        const file = this.vt100.upload.files[0];
-        const item = {...file, getAsFile: () => file }
-        this.el.emit('pasteFile', { item, type: file.type });
-      })
-
-      return this
     },
 
     setupPasteDrop: function(){
