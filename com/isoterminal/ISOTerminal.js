@@ -290,6 +290,27 @@ ISOTerminal.prototype.bufferOutput = function(byte,cb,latency){
   }
 }
 
+
+//ISOTerminal.prototype.bufferOutput = function(byte, cb, latency, buffer) {
+//  const str = String.fromCharCode(byte);
+//  //if (str === '\r' || str === '\n' || str.charCodeAt(0) < 32 || str.charCodeAt(0) === 127) {
+//  //  cb(str);
+//  //} else if (str === '\x1b') { // ESC
+//  //  buffer.esc = true;
+//  //} else if (buffer.esc) {
+//  //  cb('\x1b' + str);
+//  //  buffer.esc = false;
+//  //} else {
+//    buffer.str = (buffer.str || '') + str;
+//    if (Date.now() - (buffer.timestamp || 0) >= latency) {
+//    console.log(buffer.str)
+//      cb(buffer.str);
+//      buffer.str = '';
+//      buffer.timestamp = Date.now();
+//    }
+//  //}
+//}
+
 ISOTerminal.prototype.preventFrameDrop = function(cb){
   // don't let workers cause framerate dropping
   const xr = this.instance.sceneEl.renderer.xr

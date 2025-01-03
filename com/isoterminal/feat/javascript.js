@@ -22,17 +22,25 @@ if( typeof emulator != 'undefined' ){
   
   ISOTerminal.addEventListener('javascript-eval', async function(e){
     const {script,PID} = e.detail
-    let res
+    let res;
+
     try{
-      res = (new Function(`${script}`))()
+      let f = new Function(`${script}`);
+      res = f();
       if( res && typeof res != 'string' ) res = JSON.stringify(res,null,2)
-    }catch(e){
-      console.error(e)
-      console.info(script)
-      res = "error: "+e.toString()
-      if( e.filename ){
-        res += "\n"+e.filename+":"+e.lineno+":"+e.colno
-      }
+    }catch(err){
+      console.error(err)
+      console.dir(err)
+      res = "error: "+err.toString()
+
+      // try to figure out line *FIXME*
+      let line = err.stack.split("\n").find(e => e.includes("<anonymous>:") || e.includes("Function:"));
+      if( line ){
+        let lineIndex = (line.includes("<anonymous>:") && line.indexOf("<anonymous>:") + "<anonymous>:".length) ||  (line.includes("Function:") && line.indexOf("Function:") + "Function:".length);
+        let lnr = +line.substring(lineIndex, lineIndex + 1) - 2
+        res += script.split("\n")[lnr-1]
+      }else console.dir(script)
+      console.error(res)
     }
     // update output to 9p with PID as filename (in /mnt/run)
     if( PID ){

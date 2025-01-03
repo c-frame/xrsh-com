@@ -12,26 +12,29 @@ this.runISO = function(opts){
   console.log("[worker.js] started emulator")
 
   // event forwarding
+  emulator.buf0 = {}
+  emulator.buf1 = {}
+  emulator.buf2 = {}
 
   emulator.add_listener("serial0-output-byte", function(byte){
     ISOTerminal.prototype.bufferOutput(byte, (str) => { // we buffer to prevent framerate dropping
       if( !str ) return
       this.postMessage({event:"serial0-output-string",data:str});
-    }, opts.bufferLatency )
+    }, opts.bufferLatency, emulator.buf0 )
   }.bind(this));
 
   emulator.add_listener("serial1-output-byte", function(byte){
     ISOTerminal.prototype.bufferOutput(byte, (str) => { // we buffer to prevent framerate dropping
       if( !str ) return
       this.postMessage({event:"serial1-output-string",data:str});
-    }, opts.bufferLatency )
+    }, opts.bufferLatency, emulator.buf1 )
   }.bind(this));
 
   emulator.add_listener("serial2-output-byte", function(byte){
     ISOTerminal.prototype.bufferOutput(byte, (str) => { // we buffer to prevent framerate dropping
       if( !str ) return
       this.postMessage({event:"serial2-output-string",data:str});
-    }, opts.bufferLatency )
+    }, opts.bufferLatency, emulator.buf2 )
   }.bind(this));
 
   emulator.add_listener("emulator-started", function(){
