@@ -45,7 +45,7 @@ if( typeof AFRAME != 'undefined '){
       muteUntilPrompt:{ type: 'boolean',"default":true},     // mute stdout until a prompt is detected in ISO
       HUD:            { type: 'boolean',"default":false},    // link to camera movement 
       transparent:    { type:'boolean', "default":false },   // need good gpu
-      memory:         { type: 'number',  "default":40  },    // VM memory (in MB) [NOTE: quest or smartphone might crash > 40mb ]
+      memory:         { type: 'number',  "default":60  },    // VM memory (in MB) [NOTE: quest or smartphone might crash > 40mb ]
       bufferLatency:  { type: 'number', "default":1  },    // in ms: bufferlatency from webworker to xterm (batch-update every char to texture)
       debug:          { type: 'boolean', "default":false },
       emulator:       { type: 'string', "default": "vt100" }  
