@@ -17,7 +17,7 @@ if( typeof emulator != 'undefined' ){
   ISOTerminal.prototype.pasteFile = async function(data){
     const {type,item,pastedText} = data
     if( pastedText){
-      this.pasteWriteFile( this.convert.toUint8Array(pastedText) ,type)
+      this.pasteWriteFile( this.convert.toUint8Array(pastedText) ,type, null, true)
     }else{
       const file = item.getAsFile();
       const reader = new FileReader();
@@ -29,4 +29,18 @@ if( typeof emulator != 'undefined' ){
     }
   }
 
+  ISOTerminal.prototype.pasteInit = function(opts){
+      // bind upload input
+      const {instance, aEntity} = opts
+      const el = aEntity.el.dom.querySelector('#pastedrop') // upload input
+      el.addEventListener('change', (e) => {
+        const file = el.files[0];
+        const item = {...file, getAsFile: () => file }
+        this.el.emit('pasteFile', { item, type: file.type });
+      })
+  }
+
+  ISOTerminal.addEventListener('init', function(){
+    this.addEventListener('term_init', (opts) => this.pasteInit(opts.detail) )
+  })
 }

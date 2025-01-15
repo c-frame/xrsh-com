@@ -34,11 +34,12 @@ ISOTerminal.addEventListener = (event,cb) => {
 }
 
 ISOTerminal.prototype.exec = function(shellscript){
-  this.send(shellscript+"\n",1)
+  this.send(`printf "\n\r"; ${shellscript}\n`,1)
 }
 
 ISOTerminal.prototype.hook = function(hookname,args){
-  this.exec(`{ type hook || source /etc/profile.sh; }; hook ${hookname} "${args.join('" "')}"`)
+  let cmd = `{ type hook || source /etc/profile.sh; }; hook ${hookname} "${args.join('" "')}"`
+  this.exec(cmd)
 }
 
 ISOTerminal.prototype.serial_input = 0; // can be set to 0,1,2,3 to define stdinput tty (xterm plugin)
@@ -53,7 +54,7 @@ ISOTerminal.prototype.send = function(str, ttyNr){
     this.convert.toUint8Array( str ).map( (c) => {
       this.preventFrameDrop( 
         () => {
-        this.worker.postMessage({event:`serial${ttyNr}-input`,data:c})
+          this.worker.postMessage({event:`serial${ttyNr}-input`,data:c})
         }
       )
     })
@@ -189,15 +190,14 @@ ISOTerminal.prototype.startVM = function(opts){
 
   const empower    = [
     "FOSS gives users control over their software, offering freedom to modify and share",
-    "Feeling powerless with tech? FOSS escapes a mindset known as learned helplessness",
+    "Feeling powerless? FOSS escapes a mindset known as learned helplessness",
     "FOSS breaks this cycle by showing that anyone can learn and contribute",
     "Proprietary software can make users dependent, but FOSS offers real choices",
     "FOSS communities provide support and encourage users to develop new skills",
-    "Learned helplessness fades when we realize tech isn’t too complex to understand",
     "FOSS empowers users to customize and improve their tools",
     "Engaging with FOSS helps build confidence and self-reliance in tech",
     "FOSS shows that anyone can shape the digital world with curiosity and effort",
-    "Linux can revive old computers, extending their life and reducing e-waste",
+    "Linux can revive old computers, extending their life and reduces e-waste",
     "Many lightweight Linux distributions run smoothly on older hardware",
     "Installing Linux on aging devices keeps them functional instead of sending them to the landfill",
     "Linux uses fewer resources, making it ideal for reusing older machines",
@@ -216,16 +216,17 @@ ISOTerminal.prototype.startVM = function(opts){
 \r[38;5;129m . . . /     \\  |    |   \\/        \\    Y    / . 
 \r[38;5;165m . . ./___/\\  \\ |____|_  /_______  /\\___|_  /. . 
 \r[38;5;201m . . . . . .\\_/. . . . \\/ . . . .\\/ . . _ \\/ . . 
-\r[38;5;165m ▬▬▬▬▬▬▬▬ https://xrsh.isvery.ninja ▬▬▬▬▬▬▬▬▬▬▬▬
+\r[38;5;165m ▬▬▬▬▬▬▬▬ [38;5;51mhttps://xrsh.isvery.ninja[38;5;165m ▬▬▬▬▬▬▬▬▬▬▬▬
 \r[38;5;165m local-first, polyglot, unixy WebXR IDE & runtime
-\r
+\r[38;5;57m
 \r credits
 \r ------- 
 \r @nlnet@nlnet.nl 
 \r @lvk@mastodon.online
-\r @utopiah@mastodon.pirateparty.be 
+\r @utopiah@mastodon.pirateparty.be [38;5;51m
 \r https://www.w3.org/TR/webxr
-\r https://three.org 
+\r https://xrfragment.org 
+\r https://threejs.org 
 \r https://aframe.org 
 \r https://busybox.net
 \r https://buildroot.org
@@ -233,7 +234,7 @@ ISOTerminal.prototype.startVM = function(opts){
 
   const text_color = "\r[38;5;129m" 
   const text_reset = "\033[0m"
-  const loadmsg    = "\n\r "+loading[ Math.floor(Math.random()*1000) % loading.length ] + "..[please wait]"
+  const loadmsg    = "\n\r "+loading[ Math.floor(Math.random()*1000) % loading.length ] + "..please wait"
   const empowermsg = "\n\r "+text_reset+'"'+empower[ Math.floor(Math.random()*1000) % empower.length ] + '"\n\r'
   this.emit('status',loadmsg)
   this.emit('serial-output-string', motd + empowermsg + text_color +  loadmsg + text_reset+"\n\r")

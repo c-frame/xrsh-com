@@ -35,8 +35,8 @@ if( typeof AFRAME != 'undefined '){
     schema: {
       iso:            { type:"string", "default":"https://forgejo.isvery.ninja/assets/xrsh-buildroot/main/xrsh.iso" },
       overlayfs:      { type:"string"},
-      width:          { type: 'number',"default": 700 },
-      height:         { type: 'number',"default": 500 },
+      width:          { type: 'number',"default": 800 },
+      height:         { type: 'number',"default": 600 },
       depth:          { type: 'number',"default": 0.03 },
       lineHeight:     { type: 'number',"default": 18 },
       padding:        { type: 'number',"default": 18 },
@@ -46,9 +46,9 @@ if( typeof AFRAME != 'undefined '){
       HUD:            { type: 'boolean',"default":false},    // link to camera movement 
       transparent:    { type:'boolean', "default":false },   // need good gpu
       memory:         { type: 'number',  "default":60  },    // VM memory (in MB) [NOTE: quest or smartphone might crash > 40mb ]
-      bufferLatency:  { type: 'number', "default":1  },    // in ms: bufferlatency from webworker to xterm (batch-update every char to texture)
+      bufferLatency:  { type: 'number', "default":1  },      // in ms: bufferlatency from webworker to xterm (batch-update every char to texture)
       debug:          { type: 'boolean', "default":false },
-      emulator:       { type: 'string', "default": "vt100" }  
+      emulator:       { type: 'string', "default": "fbterm" }// terminal emulator
     },
 
     init: function(){
@@ -59,7 +59,6 @@ if( typeof AFRAME != 'undefined '){
 
       this.calculateDimension()
       this.initHud()
-      this.setupBox()
       this.setupPasteDrop()
 
       fetch(this.data.iso,{method: 'HEAD'})
@@ -94,26 +93,18 @@ if( typeof AFRAME != 'undefined '){
       scale: 0.66,
       events:  ['click','keydown'],
       html:    (me) => `<div class="isoterminal">
-                          <div style="white-space: pre;"></div>
-                          <canvas style="display: none"></canvas>
-                          <div id="term" tabindex="0">
-                            <pre></pre>
-                          </div>
+                          <input type="file" id="pastedrop" style="position:absolute; left:-9999px;opacity:0"></input>
+                          <div id="term" tabindex="0"></div>
                         </div>`,
 
-      css:     (me) => `.isoterminal{
+      css:     (me) => `
+
+                        .isoterminal{
                           padding: ${me.com.data.padding}px;
                           width:100%;
-                          height:90%;
-                          position:relative;
-                        }
-                        .isoterminal div{
-                          display:block;
-                          position:relative;
-                          line-height: ${me.com.data.lineHeight}px;
-                        }
-                        #term {
-                          outline: none !important;
+                          height:99%;
+                          resize: both;
+                          overflow: hidden;
                         }
                         @font-face {
                           font-family: 'Cousine';
@@ -128,6 +119,73 @@ if( typeof AFRAME != 'undefined '){
                           src: url(./com/isoterminal/assets/CousineBold.ttf) format('truetype');
                         }
 
+                        .isoterminal *{
+                            outline:none;
+                            box-shadow:none;
+                        }
+
+                        .term {
+                            font-family: 'Cousine';
+                            line-height: ${me.com.data.lineHeight}px;
+                            font-weight: normal;
+                            font-variant-ligatures: none;
+                            color: #f0f0f0;
+                            overflow: hidden;
+                            white-space: nowrap;
+                        }
+
+                        .term_content a {
+                            color: inherit;
+                            text-decoration: underline;
+                            color:#2AFF;
+                        }
+                        
+                        .term_content a span{
+                            text-shadow: 0px 0px 10px #F07A;
+                        }
+
+                        .term_content a:hover {
+                            color: inherit;
+                            text-decoration: underline;
+                            animation:fade 1000ms infinite;
+                            -webkit-animation:fade 1000ms infinite;
+                        }
+
+                        .term_cursor {
+                            color: #000000;
+                            background: #70f;
+                            animation:fade 1000ms infinite; 
+                            -webkit-animation:fade 1000ms infinite;
+                        }
+
+                        .term_char_size {
+                            display: inline-block;
+                            visibility: hidden;
+                            position: absolute;
+                            top: 0px;
+                            left: -1000px;
+                            padding: 0px;
+                        }
+
+                        .term_textarea {
+                            position: absolute;
+                            top: 0px;
+                            left: 0px;
+                            width: 0px;
+                            height: 0px;
+                            padding: 0px;
+                            border: 0px;
+                            margin: 0px;
+                            opacity: 0;
+                            resize: none;
+                        }
+
+                        .term_scrollbar { background: transparent url(images/bg-scrollbar-track-y.png) no-repeat 0 0; position: relative; background-position: 0 0; float: right; height: 100%; }
+                        .term_track { background: transparent url(images/bg-scrollbar-trackend-y.png) no-repeat 0 100%; height: 100%; width:13px; position: relative; padding: 0 1px; }
+                        .term_thumb { background: transparent url(images/bg-scrollbar-thumb-y.png) no-repeat 50% 100%; height: 20px; width: 25px; cursor: pointer; overflow: hidden; position: absolute; top: 0; left: -5px; }
+                        .term_thumb .term_end { background: transparent url(images/bg-scrollbar-thumb-y.png) no-repeat 50% 0; overflow: hidden; height: 5px; width: 25px; }
+                        .noSelect { user-select: none; -o-user-select: none; -moz-user-select: none; -khtml-user-select: none; -webkit-user-select: none; }
+
                         .isoterminal style{ display:none }
 
                         blink{ 
@@ -138,12 +196,6 @@ if( typeof AFRAME != 'undefined '){
                         #overlay .winbox:has(> .isoterminal){ 
                           background:transparent;
                           box-shadow:none;
-                        }
-
-                        .cursor {
-                          background: #70F !important;
-                          animation:fade 1000ms infinite;
-                          -webkit-animation:fade 1000ms infinite;
                         }
 
                         .XR .cursor {
@@ -214,10 +266,10 @@ if( typeof AFRAME != 'undefined '){
         pastedropFeat: "com/isoterminal/feat/pastedrop.js",
         httpfs:        "com/isoterminal/feat/httpfs.js",
       }
-      if( this.data.emulator == "vt100" ){
-        features['VT100js'] = "com/isoterminal/VT100.js"
-        features['vt100']   = "com/isoterminal/feat/vt100.js"
-      } 
+      if( this.data.emulator == 'fbterm' ){
+        features['fbtermjs'] = "com/isoterminal/term.js"
+        features['fbterm']   = "com/isoterminal/feat/term.js"
+      }
       await AFRAME.utils.require(features)
 
       this.el.setAttribute("selfcontainer","")
@@ -325,25 +377,14 @@ if( typeof AFRAME != 'undefined '){
       return this
     },
 
-    setupBox: function(){
-      // setup slightly bigger black backdrop (this.el.getObject3D("mesh")) 
-      const w = this.data.width/950;
-      const h = this.data.height/950;
-      this.el.box = document.createElement('a-entity')
-      this.el.box.setAttribute("geometry",`primitive: box; width:${w}; height:${h}; depth: -${this.data.depth}`)
-      this.el.box.setAttribute("material","shader:flat; color:black; opacity:0.9; transparent:true; ")
-      this.el.box.setAttribute("position",`0 0 ${(this.data.depth/2)-0.001}`)
-      this.el.appendChild(this.el.box)
-    },
-
     calculateDimension: function(){
       if( this.data.width == -1  ) this.data.width = document.body.offsetWidth;
       if( this.data.height == -1 ) this.data.height = Math.floor( document.body.offsetHeight - 30 )
       if( this.data.height > this.data.width ) this.data.height = this.data.width // mobile smartphone fix
       this.data.width -= this.data.padding*2
       this.data.height -= this.data.padding*2
-      this.cols = Math.floor(this.data.width/this.data.lineHeight*2)
-      this.rows = Math.floor( (this.data.height*0.93)/this.data.lineHeight) 
+      this.cols = Math.floor(this.data.width/this.data.lineHeight*2)-1
+      this.rows = Math.floor( (this.data.height*0.93)/this.data.lineHeight)-1
     },
 
     events:{
