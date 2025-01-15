@@ -94,6 +94,7 @@ ISOTerminal.prototype.TermInit = function(){
             case '1': this.bootISO(); break;
             case '2': {
                         this.emit('enable-console',{stdout:true})
+                        this.emit('status',"javascript console")
                         this.console = ""
                         setTimeout( () => this.term.write( this.term.prompt), 100 )
                         break;
