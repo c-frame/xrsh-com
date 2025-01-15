@@ -138,6 +138,7 @@ ISOTerminal.prototype.start = function(opts){
     //disable_jit: false,
     filesystem: {},
     autostart: true,
+    prompt: this.opts.prompt,
     debug: this.opts.debug ? true : false
   };
 
@@ -160,10 +161,8 @@ ISOTerminal.prototype.setupWorker = function(opts){
   return this
 }
 
+ISOTerminal.prototype.getLoaderMsg = function(){
 
-ISOTerminal.prototype.startVM = function(opts){
-
-  this.emit('runISO',{...opts, bufferLatency: this.opts.bufferLatency })
   const loading = [
     'loading quantum bits and bytes',
     'preparing quantum flux capacitors',
@@ -209,7 +208,7 @@ ISOTerminal.prototype.startVM = function(opts){
     "Switching to Linux promotes sustainability by reducing demand for new gadgets and lowering e-waste"
   ]
 
-  const motd = `
+  let motd = `
 \r[38;5;57m . .  ____  _____________  ________. ._. ._. . . 
 \r[38;5;93m . . .\\   \\/  /\\______   \\/   _____//   |   \\. . 
 \r[38;5;93m . . . \\     /  |       _/\\_____  \\/    ~    \\ . 
@@ -219,25 +218,29 @@ ISOTerminal.prototype.startVM = function(opts){
 \r[38;5;165m ▬▬▬▬▬▬▬▬ [38;5;51mhttps://xrsh.isvery.ninja[38;5;165m ▬▬▬▬▬▬▬▬▬▬▬▬
 \r[38;5;165m local-first, polyglot, unixy WebXR IDE & runtime
 \r[38;5;57m
-\r credits
-\r ------- 
-\r @nlnet@nlnet.nl 
-\r @lvk@mastodon.online
-\r @utopiah@mastodon.pirateparty.be [38;5;51m
-\r https://www.w3.org/TR/webxr
-\r https://xrfragment.org 
-\r https://threejs.org 
-\r https://aframe.org 
-\r https://busybox.net
-\r https://buildroot.org
-  `
+\r  credits
+\r  ------- 
+\r  @nlnet@nlnet.nl 
+\r  @lvk@mastodon.online
+\r  @utopiah@mastodon.pirateparty.be [38;5;51m
+\r  https://www.w3.org/TR/webxr
+\r  https://xrfragment.org 
+\r  https://threejs.org 
+\r  https://aframe.org 
+\r  https://busybox.net
+\r  https://buildroot.org
+\r`
 
   const text_color = "\r[38;5;129m" 
   const text_reset = "\033[0m"
-  const loadmsg    = "\n\r "+loading[ Math.floor(Math.random()*1000) % loading.length ] + "..please wait"
-  const empowermsg = "\n\r "+text_reset+'"'+empower[ Math.floor(Math.random()*1000) % empower.length ] + '"\n\r'
-  this.emit('status',loadmsg)
-  this.emit('serial-output-string', motd + empowermsg + text_color +  loadmsg + text_reset+"\n\r")
+  const loadmsg    = "\n\r"+loading[ Math.floor(Math.random()*1000) % loading.length ] + "..please wait \n\n\r"
+  const empowermsg = "\n\r"+text_reset+'"'+empower[ Math.floor(Math.random()*1000) % empower.length ] + '"\n\r'
+  return { motd, text_color, text_reset, loadmsg, empowermsg}
+}
+
+ISOTerminal.prototype.startVM = function(opts){
+
+  this.v86opts = opts
 
   this.addEventListener('emulator-started', async (e) => {
 
@@ -264,6 +267,28 @@ ISOTerminal.prototype.startVM = function(opts){
     })
   });
 
+  let msglib = this.getLoaderMsg()
+  let msg = msglib.motd
+
+  if( this.opts.prompt ){
+    msg += `\r
+\r[36m  1)[0m boot [31m${String(this.opts.iso || "").replace(/.*\//,'')}[0m Linux ❤️
+\r[36m  2)[0m just give me a javascript-console in WebXR [=instant]
+\r
+\renter number> `
+  }else{
+    bootISO()
+  }
+  this.emit('status',msglib.loadmsg)
+  this.emit('serial-output-string', msg)
+
+}
+
+ISOTerminal.prototype.bootISO = function(){
+  let msglib = this.getLoaderMsg()
+  let msg = "\n\r" + msglib.empowermsg + msglib.text_color + msglib.loadmsg + msglib.text_reset
+  this.emit('serial-output-string', msg)
+  this.emit('runISO',{...this.v86opts, bufferLatency: this.opts.bufferLatency })
 }
 
 

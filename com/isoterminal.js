@@ -2,28 +2,28 @@
  *
  *                   css/html template                                                                                
  *                                                                                                                     
- *                     ┌─────────┐   ┌────────────┐  ┌─────────────┐            exit-AR                                
- *            ┌───────►│ com/dom ┼──►│ com/window ├─►│ domrenderer │◄────────── exit-VR  ◄─┐                           
- *            │        └─────────┘   └────────────┘  └─────▲───────┘                       │                           
- *            │                                            │         ┌───────────────┐     │                           
- * ┌──────────┴────────┐                             ┌─────┴──────┐  │  xterm.js     │  ┌─────────────────────────────┐
- * │  com/isoterminal  ├────────────────────────────►│com/xterm.js│◄─┤               │  │com/html-as-texture-in-XR.js │
- * └────────┬─┬────────┘                             └──┬──────┬▲─┘  │  xterm.css    │  └─────────────────────────────┘
- *          │ │        ┌────────┐             ┌─────────▼──┐   ││    └───────────────┘     │     ▲                     
- *          │ └───────►│ plane  ├─────►text───┼►canvas     │◄────────────────── enter-VR   │     │                     
- *          │          └────────┘             └────────────┘   ││               enter-AR ◄─┘     │                     
- *          │                                renderer=canvas   ││                                │                     
- *          │                                                  ││                                │                     
- *          │                      ISOTerminal.js              ││                                │                     
- *          │                ┌───────────────────────────┐◄────┘│                                │                     
- *          │                │ com/isoterminal/worker.js ├──────┘                                │                     
- *          │                └──────────────┌────────────┤                                       │                     
- *          │                               │ v86.js     │                                       │                     
- *          │                               │ feat/*.js  │                                       │                     
- *          │                               │ libv86.js  │                                       │                     
- *          │                               └────────────┘                                       │                     
- *          │                                                                                    │                     
- *          └────────────────────────────────────────────────────────────────────────────────────┘                     
+ *                     ┌─────────┐   ┌────────────┐                  exit-AR                                
+ *            ┌───────►│ com/dom ┼──►│ com/window ├───────────────── exit-VR  ◄─┐                           
+ *            │        └─────────┘   └───────────┬┘                             │                           
+ *            │                                  │                              │                           
+ * ┌──────────┴────────┐                         │   ┌───────────┐    ┌─────────────────────────────┐
+ * │  com/isoterminal  ├────────────────────────────►│com/term.js│    │com/html-as-texture-in-XR.js │
+ * └────────┬─┬────────┘                         │   └──┬─────┬▲─┘    └─────────────────────────────┘
+ *          │ │        ┌────────┐             ┌──▼──────▼──────┐                     ││        │                       
+ *          │ └───────►│ plane  ├─────►text───┼►div#isoterminal│◄────────────────── enter-VR   │                       
+ *          │          └────────┘             └────────────────┘                    enter-AR ◄─┘                       
+ *          │                                   │                                                     
+ *          │                                   │                                                                   
+ *          │                             ISOTerminal.js                                                                   
+ *          │                ┌───────────────────────────┐           
+ *          │                │ com/isoterminal/worker.js ├            
+ *          │                └──────────────┌────────────┤            
+ *          │                     │         │ v86.js     │            
+ *          │                     │         │ feat/*.js  │            
+ *          │                     │         │ libv86.js  │            
+ *          │                     │         └────────────┘            
+ *          │                     │         
+ *          └─────────────────────┘    
  *                                                                                                                     
  * NOTE: For convenience reasons, events are forwarded between com/isoterminal.js, worker.js and ISOTerminal
  *       Instead of a melting pot of different functionnames, events are flowing through everything (ISOTerminal.emit())
@@ -39,6 +39,7 @@ if( typeof AFRAME != 'undefined '){
       height:         { type: 'number',"default": 600 },
       depth:          { type: 'number',"default": 0.03 },
       lineHeight:     { type: 'number',"default": 18 },
+      prompt:         { type: 'boolean', "default": true },  // boot straight into ISO or give user choice
       padding:        { type: 'number',"default": 18 },
       maximized:      { type: 'boolean',"default":false},
       minimized:      { type: 'boolean',"default":false},

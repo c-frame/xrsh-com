@@ -69,8 +69,59 @@ ISOTerminal.prototype.TermInit = function(){
     ];
     this.term.open(el)
     this.term.el = el
+    this.term.prompt = "\r[36m>[0m "
 
-    this.term.setKeyHandler( (ch) => this.send(ch) )
+
+    // you can override this REPL in index.html via :
+    //
+    // <script>
+    //   document.querySelector('[isoterminal]')
+    //   .components
+    //   .isoterminal
+    //   .term
+    //   .term
+    //   .setKeyHandler( (ch) => { ....} )
+    //  </script>
+    //
+    //  this might change in the future into something 
+    //  more convenient
+    this.term.setKeyHandler( (ch) => {
+      if( this.ready ){
+        this.send(ch)  // send to v86 webworker
+      }else{
+        if( (ch == "\n" || ch == "\r") && typeof this.console == 'undefined' ){ 
+          switch( this.lastChar ){
+            case '1': this.bootISO(); break;
+            case '2': {
+                        this.emit('enable-console',{stdout:true})
+                        this.console = ""
+                        setTimeout( () => this.term.write( this.term.prompt), 100 )
+                        break;
+                      }
+          }
+        }else if( this.console != undefined ){
+          this.term.write(ch)
+          const reset = () => {
+            this.console = ""
+            setTimeout( () => this.term.write( this.term.prompt),100)
+          }
+          if( (ch == "\n" || ch == "\r") ){
+            try{
+              if( this.console ) eval(this.console)
+              reset()
+            }catch(e){ 
+              reset()
+              throw e // re throw
+            }
+          }else{
+            this.console += ch
+          }
+        }else{
+          this.term.write(ch)
+        }
+        this.lastChar = ch
+      }
+    })
     aEntity.el.addEventListener('focus', () => el.querySelector("textarea").focus() )
     aEntity.el.addEventListener('serial-output-string', (e) => {
       this.term.write(e.detail)
