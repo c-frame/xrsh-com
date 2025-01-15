@@ -103,10 +103,11 @@ ISOTerminal.prototype.TermInit = function(){
           this.term.write(ch)
           const reset = () => {
             this.console = ""
-            setTimeout( () => this.term.write( this.term.prompt),100)
+            setTimeout( () => "\n\r"+this.term.write( this.term.prompt),100)
           }
           if( (ch == "\n" || ch == "\r") ){
             try{
+              this.term.write("\n\r")
               if( this.console ) eval(this.console)
               reset()
             }catch(e){ 

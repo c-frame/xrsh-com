@@ -34,7 +34,7 @@ ISOTerminal.prototype.enableConsole = function(opts){
   opts = opts || {stdout:false}
 
   this.redirectConsole( (str,prefix) => {
-    let finalStr = opts.stdout ? "\n\r" : ""
+    let finalStr = "";
     prefix = prefix ? prefix+' ' : ''
     str.trim().split("\n").map( (line) => {
       finalStr += `${opts.stdout ? '' : "\x1b[38;5;165m/dev/browser: \x1b[0m"}`+prefix+line+'\n'
