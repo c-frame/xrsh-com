@@ -2,7 +2,7 @@
 
 <img src='https://github.com/coderofsalvation/xrshell/raw/main/src/assets/logo.svg' width="25%"/>
 
-This is a library of useful AFRAME components which can be used in any AFRAME app, which are higher-level than usual (and used in [XRSH](https://coderofsalvation.github.io/xrsh):
+This is a library of useful AFRAME components which can be used in any AFRAME app, which are higher-level than usual (and used in [XRSH](https://xrsh.isvery.ninja).
 
 # Usage
 
