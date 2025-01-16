@@ -2,7 +2,7 @@
 
 <img src='https://codeberg.org/xrsh/xrsh/media/branch/main/xrsh.svg' width="25%"/>
 
-This is a library of useful AFRAME components which can be used in any AFRAME app, used in [XRSH](https://xrsh.isvery.ninja)).<br>
+This is a library of useful AFRAME components used in [XRSH](https://xrsh.isvery.ninja)) [or in any AFRAME app].<br>
 Characteristics:
 
 * selfcontained 
