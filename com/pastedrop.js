@@ -1,3 +1,18 @@
+/** 
+ * ## [pastedrop](com/pastedrop.js)
+ *
+ * detects user copy/paste and file dragdrop action
+ * and clipboard functions
+ *
+ * ```html 
+ *   <a-entity pastedrop/>
+ * ```
+ *
+ * | event        | target | info                                                                                               |
+ * |--------------|--------|------------------------------------------|
+ * | `pasteFile`  | self   | always translates input to a File object |
+ */
+
 AFRAME.registerComponent('pastedrop', {
   schema: { 
     foo: { type:"string"}
@@ -22,16 +37,16 @@ AFRAME.registerComponent('pastedrop', {
     })
   },
 
-  //getClipboard: function(){
-  //  navigator.clipboard.readText()
-  //  .then( async (base64) => {
-  //    let mimetype  = base64.replace(/;base64,.*/,'')
-  //    let data = base64.replace(/.*;base64,/,'')
-  //    let type = this.textHeuristic(data)
-  //    const term = document.querySelector('[isoterminal]').components.isoterminal.term
-  //      this.el.emit('pasteFile',{}) /*TODO* data incompatible */
-  //   })
-  //},
+  getClipboard: function(){
+    navigator.clipboard.readText()
+    .then( async (base64) => {
+      let mimetype  = base64.replace(/;base64,.*/,'')
+      let data = base64.replace(/.*;base64,/,'')
+      let type = this.textHeuristic(data)
+      const term = document.querySelector('[isoterminal]').components.isoterminal.term
+        this.el.emit('pasteFile',{}) /*TODO* data incompatible */
+     })
+  },
 
   onDrop: function(e){
     e.preventDefault()

@@ -1,5 +1,5 @@
 /*
- * ## dom
+ * ## [dom](com/dom.js)
  *
  * instances reactive DOM component from AFRAME component's `dom` metadata 
  *
@@ -35,10 +35,6 @@
 if( !AFRAME.components.dom ){
 
   AFRAME.registerComponent('dom',{
-
-    requires: {
-      "requestAnimationFrameXR": "com/requestAnimationFrameXR.js"
-    },
 
     init: function(){
       Object.values(this.el.components)

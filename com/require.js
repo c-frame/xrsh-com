@@ -1,12 +1,17 @@
-// usage: 
-//
-// await AFRAME.utils.require( this.dependencies )               (*) autoload missing components
-// await AFRAME.utils.require( this.el.getAttributeNames() )     (*) autoload missing components
-// await AFRAME.utils.require({foo: "https://foo.com/aframe/components/foo.js"},this)
-// await AFRAME.utils.require(["./app/foo.js","foo.css"],this)
-// 
-// (*) = prefixes baseURL AFRAME.utils.require.baseURL ('./com/' e.g.)
-//
+/**
+ * ## [require](com/require('').js)
+ *
+ * automatically requires dependencies 
+ * 
+ * ```javascript
+ * await AFRAME.utils.require( this.dependencies )               (*) autoload missing components
+ * await AFRAME.utils.require( this.el.getAttributeNames() )     (*) autoload missing components
+ * await AFRAME.utils.require({foo: "https://foo.com/aframe/components/foo.js"},this)
+ * await AFRAME.utils.require(["./app/foo.js","foo.css"],this)
+ * ```
+ * 
+ * > (*) = prefixes baseURL AFRAME.utils.require.baseURL ('./com/' e.g.)
+ */ 
 AFRAME.utils.require = function(arr_or_obj,opts){
   opts            = opts || {}
   let i           = 0

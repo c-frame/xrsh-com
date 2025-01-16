@@ -1,5 +1,5 @@
-/*
- * ## data_events
+/**
+ * ## [data_events](com/data_events.js)
  *
  * allows components to react to data changes 
  *

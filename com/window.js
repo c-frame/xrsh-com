@@ -1,3 +1,28 @@
+ * ## [window](com/window.js)
+ *
+ * wraps a draggable window around a dom id or [dom](com/dom.js) component.
+ *
+ * ```html 
+ *   <a-entity window="dom: #mydiv"/>
+ * ```
+ *
+ * > depends on [AFRAME.utils.require](com/require.js)
+ *
+ * | property         | type      | default                | info |
+ * |------------------|-----------|------------------------|------|
+ * | `title`          |`string`   | ""                     |      |
+ * | `width`          |`string`   |                        |      |
+ * | `height`         |`string`   | 260px                  |      |
+ * | `uid`            |`string`   |                        |      |
+ * | `attach`         |`selector` |                        |      |
+ * | `dom`            |`selector` |                        |      |
+ * | `max`            |`boolean`  | false                  |      |
+ * | `min`            |`boolean`  | false                  |      |
+ * | `x`              |`string`   | "center"               |      |
+ * | `y`              |`string`   | "center"               |      |
+ * | `class`          |`array`    | []                     |      |
+ */
+
 AFRAME.registerComponent('window', {
   schema:{
     title:     {type:'string',"default":"title"},

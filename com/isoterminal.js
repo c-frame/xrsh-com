@@ -1,5 +1,40 @@
-/* 
+/** 
+ * ## [isoterminal](com/isoterminal.js)
  *
+ * Renders a windowed terminal in both (non)immersive mode.
+ * It displays an interactive javascript console or boots into 
+ * a Linux ISO image (via WASM).
+ *
+ * ```html 
+ *   <a-entity isoterminal="iso: xrsh.iso" position="0 1.6 -0.3"></a-entity>
+ * ```
+ *
+ * > depends on [AFRAME.utils.require](com/require.js)
+ *
+ * | property         | type      | default                | info |
+ * |------------------|-----------|------------------------|------|
+ * | `iso`            | `string`  | https`//forgejo.isvery.ninja/assets/xrsh-buildroot/main/xrsh.iso" | |
+ * | `overlayfs`      | `string`  | *WORK-IN-PROGRESS* | |
+ * | `width`          | `number`  |  800   ||
+ * | `height`         | `number`  |  600   ||
+ * | `depth`          | `number`  |  0.03  ||
+ * | `lineHeight`     | `number`  |  18    ||
+ * | `prompt`         | `boolean` |  true  | boot straight into ISO or give user choice |
+ * | `padding`        | `number`` |  18    | |
+ * | `maximized`      | `boolean` | false  | |
+ * | `minimized`      | `boolean` | false  | |
+ * | `muteUntilPrompt`| `boolean` | true   | mute stdout until a prompt is detected in ISO |
+ * | `HUD`            | `boolean` | false  | link to camera movement |
+ * | `transparent`    | `boolean` | false  | heavy, needs good gpu |
+ * | `memory`         | `number`  | 60     | VM memory (in MB) [NOTE` quest or smartphone webworker might crash > 40mb ] |
+ * | `bufferLatency`  | `number`  | 1      | in ms` bufferlatency from webworker to term (batch-update every char to texture) |
+ * | `debug`          | `boolean` | false  | |
+ * | `emulator`       | `string`  | fbterm | terminal emulator |
+ *
+ * > for more info see [xrsh.isvery.ninja](https://xrsh.isvery.ninja)
+ *
+ * Component design:
+ * ```
  *                   css/html template                                                                                
  *                                                                                                                     
  *                     ┌─────────┐   ┌────────────┐                  exit-AR                                
@@ -27,6 +62,7 @@
  *                                                                                                                     
  * NOTE: For convenience reasons, events are forwarded between com/isoterminal.js, worker.js and ISOTerminal
  *       Instead of a melting pot of different functionnames, events are flowing through everything (ISOTerminal.emit())
+ * ```       
  */ 
 
 if( typeof AFRAME != 'undefined '){

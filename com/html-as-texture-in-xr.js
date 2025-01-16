@@ -1,3 +1,35 @@
+/**
+ * ## [html-as-texture-in-xr](com/html-as-texture-in-xr.js)
+ *
+ * shows domid **only** in immersive mode 
+ * (wrapper around [aframe-htmlmesh](https://ada.is/aframe-htmlmesh/)
+ *
+ * It also sets class 'XR' to the (HTML) body-element in immersive mode.
+ * This allows CSS (in [dom component](com/dom.js)) to visually update accordingly.
+ *
+ * > depends on [AFRAME.utils.require](com/require.js)
+ *
+ * ```html 
+ *  <style type="text/css">
+ *    .XR #foo { color:red; }
+ *  </style>
+ *
+ *  <a-entity html-as-texture-in-xr="domid: #foo">
+ *    <b id="foo">hello</b>
+ *  </a-entitiy>
+ * ```
+ *
+ * | property     | type               |
+ * |--------------|--------------------|
+ * | `domid`      | `string`           |
+ *
+ * | event        | target     | info                                 |
+ * |--------------|------------|--------------------------------------|
+ * | `3D`         | a-scene    | fired when going into immersive mode |
+ * | `2D`         | a-scene    | fired when leaving immersive mode    |
+ *
+ */
+
 if( !AFRAME.components['html-as-texture-in-xr'] ){
 
   AFRAME.registerComponent('html-as-texture-in-xr', {
