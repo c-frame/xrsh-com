@@ -13,7 +13,7 @@ jobs:
       - run: "echo \"${{ secrets.SSHKEY_APPS }}\" > ~/.ssh/id_rsa" 
       - run: ssh-keyscan github.com >> ~/.ssh/known_hosts   # see https://gist.github.com/vikpe/34454d69fe03a9617f2b009cc3ba200b
       - run: chmod 600 -R ~/.ssh
-      - run: git remote add github git@github.com:coderofsalvation/xrsh-apps 
+      - run: git remote add github git@github.com:c-frame/xrsh-com.git
       - run: git push github main
       # *todo* trigger deploy at website
       #- run: git clone git@github.com:coderofsalvation/xrsh xrsh.github # now push empty commit to deploy website
