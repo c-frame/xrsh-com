@@ -1,3 +1,4 @@
+/** 
  * ## [window](com/window.js)
  *
  * wraps a draggable window around a dom id or [dom](com/dom.js) component.
