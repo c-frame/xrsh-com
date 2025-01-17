@@ -91,7 +91,7 @@ ISOTerminal.prototype.TermInit = function(){
       }else{
         if( (ch == "\n" || ch == "\r") && typeof this.console == 'undefined' ){ 
           switch( this.lastChar ){
-            case '1': this.bootISO(); break;
+            case '1':   this.bootISO(); break;
             case '2': {
                         this.emit('enable-console',{stdout:true})
                         this.emit('status',"javascript console")

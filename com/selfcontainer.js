@@ -47,7 +47,8 @@ AFRAME.registerComponent('selfcontainer', {
           cb(res)
         }else{
 
-          if( request.url.match(/(^file:\/\/xrsh)/) ) return cb(response)
+          // never cache requests to filesystem
+          if( request.url.match(/(^\/mnt\/)/) ) return cb(response)
 
           console.log("selfcontainer.js: caching "+request.url)
           if( response.text ){

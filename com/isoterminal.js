@@ -351,6 +351,12 @@ if( typeof AFRAME != 'undefined '){
       instance.setAttribute("dom",    "")
       instance.setAttribute("pastedrop",  "")
 
+
+      // *REMOVE* make a boot-plugin mechanism in feat/term.js
+      this.term.addEventListener('enable-console', () => {
+        instance.dom.classList.remove('blink')
+      })
+
       this.term.addEventListener('ready', (e) => {
         instance.dom.classList.remove('blink')
         this.term.emit('status',"running")
