@@ -3,7 +3,7 @@ ISOTerminal.prototype.redirectConsole = function(handler){
    const dir = console.dir;
    const err = console.error;
    const warn = console.warn;
-   const addLineFeeds = (str) => str.replace(/\n/g,"\n\r")
+   const addLineFeeds = (str) => typeof str == 'string' ? str.replace(/\n/g,"\n\r") : str
 
    console.log = (...args)=>{
        const textArg = args[0];
@@ -34,9 +34,10 @@ ISOTerminal.prototype.enableConsole = function(opts){
   opts = opts || {stdout:false}
 
   this.redirectConsole( (str,prefix) => {
+    let _str = typeof str == 'string' ? str : JSON.stringify(str)
     let finalStr = "";
     prefix = prefix ? prefix+' ' : ''
-    str.trim().split("\n").map( (line) => {
+    _str.trim().split("\n").map( (line) => {
       finalStr += `${opts.stdout ? '' : "\x1b[38;5;165m/dev/browser: \x1b[0m"}`+prefix+line+'\n'
     })
     if( opts.stdout ){

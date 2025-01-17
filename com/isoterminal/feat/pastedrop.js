@@ -17,7 +17,8 @@ if( typeof emulator != 'undefined' ){
   ISOTerminal.prototype.pasteFile = async function(data){
     const {type,item,pastedText} = data
     if( pastedText){
-      this.pasteWriteFile( this.convert.toUint8Array(pastedText) ,type, null, true)
+      // the terminal handles this (pastes text)
+      // this.pasteWriteFile( this.convert.toUint8Array(pastedText) ,type, null, true)
     }else{
       const file = item.getAsFile();
       const reader = new FileReader();
@@ -35,8 +36,9 @@ if( typeof emulator != 'undefined' ){
       const el = aEntity.el.dom.querySelector('#pastedrop') // upload input
       el.addEventListener('change', (e) => {
         const file = el.files[0];
-        const item = {...file, getAsFile: () => file }
-        this.el.emit('pasteFile', { item, type: file.type });
+        const item = {...file, getAsFile: () => file } // pasteFile-event works with File objets
+        const data = { item, type: file.type }
+        this.emit( 'pasteFile', data, "worker" ) // impersonate as worker (as worker cannot handle File objet)
       })
   }
 
