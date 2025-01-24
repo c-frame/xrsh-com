@@ -38,7 +38,7 @@ ISOTerminal.prototype.boot.menu = [
     key: "1",
     title: (opts) => `boot [31m${String(opts.iso || "").replace(/.*\//,'')}[0m Linux ❤️ `,
     init: function(){ this.bootISO() },
-    keyHandler: (ch) => this.send(ch)  // send to v86 webworker
+    keyHandler: function(ch){ this.send(ch) }  // send to v86 webworker
   },
 
   {
