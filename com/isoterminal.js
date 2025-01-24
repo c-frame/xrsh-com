@@ -19,7 +19,7 @@
  * | `height`         | `number`  |  600   ||
  * | `depth`          | `number`  |  0.03  ||
  * | `lineHeight`     | `number`  |  18    ||
- * | `prompt`         | `boolean` |  true  | boot straight into ISO or give user choice |
+ * | `bootmenu`       | `boolean` |  true  | give user choice [or boot straight into ISO ] |
  * | `padding`        | `number`` |  18    | |
  * | `maximized`      | `boolean` | false  | |
  * | `minimized`      | `boolean` | false  | |
@@ -75,7 +75,7 @@ if( typeof AFRAME != 'undefined '){
       height:         { type: 'number',"default": 600 },
       depth:          { type: 'number',"default": 0.03 },
       lineHeight:     { type: 'number',"default": 18 },
-      prompt:         { type: 'boolean', "default": true },  // boot straight into ISO or give user choice
+      bootmenu:       { type: 'string', "default": 'show' }, // show bootmenu or autosend key to bootmenu (key '1' e.g.)
       padding:        { type: 'number',"default": 18 },
       maximized:      { type: 'boolean',"default":false},
       minimized:      { type: 'boolean',"default":false},

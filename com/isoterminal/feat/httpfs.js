@@ -26,7 +26,7 @@ if( typeof emulator != 'undefined' ){
         let mimetype = getMimeType(file)
         this.worker.read_file_world(file)
         .then( (data) => {
-          if( data == null ) throw `/mnt/${file} does not exist in ISO filesystem`"
+          if( data == null ) throw `/mnt/${file} does not exist in ISO filesystem`
           let blob     = new Blob( [data], {type: getMimeType(file) })  // wrap Uint8Array into array
           response = {
               headers: new Headers({ 'Content-Type': getMimeType(file) }),

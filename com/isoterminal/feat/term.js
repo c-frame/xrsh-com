@@ -69,64 +69,26 @@ ISOTerminal.prototype.TermInit = function(){
     ];
     this.term.open(el)
     this.term.el = el
-    this.term.prompt = "\r[36m>[0m "
 
 
-    // you can override this REPL in index.html via :
-    //
-    // <script>
-    //   document.querySelector('[isoterminal]')
-    //   .components
-    //   .isoterminal
-    //   .term
-    //   .term
-    //   .setKeyHandler( (ch) => { ....} )
-    //  </script>
-    //
-    //  this might change in the future into something 
-    //  more convenient
     this.term.setKeyHandler( (ch) => {
-      if( this.ready ){
-        this.send(ch)  // send to v86 webworker
-      }else{
-        if( (ch == "\n" || ch == "\r") && typeof this.console == 'undefined' ){ 
-          switch( this.lastChar ){
-            case '1':   this.bootISO(); break;
-            case '2': {
-                        this.emit('enable-console',{stdout:true})
-                        this.emit('status',"javascript console")
-                        this.console = ""
-                        setTimeout( () => this.term.write( this.term.prompt), 100 )
-                        break;
-                      }
-          }
-        }else if( this.console != undefined ){
-          this.term.write(ch)
-          const reset = () => {
-            this.console = ""
-            setTimeout( () => "\n\r"+this.term.write( this.term.prompt),100)
-          }
-          if( (ch == "\n" || ch == "\r") ){
-            try{
-              this.term.write("\n\r")
-              if( this.console ) eval(this.console)
-              reset()
-            }catch(e){ 
-              reset()
-              throw e // re throw
-            }
-          }else{
-            this.console += ch
-          }
-        }else{
-          this.term.write(ch)
+      if( this.boot.menu.selected ){
+        this.boot.menu.selected.keyHandler.call(this,ch) 
+      }else if( (ch == "\n" || ch == "\r") ){ 
+        let menuitem = this.boot.menu.find( (m) => m.key == this.lastChar )
+        if( menuitem ){
+          this.boot.menu.selected = menuitem
+          menuitem.init.call(this)
         }
-        this.lastChar = ch
+      }else{
+        this.term.write(ch)
       }
+      this.lastChar = ch
     })
     aEntity.el.addEventListener('focus', () => el.querySelector("textarea").focus() )
     aEntity.el.addEventListener('serial-output-string', (e) => {
-      this.term.write(e.detail)
+      let msg = e.detail
+      this.term.write(msg)
     })
     //aEntity.term.emit('initTerm',this)
     //aEntity.el.addEventListener('focus', () => this.vt100.focus() )

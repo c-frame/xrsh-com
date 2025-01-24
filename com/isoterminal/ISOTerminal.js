@@ -11,6 +11,7 @@ function ISOTerminal(instance,opts){
   // compose object with functions
   for( let i in ISOTerminal.prototype ) obj[i] = ISOTerminal.prototype[i]
   obj.emit('init')
+  instance.sceneEl.emit("isoterminal_init",{})
   return obj
 }
 
@@ -270,18 +271,11 @@ ISOTerminal.prototype.startVM = function(opts){
   let msglib = this.getLoaderMsg()
   let msg = msglib.motd
 
-  if( this.opts.prompt ){
-    msg += `\r
-\r[36m  1)[0m boot [31m${String(this.opts.iso || "").replace(/.*\//,'')}[0m Linux ❤️
-\r[36m  2)[0m just give me a javascript-console in WebXR [=instant]
-\r
-\renter number> `
-  }else{
-    bootISO()
-  }
   this.emit('status',msglib.loadmsg)
   this.emit('serial-output-string', msg)
-
+  if( this.opts.bootmenu == 'show'){
+    this.emit('bootmenu',{})
+  }
 }
 
 ISOTerminal.prototype.bootISO = function(){
