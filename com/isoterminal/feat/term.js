@@ -71,7 +71,16 @@ ISOTerminal.prototype.TermInit = function(){
     this.term.el = el
 
 
+    // this is the default REPL
+    // please do not edit or replace this
+    // but instead extend/override ISOTerminal.prototype.boot.menu
+    // as demonstrated in index.html
     this.term.setKeyHandler( (ch) => {
+      let erase = false
+      if( ch == '\x7F' ){
+        ch = "\b \b" // why does write() not just support \x7F ?
+        erase = true
+      }
       if( this.boot.menu.selected ){
         this.boot.menu.selected.keyHandler.call(this,ch) 
       }else if( (ch == "\n" || ch == "\r") ){ 
@@ -83,7 +92,7 @@ ISOTerminal.prototype.TermInit = function(){
       }else{
         this.term.write(ch)
       }
-      this.lastChar = ch
+      if( !erase ) this.lastChar = ch
     })
     aEntity.el.addEventListener('focus', () => el.querySelector("textarea").focus() )
     aEntity.el.addEventListener('serial-output-string', (e) => {
