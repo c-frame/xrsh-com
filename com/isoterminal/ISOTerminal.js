@@ -150,6 +150,8 @@ ISOTerminal.prototype.start = function(opts){
 
 ISOTerminal.prototype.setupWorker = function(opts){
 
+  if( typeof window.PromiseWorker == 'undefined' ) return this
+
   /*
    * the WebWorker (which runs v86)
    *

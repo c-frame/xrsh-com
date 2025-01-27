@@ -40,19 +40,21 @@ ISOTerminal.prototype.boot = async function(e){
 ISOTerminal.prototype.boot.menu = []
 
 // REPL: iso
-ISOTerminal.prototype.boot.menu.push(
-  {
-    key: "1",
-    title: (opts) => `boot [31m${String(opts.iso || "").replace(/.*\//,'')}[0m Linux ❤️ `,
-    init: function(){ this.bootISO() },
-    keyHandler: function(ch){ this.send(ch) }  // send to v86 webworker
-  }
-)
+if( typeof window.PromiseWorker != 'undefined' ){ // if xrsh v86 is able to run in  in worker 
+  ISOTerminal.prototype.boot.menu.push(
+    {
+      key: "1",
+      title: (opts) => `boot [31m${String(opts.iso || "").replace(/.*\//,'')}[0m Linux ❤️ `,
+      init: function(){ this.bootISO() },
+      keyHandler: function(ch){ this.send(ch) }  // send to v86 webworker
+    }
+  )
+}
 
 // REPL: jsconsole
 ISOTerminal.prototype.boot.menu.push(
   {
-    key: "2",
+    key: "j",
     title: (opts) => "just give me an javascript-console in WebXR instantly",
     init: function(){ 
       this.prompt = "\r[36m>[0m "
@@ -60,7 +62,7 @@ ISOTerminal.prototype.boot.menu.push(
       this.emit('status',"javascript console")
       this.console = ""
       setTimeout( () => {
-        if( this.boot.menu.selected ) this.emit('serial-output-string', this.prompt)
+        this.emit('serial-output-string', this.prompt)
       }, 100 )
     },
     keyHandler: function(ch){
@@ -72,7 +74,9 @@ ISOTerminal.prototype.boot.menu.push(
       this.emit('serial-output-string', ch)
       const reset = () => {
         this.console = ""
-        setTimeout( () => "\n\r"+this.emit('serial-output-string', this.prompt),100)
+        setTimeout( () => {
+          if( this.boot.menu.selected ) this.emit('serial-output-string', this.prompt)
+        },100)
       }
       if( (ch == "\n" || ch == "\r") ){
         try{

@@ -3,7 +3,7 @@ ISOTerminal.prototype.redirectConsole = function(handler){
    const dir = console.dir;
    const err = console.error;
    const warn = console.warn;
-   const addLineFeeds = (str) => typeof str == 'string' ? str.replace(/\n/g,"\n\r") : str
+   const addLineFeeds = (str) => typeof str == 'string' ? str.replace(/\n/g,"\r\n") : str
 
    console.log = (...args)=>{
        const textArg = args[0];

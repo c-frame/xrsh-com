@@ -16,7 +16,6 @@ AFRAME.utils.require = function(arr_or_obj,opts){
   opts            = opts || {}
   let i           = 0
   let deps        = []
-  AFRAME.required = AFRAME.required || {}
   let packagesArr = arr_or_obj.map ? arr_or_obj : Object.values(arr_or_obj)
 
   const parseURI = function(uri){
@@ -36,8 +35,8 @@ AFRAME.utils.require = function(arr_or_obj,opts){
       }
 
       // prevent duplicate requests
-      if( AFRAME.required[id] ) return // already loaded before
-      AFRAME.required[id] = true
+      if( AFRAME.utils.require.required[id] ) return // already loaded before
+      AFRAME.utils.require.required[id] = true
 
       if( !document.body.querySelector(`script#${id}`) &&
           !document.body.querySelector(`link#${id}`) ){
@@ -71,5 +70,7 @@ AFRAME.utils.require = function(arr_or_obj,opts){
   })
   return Promise.all(deps)
 }
+
+AFRAME.utils.require.required   = {}
 
 AFRAME.utils.require.baseURL = './com/'

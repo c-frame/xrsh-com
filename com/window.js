@@ -41,8 +41,7 @@ AFRAME.registerComponent('window', {
 
   dependencies:{
     dom:         "com/dom.js",
-    winboxjs:    "https://unpkg.com/winbox@0.2.82/dist/winbox.bundle.min.js",     // deadsimple windows: https://nextapps-de.github.io/winbox
-    //winboxcss:   "https://unpkg.com/winbox@0.2.82/dist/css/winbox.min.css",       // main theme
+    winboxjs:    "../assets/winbox.bundle.min.js",     // deadsimple windows: https://nextapps-de.github.io/winbox
   },
 
   init: function(){
