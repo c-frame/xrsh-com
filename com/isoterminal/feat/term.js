@@ -87,7 +87,10 @@ ISOTerminal.prototype.TermInit = function(){
         let menuitem = this.boot.menu.find( (m) => m.key == this.lastChar )
         if( menuitem ){
           this.boot.menu.selected = menuitem
-          menuitem.init.call(this)
+          menuitem.init.call(this, () => {
+            this.term.write("\n\r")
+            this.bootMenu() 
+          })
         }
       }else{
         this.term.write(ch)

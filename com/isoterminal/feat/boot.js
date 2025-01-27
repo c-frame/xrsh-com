@@ -2,14 +2,17 @@ ISOTerminal.addEventListener('ready', function(e){
   setTimeout( () => this.boot(), 50 ) // because of autorestore.js
 })
 
-ISOTerminal.addEventListener('bootmenu', function(e){
+ISOTerminal.prototype.bootMenu = function(e){
+  this.boot.menu.selected = false // reset
   let msg = '\n\r'
   this.boot.menu.map( (m) => {
     msg += `\r[36m  ${m.key})[0m ${m.title(this.opts)}\n`
   })
   msg += `\n\r  enter choice> `
   this.emit('serial-output-string', msg)
-})
+}
+
+ISOTerminal.addEventListener('bootmenu', function(e){ this.bootMenu() })
 
 ISOTerminal.prototype.boot = async function(e){
   // set environment
@@ -32,15 +35,22 @@ ISOTerminal.prototype.boot = async function(e){
   }
 
 }
-ISOTerminal.prototype.boot.menu = [
 
+// here REPL's can be defined
+ISOTerminal.prototype.boot.menu = []
+
+// REPL: iso
+ISOTerminal.prototype.boot.menu.push(
   {
     key: "1",
     title: (opts) => `boot [31m${String(opts.iso || "").replace(/.*\//,'')}[0m Linux ❤️ `,
     init: function(){ this.bootISO() },
     keyHandler: function(ch){ this.send(ch) }  // send to v86 webworker
-  },
+  }
+)
 
+// REPL: jsconsole
+ISOTerminal.prototype.boot.menu.push(
   {
     key: "2",
     title: (opts) => "just give me an javascript-console in WebXR instantly",
@@ -49,7 +59,9 @@ ISOTerminal.prototype.boot.menu = [
       this.emit('enable-console',{stdout:true})
       this.emit('status',"javascript console")
       this.console = ""
-      setTimeout( () => this.emit('serial-output-string', this.prompt), 100 )
+      setTimeout( () => {
+        if( this.boot.menu.selected ) this.emit('serial-output-string', this.prompt)
+      }, 100 )
     },
     keyHandler: function(ch){
       let erase = false
@@ -80,4 +92,4 @@ ISOTerminal.prototype.boot.menu = [
       }
     }
   }
-]
+)

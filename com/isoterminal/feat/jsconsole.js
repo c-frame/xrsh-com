@@ -58,12 +58,15 @@ ISOTerminal.prototype.enableConsole = function(opts){
   });
 
   if( opts.stdout ){
+    window.menu = () => this.bootMenu()
     this.emit('serial-output-string', "\n\n\r☑ initialized javascript console\n");
     this.emit('serial-output-string', "\r☑ please use these functions to print:\n");
     this.emit('serial-output-string', "\r└☑ console.log(\"foo\")\n");
     this.emit('serial-output-string', "\r└☑ console.warn(\"foo\")\n");
     this.emit('serial-output-string', "\r└☑ console.dir({foo:12})\n");
     this.emit('serial-output-string', "\r└☑ console.error(\"foo\")\n");
+    this.emit('serial-output-string', "\r\n");
+    this.emit('serial-output-string', "\rtype 'menu()' to return to mainmenu");
     this.emit('serial-output-string', "\r\n");
   }
 }
