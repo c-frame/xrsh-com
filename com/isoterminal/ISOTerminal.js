@@ -47,18 +47,22 @@ ISOTerminal.prototype.serial_input = 0; // can be set to 0,1,2,3 to define stdin
 
 ISOTerminal.prototype.send = function(str, ttyNr){
   if( ttyNr == undefined) ttyNr = this.serial_input
-  if( ttyNr == undefined ){
-    if( this.emulator.serial_adapter ){
-      this.emulator.serial_adapter.term.paste(str)
-    }else this.emulator.keyboard_send_text(str) // vga screen
+  if( (this.emulator || this.worker) && this.ready ){
+    if( ttyNr == undefined ){
+      if( this.emulator.serial_adapter ){
+        this.emulator.serial_adapter.term.paste(str)
+      }else this.emulator.keyboard_send_text(str) // vga screen
+    }else{
+      this.convert.toUint8Array( str ).map( (c) => {
+        this.preventFrameDrop( 
+          () => {
+            this.worker.postMessage({event:`serial${ttyNr}-input`,data:c})
+          }
+        )
+      })
+    }  
   }else{
-    this.convert.toUint8Array( str ).map( (c) => {
-      this.preventFrameDrop( 
-        () => {
-          this.worker.postMessage({event:`serial${ttyNr}-input`,data:c})
-        }
-      )
-    })
+    this.emit('serial-output-string', str)
   }
 }
 

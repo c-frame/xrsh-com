@@ -9,7 +9,7 @@ ISOTerminal.prototype.bootMenu = function(e){
     msg += `\r[36m  ${m.key})[0m ${m.title(this.opts)}\n`
   })
   msg += `\n\r  enter choice> `
-  this.emit('serial-output-string', msg)
+  this.send(msg)
 }
 
 ISOTerminal.addEventListener('bootmenu', function(e){ this.bootMenu() })
@@ -62,7 +62,7 @@ ISOTerminal.prototype.boot.menu.push(
       this.emit('status',"javascript console")
       this.console = ""
       setTimeout( () => {
-        this.emit('serial-output-string', this.prompt)
+        this.send(this.prompt)
       }, 100 )
     },
     keyHandler: function(ch){
@@ -71,16 +71,16 @@ ISOTerminal.prototype.boot.menu.push(
         ch = "\b \b" // why does write() not just support \x7F ?
         erase = true
       }
-      this.emit('serial-output-string', ch)
+      this.send(ch)
       const reset = () => {
         this.console = ""
         setTimeout( () => {
-          if( this.boot.menu.selected ) this.emit('serial-output-string', this.prompt)
+          if( this.boot.menu.selected ) this.send(this.prompt)
         },100)
       }
       if( (ch == "\n" || ch == "\r") ){
         try{
-          this.emit('serial-output-string', "\n\r")
+          this.send("\n\r")
           if( this.console ) eval(this.console)
           reset()
         }catch(e){ 
