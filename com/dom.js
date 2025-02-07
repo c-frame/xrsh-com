@@ -66,8 +66,11 @@ if( !AFRAME.components.dom ){
       if( !overlay ){
         overlay = document.createElement('div')
         overlay.id = "overlay"
-        overlay.setAttribute('style','position:fixed;top:0px;left:0px;right:0px;bottom:0px')
+        overlay.setAttribute('style','position:fixed;top:0px;left:0px;right:0px;bottom:0px;pointer-events:none')
         document.body.appendChild(overlay)
+        document.head.innerHTML += `
+          <style type="text/css">#overlay * { pointer-events:all }</style>
+        `
         //  sceneEl.setAttribute("webxr","overlayElement:#overlay")
       }
       return this
