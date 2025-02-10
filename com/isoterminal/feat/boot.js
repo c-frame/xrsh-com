@@ -8,7 +8,7 @@ ISOTerminal.prototype.bootMenu = function(e){
   this.boot.menu.map( (m) => {
     msg += `\r[36m  ${m.key})[0m ${m.title(this.opts)}\n`
   })
-  msg += `\n\r  enter choice> `
+  if( this.boot.menu.length ) msg += `\n\r  enter choice> `
   this.send(msg)
 }
 
