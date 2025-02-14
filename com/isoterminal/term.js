@@ -294,7 +294,7 @@ Term.prototype.refresh = function(ymin, ymax)
     
     function is_http_link_char(c)
     {
-        var str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;=`.";
+        var str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;=%`.";
         return str.indexOf(String.fromCharCode(c)) >= 0;
     }
 
@@ -353,7 +353,7 @@ Term.prototype.refresh = function(ymin, ymax)
                         outline += '</span>';
                         last_attr = this.def_attr;
                     }
-                    outline += "<a href='" + http_link_str + "' onclick='return Term.prototype.href(this)'>";
+                    outline += "<a href='" + http_link_str + "' onclick='return Term.prototype.href(this)' target='_blank'>";
                 }
             }
             if (i == cx)  {
@@ -1049,9 +1049,8 @@ Term.prototype.interceptBrowserExit = function (ev)
 Term.prototype.keyDownHandler = function (ev)
 {
     var str;
-
     this.interceptBrowserExit(ev);
-    
+
     str="";
     switch(ev.keyCode) {
     case 8: /* backspace */

@@ -40,13 +40,8 @@ ISOTerminal.prototype.TermInit = function(){
       }
     }( Term.prototype.keyDownHandler )
 
-    Term.prototype.href = (a) => {
-      if( a.href ){
-        this.exec(`source /etc/profile.sh; hook href "${a.href}"`)
-      }
-      return false
-    }
     this.term = new Term( opts.termOpts )
+    Term.prototype.href = (a) => true
     this.term.colors = [
         /* normal */
         "#000000",
@@ -93,7 +88,7 @@ ISOTerminal.prototype.TermInit = function(){
           })
         }
       }else{
-        this.term.write(ch)
+        this.term.write( ch )
       }
       if( !erase ) this.lastChar = ch
     })

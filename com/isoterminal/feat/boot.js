@@ -45,7 +45,18 @@ if( typeof window.PromiseWorker != 'undefined' ){ // if xrsh v86 is able to run 
     {
       key: "1",
       title: (opts) => `boot [31m${String(opts.iso || "").replace(/.*\//,'')}[0m Linux ❤️ `,
-      init: function(){ this.bootISO() },
+      init: function(){ 
+
+        // hack to notify href clicks
+        Term.prototype.href = (a) => {
+          if( a.href ){
+            this.exec(`source /etc/profile.sh; hook href "${a.href}"`)
+          }
+          return false
+        }
+
+        this.bootISO() 
+      },
       keyHandler: function(ch){ this.send(ch) }  // send to v86 webworker
     }
   )
