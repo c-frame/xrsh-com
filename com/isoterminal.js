@@ -294,14 +294,15 @@ if( typeof AFRAME != 'undefined '){
       await AFRAME.utils.require(this.requires)
 
       let features = { // ISOTerminal plugins
-        boot:          "com/isoterminal/feat/boot.js",
-        javascript:    "com/isoterminal/feat/javascript.js",
-        jsconsole:     "com/isoterminal/feat/jsconsole.js",
-        indexhtml:     "com/isoterminal/feat/index.html.js",
-        indexjs:       "com/isoterminal/feat/index.js.js",
-        autorestore:   "com/isoterminal/feat/autorestore.js",
-        pastedropFeat: "com/isoterminal/feat/pastedrop.js",
-        httpfs:        "com/isoterminal/feat/httpfs.js",
+        boot:           "com/isoterminal/feat/boot.js",
+        javascript:     "com/isoterminal/feat/javascript.js",
+        jsconsole:      "com/isoterminal/feat/jsconsole.js",
+        remotekeyboard: "com/isoterminal/feat/remotekeyboard.js",
+        indexhtml:      "com/isoterminal/feat/index.html.js",
+        indexjs:        "com/isoterminal/feat/index.js.js",
+        autorestore:    "com/isoterminal/feat/autorestore.js",
+        pastedropFeat:  "com/isoterminal/feat/pastedrop.js",
+        httpfs:         "com/isoterminal/feat/httpfs.js",
       }
       if( this.data.emulator == 'fbterm' ){
         features['fbtermjs'] = "com/isoterminal/term.js"

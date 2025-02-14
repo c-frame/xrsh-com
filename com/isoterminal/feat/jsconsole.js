@@ -79,4 +79,52 @@ ISOTerminal.addEventListener('init', function(){
   this.addEventListener('enable-console', function(opts){
     this.enableConsole(opts.detail)
   })
+
+  // REPL: jsconsole
+  ISOTerminal.prototype.boot.menu.push(
+    {
+      key: "j",
+      title: (opts) => "just give me an javascript-console in WebXR instantly",
+      init: function(){ 
+        this.prompt = "\r[36m>[0m "
+        this.emit('enable-console',{stdout:true})
+        this.emit('status',"javascript console")
+        this.console = ""
+        setTimeout( () => {
+          this.send(this.prompt)
+        }, 100 )
+      },
+      keyHandler: function(ch){
+        let erase = false
+        if( ch == '\x7F' ){
+          ch = "\b \b" // why does write() not just support \x7F ?
+          erase = true
+        }
+        this.send(ch)
+        const reset = () => {
+          this.console = ""
+          setTimeout( () => {
+            if( this.boot.menu.selected ) this.send(this.prompt)
+          },100)
+        }
+        if( (ch == "\n" || ch == "\r") ){
+          try{
+            this.send("\n\r")
+            if( this.console ) eval(this.console)
+            reset()
+          }catch(e){ 
+            reset()
+            throw e // re throw
+          }
+        }else{
+          if( erase ){
+            this.console = this.console.split('').slice(0,-1).join('')
+          }else{
+            this.console += ch
+          }
+        }
+      }
+    }
+  )
+
 })

@@ -216,26 +216,24 @@ ISOTerminal.prototype.getLoaderMsg = function(){
   ]
 
   let motd = `
-\r[38;5;57m . .  ____  _____________  ________. ._. ._. . . 
-\r[38;5;93m . . .\\   \\/  /\\______   \\/   _____//   |   \\. . 
-\r[38;5;93m . . . \\     /  |       _/\\_____  \\/    ~    \\ . 
-\r[38;5;129m . . . /     \\  |    |   \\/        \\    Y    / . 
-\r[38;5;165m . . ./___/\\  \\ |____|_  /_______  /\\___|_  /. . 
-\r[38;5;201m . . . . . .\\_/. . . . \\/ . . . .\\/ . . _ \\/ . . 
-\r[38;5;165m ▬▬▬▬▬▬▬▬ [38;5;51mhttps://xrsh.isvery.ninja[38;5;165m ▬▬▬▬▬▬▬▬▬▬▬▬
-\r[38;5;165m local-first, polyglot, unixy WebXR IDE & runtime
+\r[38;5;57m. .  ____  _____________  ________. ._. ._. . . 
+\r[38;5;93m. . .\\   \\/  /\\______   \\/   _____//   |   \\. . 
+\r[38;5;93m. . . \\     /  |       _/\\_____  \\/    ~    \\ . 
+\r[38;5;129m. . . /     \\  |    |   \\/        \\    Y    / . 
+\r[38;5;165m. . ./___/\\  \\ |____|_  /_______  /\\___|_  /. . 
+\r[38;5;201m. . . . . .\\_/. . . . \\/ . . . .\\/ . . _ \\/ . . 
+\r[38;5;165m▬▬▬▬▬▬▬▬ [38;5;51mhttps://xrsh.isvery.ninja[38;5;165m ▬▬▬▬▬▬▬▬▬▬▬▬
+\r[38;5;165mlocal-first, polyglot, unixy WebXR IDE & runtime
 \r[38;5;57m
-\r  credits
-\r  ------- 
-\r  @nlnet@nlnet.nl 
-\r  @lvk@mastodon.online
-\r  @utopiah@mastodon.pirateparty.be [38;5;51m
-\r  https://www.w3.org/TR/webxr
-\r  https://xrfragment.org 
-\r  https://threejs.org 
-\r  https://aframe.org 
-\r  https://busybox.net
-\r  https://buildroot.org
+\rcredits
+\r------- 
+\r[38;5;51mhttps://www.w3.org/TR/webxr
+\rhttps://xrfragment.org 
+\rhttps://threejs.org 
+\rhttps://aframe.org 
+\rhttps://busybox.net
+\rhttps://buildroot.org
+\rfediverse: @lvk@mastodon.online @utopiah@mastodon.pirateparty.be @nlnet@nlnet.nl 
 \r`
 
   const text_color = "\r[38;5;129m" 
