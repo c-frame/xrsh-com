@@ -1,7 +1,7 @@
 importScripts("libv86.js");
 importScripts("ISOTerminal.js")  // we don't instance it again here (just use its functions)
 
-this.runISO = function(opts){
+this.runISO = async function(opts){
   this.opts = opts
   if( opts.debug ) console.dir(opts)
 
@@ -66,9 +66,13 @@ this.runISO = function(opts){
     })
   }
 
+  
+
   importScripts("feat/javascript.js")
   importScripts("feat/index.html.js")
   importScripts("feat/autorestore.js")
+
+  if( opts.overlayfs ) await this.addOverlayFS(opts)
 }
 /* 
  * forward events/functions so non-worker world can reach them
@@ -93,4 +97,18 @@ this.onmessage = async function(e){
       } 
     }
   }
+}
+
+this.addOverlayFS = async function(opts){
+  return new Promise( (resolve,reject) => {
+    // OVERLAY FS *FIXME*
+    if( opts.overlayfs ){
+      fetch(opts.overlayfs)
+      .then( (f) => {
+        f.arrayBuffer().then( (buf) => {
+          this.emulator.create_file('overlayfs.zip', new Uint8Array(buf) )
+        })
+      })
+    }
+  })
 }

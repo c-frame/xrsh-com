@@ -14,7 +14,7 @@
  * | property         | type      | default                | info |
  * |------------------|-----------|------------------------|------|
  * | `iso`            | `string`  | https`//forgejo.isvery.ninja/assets/xrsh-buildroot/main/xrsh.iso" | |
- * | `overlayfs`      | `string`  | *WORK-IN-PROGRESS* | |
+ * | `overlayfs`      | `string`  | ''     | zip URL/file to autoextract on top of filesystem |
  * | `width`          | `number`  |  800   ||
  * | `height`         | `number`  |  600   ||
  * | `depth`          | `number`  |  0.03  ||

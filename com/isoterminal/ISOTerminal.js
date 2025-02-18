@@ -141,6 +141,7 @@ ISOTerminal.prototype.start = function(opts){
     //      },
     //screen_dummy: true,
     //disable_jit: false,
+    overlayfs: this.opts.overlayfs,
     filesystem: {},
     autostart: true,
     prompt: this.opts.prompt,
@@ -249,16 +250,6 @@ ISOTerminal.prototype.startVM = function(opts){
 
   this.addEventListener('emulator-started', async (e) => {
 
-    // OVERLAY FS *FIXME*
-    //if( me.opts.overlayfs ){
-    //  fetch(me.opts.overlayfs)
-    //  .then( (f) => {
-    //    f.arrayBuffer().then( (buf) => {
-    //      emulator.create_file('overlayfs.zip', new Uint8Array(buf) )
-    //    })
-    //  })
-    //}
-
     let line = ''
     this.ready = false
 
@@ -287,6 +278,7 @@ ISOTerminal.prototype.bootISO = function(){
   let msg = "\n\r" + msglib.empowermsg + msglib.text_color + msglib.loadmsg + msglib.text_reset
   this.emit('serial-output-string', msg)
   this.emit('runISO',{...this.v86opts, bufferLatency: this.opts.bufferLatency })
+
 }
 
 
