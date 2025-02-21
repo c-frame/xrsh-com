@@ -8,7 +8,6 @@ ISOTerminal.prototype.bootMenu = function(e){
   const autoboot    = e.detail.bootMenu || autobootURL
   if( !autoboot ){
 
-    alert("ja")
     let msg = '\n\r'
     this.boot.menu.map( (m) => {
       msg += `\r[36m${m.key})[0m ${m.title(this.opts)}\n`
