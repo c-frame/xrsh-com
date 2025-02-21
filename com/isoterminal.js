@@ -11,25 +11,26 @@
  *
  * > depends on [AFRAME.utils.require](com/require.js)
  *
- * | property         | type      | default                | info |
- * |------------------|-----------|------------------------|------|
- * | `iso`            | `string`  | https`//forgejo.isvery.ninja/assets/xrsh-buildroot/main/xrsh.iso" | |
- * | `overlayfs`      | `string`  | ''     | zip URL/file to autoextract on top of filesystem |
- * | `width`          | `number`  |  800   ||
- * | `height`         | `number`  |  600   ||
- * | `depth`          | `number`  |  0.03  ||
- * | `lineHeight`     | `number`  |  18    ||
- * | `bootmenu`       | `boolean` |  true  | give user choice [or boot straight into ISO ] |
- * | `padding`        | `number`` |  18    | |
- * | `maximized`      | `boolean` | false  | |
- * | `minimized`      | `boolean` | false  | |
- * | `muteUntilPrompt`| `boolean` | true   | mute stdout until a prompt is detected in ISO |
- * | `HUD`            | `boolean` | false  | link to camera movement |
- * | `transparent`    | `boolean` | false  | heavy, needs good gpu |
- * | `memory`         | `number`  | 60     | VM memory (in MB) [NOTE` quest or smartphone webworker might crash > 40mb ] |
- * | `bufferLatency`  | `number`  | 1      | in ms` bufferlatency from webworker to term (batch-update every char to texture) |
- * | `debug`          | `boolean` | false  | |
- * | `emulator`       | `string`  | fbterm | terminal emulator |
+ * | property          | type      | default                | info |
+ * |-------------------|-----------|------------------------|------|
+ * | `iso`             | `string`  | https`//forgejo.isvery.ninja/assets/xrsh-buildroot/main/xrsh.iso" | |
+ * | `overlayfs`       | `string`  | ''     | zip URL/file to autoextract on top of filesystem |
+ * | `width`           | `number`  |  800   ||
+ * | `height`          | `number`  |  600   ||
+ * | `depth`           | `number`  |  0.03  ||
+ * | `lineHeight`      | `number`  |  18    ||
+ * | `bootMenu`        | `string`  |  ""    | character to auto-enter in bootMenu  |
+ * | `bootMenuURL`     | `string`  |  ""    | character to auto-enter in bootmeun when URL has fragment (#foo.zip e.g.) |
+ * | `padding`         | `number`` |  18    | |
+ * | `maximized`       | `boolean` | false  | |
+ * | `minimized`       | `boolean` | false  | |
+ * | `muteUntilPrompt` | `boolean` | true   | mute stdout until a prompt is detected in ISO |
+ * | `HUD`             | `boolean` | false  | link to camera movement |
+ * | `transparent`     | `boolean` | false  | heavy, needs good gpu |
+ * | `memory`          | `number`  | 60     | VM memory (in MB) [NOTE` quest or smartphone webworker might crash > 40mb ] |
+ * | `bufferLatency`   | `number`  | 1      | in ms` bufferlatency from webworker to term (batch-update every char to texture) |
+ * | `debug`           | `boolean` | false  | |
+ * | `emulator`        | `string`  | fbterm | terminal emulator |
  *
  * > for more info see [xrsh.isvery.ninja](https://xrsh.isvery.ninja)
  *
@@ -75,7 +76,9 @@ if( typeof AFRAME != 'undefined '){
       height:         { type: 'number',"default": 600 },
       depth:          { type: 'number',"default": 0.03 },
       lineHeight:     { type: 'number',"default": 18 },
-      bootmenu:       { type: 'string', "default": 'show' }, // show bootmenu or autosend key to bootmenu (key '1' e.g.)
+      bootOnFragment: { type: 'string',"default": "nothing" },
+      bootMenu:       { type: 'string', "default": '' }, // show bootMenu if empty, or autosend key to bootMenu (key '1' e.g.)
+      bootMenuURL:    { type: 'string', "default": '' }, // show bootMenu if empty, or autosend key to bootMenu (key '1' e.g.)
       padding:        { type: 'number',"default": 18 },
       maximized:      { type: 'boolean',"default":false},
       minimized:      { type: 'boolean',"default":false},

@@ -4,15 +4,27 @@ ISOTerminal.addEventListener('ready', function(e){
 
 ISOTerminal.prototype.bootMenu = function(e){
   this.boot.menu.selected = false // reset
-  let msg = '\n\r'
-  this.boot.menu.map( (m) => {
-    msg += `\r[36m${m.key})[0m ${m.title(this.opts)}\n`
-  })
-  msg += `\n\r[36menter choice>[0m `
-  this.send(msg)
+  const autobootURL = e.detail.bootMenuURL && document.location.hash.length > 1
+  const autoboot    = e.detail.bootMenu || autobootURL
+  if( !autoboot ){
+
+    alert("ja")
+    let msg = '\n\r'
+    this.boot.menu.map( (m) => {
+      msg += `\r[36m${m.key})[0m ${m.title(this.opts)}\n`
+    })
+    msg += `\n\r[36menter choice>[0m `
+    this.send(msg)
+
+  }else{ // autoboot
+    if( this.term ){
+      this.term.handler( e.detail.bootMenu || e.detail.bootMenuURL )
+      this.term.handler("\n")
+    }
+  }
 }
 
-ISOTerminal.addEventListener('bootmenu', function(e){ this.bootMenu() })
+ISOTerminal.addEventListener('bootMenu', function(e){ this.bootMenu(e) } )
 
 ISOTerminal.prototype.boot = async function(e){
   // set environment

@@ -268,9 +268,7 @@ ISOTerminal.prototype.startVM = function(opts){
 
   this.emit('status',msglib.loadmsg)
   this.emit('serial-output-string', msg)
-  if( this.opts.bootmenu == 'show'){
-    this.emit('bootmenu',{})
-  }
+  this.emit('bootMenu',{bootMenu: this.opts.bootMenu, bootMenuURL: this.opts.bootMenuURL })
 }
 
 ISOTerminal.prototype.bootISO = function(){
