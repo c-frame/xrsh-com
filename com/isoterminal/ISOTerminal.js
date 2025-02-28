@@ -266,13 +266,13 @@ ISOTerminal.prototype.startVM = function(opts){
   let msglib = this.getLoaderMsg()
   let msg = msglib.motd
 
-  this.emit('status',msglib.loadmsg)
   this.emit('serial-output-string', msg)
   this.emit('bootMenu',{bootMenu: this.opts.bootMenu, bootMenuURL: this.opts.bootMenuURL })
 }
 
 ISOTerminal.prototype.bootISO = function(){
   let msglib = this.getLoaderMsg()
+  this.emit('status',msglib.loadmsg)
   let msg = "\n\r" + msglib.empowermsg + msglib.text_color + msglib.loadmsg + msglib.text_reset
   this.emit('serial-output-string', msg)
   this.emit('runISO',{...this.v86opts, bufferLatency: this.opts.bufferLatency })

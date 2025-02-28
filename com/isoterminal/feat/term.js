@@ -92,7 +92,11 @@ ISOTerminal.prototype.TermInit = function(){
       }
       if( !erase ) this.lastChar = ch
     })
-    aEntity.el.addEventListener('focus', () => el.querySelector("textarea").focus() )
+    aEntity.el.addEventListener('focus', () => {
+      let textarea = el.querySelector("textarea")
+      textarea.focus()
+      if( document.activeElement != textarea ) textarea.focus() 
+    })
     aEntity.el.addEventListener('serial-output-string', (e) => {
       let msg = e.detail
       this.term.write(msg)

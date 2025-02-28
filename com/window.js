@@ -37,6 +37,7 @@ AFRAME.registerComponent('window', {
     x:         {type:'string',"default":"center"},
     y:         {type:'string',"default":"center"},
     "class":   {type:'array',"default":[]},
+    autoresize:{type:'bool', "default": false}
   },
 
   dependencies:{
@@ -84,7 +85,7 @@ AFRAME.registerComponent('window', {
         this.el.emit('window.oncreate',{})
         // resize after the dom content has been rendered & updated 
         setTimeout( () => {
-          if( !this.data.max ) winbox.resize( this.el.dom.offsetWidth+'px', this.el.dom.offsetHeight+'px' )
+          if( !this.data.max && this.data.autoresize ) winbox.resize( this.el.dom.offsetWidth+'px', this.el.dom.offsetHeight+'px' )
           // hint grabbable's obb-collider to track the window-object
           this.el.components['obb-collider'].data.trackedObject3D = 'components.html.el.object3D.children.0'
           this.el.components['obb-collider'].update()

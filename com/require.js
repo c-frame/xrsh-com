@@ -1,7 +1,7 @@
 /**
  * ## [require](com/require('').js)
  *
- * automatically requires dependencies 
+ * automatically requires dependencies or missing components
  * 
  * ```javascript
  * await AFRAME.utils.require( this.dependencies )               (*) autoload missing components
@@ -74,3 +74,38 @@ AFRAME.utils.require = function(arr_or_obj,opts){
 AFRAME.utils.require.required   = {}
 
 AFRAME.utils.require.baseURL = './com/'
+
+
+//// this component will scan the DOM for missing components and lazy load them
+//AFRAME.registerSystem('require',{
+//
+//  init: function(){
+//    this.components = []
+//    // observe HTML changes in <a-scene>
+//    observer = new MutationObserver( (a,b) => this.getMissingComponents(a,b) )
+//    observer.observe( this.sceneEl, {characterData: false, childList: true, attributes: false});
+//  },
+//
+//  getMissingComponents: function(mutationsList,observer){
+//    let els         = [...this.sceneEl.getElementsByTagName("*")]
+//    let seen        = []
+//
+//    els.map( async (el) => {
+//      let attrs    = el.getAttributeNames()
+//                       .filter( (a) => a.match(/(^aframe-injected|^data-aframe|^id$|^class$|^on)/) ? null : a )
+//      for( let attr in attrs ){
+//        let component = attrs[attr]
+//        if( el.components && !el.components[component] ){
+//          console.info(`require.js: lazy-loading missing <${el.tagName.toLowerCase()} ${component} ... > (TODO: fix selectors in schema)`)
+//          // require && remount
+//          try{
+//            await AFRAME.utils.require([component])
+//            el.removeAttribute(component)
+//            el.setAttribute(component, el.getAttribute(component) )
+//          }catch(e){ } // give up, normal AFRAME behaviour follows
+//        }
+//      }
+//    })
+//  }
+//
+//})

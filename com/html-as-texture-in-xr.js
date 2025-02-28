@@ -34,69 +34,62 @@ if( !AFRAME.components['html-as-texture-in-xr'] ){
 
   AFRAME.registerComponent('html-as-texture-in-xr', {
     schema: {
-      domid: { type:"string"},
-      faceuser: { type: "boolean", default: false}
+      domid:       { type:"string"},
+      doublesided: {type: "boolean", default: true},
+      faceuser:    { type: "boolean", default: false}
     },
 
     dependencies:{
-      html:        "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",  // html to AFRAME
-      //html:          "https://coderofsalvation.github.io/aframe-htmlmesh/build/aframe-html.js"
-      //html:          "com/aframe-html.js"
+      html:          "com/lib/aframe-html.js"
     },
 
     init: async function () { 
       let el = document.querySelector(this.data.domid)
       if( ! el ){
-        return console.error("html-as-texture-in-xr: cannot get dom element "+this.data.dom.id)
+        return console.error("html-as-texture-in-xr: cannot get dom element "+this.data.domid)
       }
       let s = await AFRAME.utils.require(this.dependencies)
-      this.el.setAttribute("html",`html: ${this.data.domid}; cursor:#cursor; xrlayer: true`)
+
+      this.forwardClickToMesh();
+
+      this.el.sceneEl.addEventListener('enter-vr', () => this.enableDoubleSided() )
+
+      this.el.setAttribute("html",`html: ${this.data.domid}; cursor:#cursor; `)
       this.el.setAttribute("visible",  AFRAME.utils.XD() == '3D' ? 'true' : 'false' )
       if( this.data.faceuser ){
         this.el.setAttribute("position", AFRAME.utils.XD.getPositionInFrontOfCamera(0.4) )
       }
     },
 
-    manifest: { // HTML5 manifest to identify app to xrsh
-      "short_name": "show-texture-in-xr",
-      "name": "2D/3D switcher",
-      "icons": [],
-      "id": "/?source=pwa",
-      "start_url": "/?source=pwa",
-      "background_color": "#3367D6",
-      "display": "standalone",
-      "scope": "/",
-      "theme_color": "#3367D6",
-      "category":"system",
-      "shortcuts": [
-        {
-          "name": "What is the latest news?",
-          "cli":{
-            "usage":  "helloworld <type> [options]",
-            "example": "helloworld news",
-            "args":{
-              "--latest": {type:"string"}
-            }
-          },
-          "short_name": "Today",
-          "description": "View weather information for today",
-          "url": "/today?source=pwa",
-          "icons": [{ "src": "/images/today.png", "sizes": "192x192" }]
-        }
-      ],
-      "description": "use ESC-key to toggle between 2D / 3D",
-      "screenshots": [
-        {
-          "src": "/images/screenshot1.png",
-          "type": "image/png",
-          "sizes": "540x720",
-          "form_factor": "narrow"
-        }
-      ],
-      "help":`
-  Helloworld application
+    forwardClickToMesh: function(){
+      // monkeypatch: forward click to mesh
+      const handle = AFRAME.components['html'].Component.prototype.handle
+      AFRAME.components['html'].Component.prototype.handle = function(type,evt){
 
-      `
+        if( !this.el.sceneEl.renderer.xr.isPresenting                        ) return // ignore events in desktop mode 
+        if( this.el.sceneEl.renderer.xr.isPresenting && type.match(/^mouse/) ) return // ignore mouse-events in XR
+
+        if( type == 'click' && evt.detail.length && evt.detail[0].uv ){
+          const mesh = this.el.object3D.children[0] 
+          const uv = evt.detail[0].uv;
+          const _pointer = new THREE.Vector2();
+          const _event = { type: '', data: _pointer };
+          _event.type = type;
+          _event.data.set( uv.x, 1 - uv.y );
+          mesh.dispatchEvent( _event );
+        }
+        return handle.apply(this,[type,evt])
+      }
+
+    },
+
+    enableDoubleSided: function(){
+      // enable doubleside
+      this.el.object3D.traverse( (o) => {
+        if( o.constructor && String(o.constructor).match(/HTMLMesh/) ){
+          o.material.side = THREE.DoubleSide
+        }
+      })
     }
 
   });

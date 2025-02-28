@@ -17,7 +17,9 @@ window.AFRAME.registerComponent('pinch-to-teleport', {
       pos.x += direction.x 
       pos.z += direction.z
       // set the new position
-      this.data.rig.setAttribute("position", pos);
+      if( !this.data.rig ){
+        this.data.rig.setAttribute("position", pos);
+      }
       // !!! NOTE - it would be more efficient to do the
       // position change on the players THREE.Object:
       // `player.object3D.position.add(direction)`

@@ -4,8 +4,8 @@ ISOTerminal.addEventListener('ready', function(e){
 
 ISOTerminal.prototype.bootMenu = function(e){
   this.boot.menu.selected = false // reset
-  const autobootURL = e.detail.bootMenuURL && document.location.hash.length > 1
-  const autoboot    = e.detail.bootMenu || autobootURL
+  const autobootURL = e && e.detail.bootMenuURL && document.location.hash.length > 1
+  const autoboot    = e && e.detail.bootMenu || autobootURL
   if( !autoboot ){
 
     let msg = '\n\r'

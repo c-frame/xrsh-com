@@ -19,7 +19,7 @@ BEGIN{
   print ""
 }
 
-/\$\(/                   { cmd=$0; 
+/\$(?![\(|"])/           { cmd=$0; 
                            gsub(/^.*\$\(/,"",cmd); 
                            gsub(/\).*/,"",cmd);
                            cmd | getline stdout; close(cmd);

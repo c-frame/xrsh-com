@@ -94,8 +94,12 @@ if( !AFRAME.components.dom ){
       this.el.dom.innerHTML = this.dom.html(this)
       this.el.dom.className = this.dom.attrName 
       this.com.data = this.reactify( this.el, this.com.data )
-      if( this.dom.events ) this.dom.events.map( (e) => this.el.dom.addEventListener(e, (ev) => this.el.emit(e,ev) ) )
       this.el.dom = this.el.dom.children[0]
+      if( this.dom.events ){ 
+        this.dom.events.map( (e) => {
+          this.el.dom.addEventListener(e, (ev) => this.el.emit(e,ev)  )
+        })
+      }
       return this
     },
 

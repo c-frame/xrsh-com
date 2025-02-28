@@ -101,7 +101,7 @@ a Linux ISO image (via WASM).
 | `height`         | `number`  |  600   ||
 | `depth`          | `number`  |  0.03  ||
 | `lineHeight`     | `number`  |  18    ||
-| `prompt`         | `boolean` |  true  | boot straight into ISO or give user choice |
+| `bootmenu`       | `boolean` |  true  | give user choice [or boot straight into ISO ] |
 | `padding`        | `number`` |  18    | |
 | `maximized`      | `boolean` | false  | |
 | `minimized`      | `boolean` | false  | |
@@ -147,6 +147,54 @@ NOTE: For convenience reasons, events are forwarded between com/isoterminal.js, 
 ```       
 
 
+## [launcher](com/launcher.js)
+
+displays app (icons) for enduser to launch
+
+```javascript
+ <a-scene launcher/>
+```
+
+| property     | type               | example                                                                                |
+|--------------|--------------------|----------------------------------------------------------------------------------------|
+| `registries` | `array` of strings | `<a-entity launcher="registers: https://foo.com/index.json, ./index.json"/>`           |
+
+| event        | target | info                                                                                               |
+|--------------|-------------------------------------------------------------------------------------------------------------|
+| `launcher`   | an app | when pressing an app icon, `launcher` event will be send to the respective app                     |
+
+There a multiple ways of letting the launcher know that an app can be launched:
+
+1. any AFRAME component with an `launcher`-event + manifest is automatically added:
+ 
+ ```javascript
+ AFRAME.registerComponent('foo',{
+   events:{
+     launcher: function(){ ...launch something... }
+   },
+   manifest:{ // HTML5 manifesto JSON object
+     // https://www.w3.org/TR/appmanifest/ 
+   }
+ }
+ ```
+
+2. dynamically in javascript   
+
+```javascript
+window.launcher.register({
+  name:"foo",
+  icon: "https://.../optional_icon.png" 
+  description: "lorem ipsum",
+  cb: () => alert("foo")
+})
+//window.launcher.unregister('foo')
+```
+
+
+
+Restore the pose.
+
+
 ## [pastedrop](com/pastedrop.js)
 
 detects user copy/paste and file dragdrop action
@@ -161,9 +209,12 @@ and clipboard functions
 | `pasteFile`  | self   | always translates input to a File object |
 
 
+Restore the pose.
+
+
 ## [require](com/require('').js)
 
-automatically requires dependencies 
+automatically requires dependencies or missing components
 
 ```javascript
 await AFRAME.utils.require( this.dependencies )               (*) autoload missing components
@@ -173,3 +224,28 @@ await AFRAME.utils.require(["./app/foo.js","foo.css"],this)
 ```
 
 > (*) = prefixes baseURL AFRAME.utils.require.baseURL ('./com/' e.g.)
+
+
+## [window](com/window.js)
+
+wraps a draggable window around a dom id or [dom](com/dom.js) component.
+
+```html 
+  <a-entity window="dom: #mydiv"/>
+```
+
+> depends on [AFRAME.utils.require](com/require.js)
+
+| property         | type      | default                | info |
+|------------------|-----------|------------------------|------|
+| `title`          |`string`   | ""                     |      |
+| `width`          |`string`   |                        |      |
+| `height`         |`string`   | 260px                  |      |
+| `uid`            |`string`   |                        |      |
+| `attach`         |`selector` |                        |      |
+| `dom`            |`selector` |                        |      |
+| `max`            |`boolean`  | false                  |      |
+| `min`            |`boolean`  | false                  |      |
+| `x`              |`string`   | "center"               |      |
+| `y`              |`string`   | "center"               |      |
+| `class`          |`array`    | []                     |      |

@@ -1,34 +1,44 @@
-AFRAME.registerComponent('helloworld-htmlform', {
+AFRAME.registerComponent('helloworld-window', {
   schema: { 
     foo: { type:"string"}
   },
 
-  init: function () {},
+  init: function () {
+
+  },
 
   requires:{
-    html:        "https://unpkg.com/aframe-htmlmesh@2.1.0/build/aframe-html.js",  // html to AFRAME
-    winboxjs:    "https://unpkg.com/winbox@0.2.82/dist/winbox.bundle.min.js",     // deadsimple windows: https://nextapps-de.github.io/winbox
-    winboxcss:   "https://unpkg.com/winbox@0.2.82/dist/css/winbox.min.css",       // deadsimple windows: https://nextapps-de.github.io/winbox
+    window:   "com/window.js",
+    reactive: "com/data2event.js"
   },
 
   dom: {
-    scale:   1,
+    scale:   0.66,
     events:  ['click','input'],
     html:    (me) => `<div class="htmlform">
                         <fieldset>
-                          <legend>Colour</legend>
-                          <input type="radio" id="color-red" name="color" value="red" checked><label for="color-red"> Red</label><br>
-                          <input type="radio" id="color-blue" name="color" value="blue"><label for="color-blue"> Blue</label><br>
+                          <legend>Theme</legend>
+                          <input type="radio" id="theme" name="theme" value="0" checked style=""><label for="theme" style="margin-right:15px;">Normal</label>
+                          <input type="radio" id="themei" name="theme" value="1"><label for="themei">Invert</label><br>
                         </fieldset>
+                        <br>
                         <fieldset>
-                          <legend>Material:</legend>
-                          <input id="material-wireframe" type="checkbox" name="wireframe"><label for="material-wireframe"> Wireframe</label><br>
+                          <legend>Welcome to XR Shell</legend>
+                          A free offline-first morphable<br>
+                          environment which provides <br>
+                          <span id="myvalue"></span>&nbsp; XR-friendly shells.<br>
+                          <ol>
+                            <li>check the <a href="/" target="_blank">website</a></li> 
+                            <li>check the <a href="https://forgejo.isvery.ninja/xrsh/xrsh-buildroot/src/branch/main/buildroot-v86/board/v86/rootfs_overlay/root/manual.md" target="_blank">manual</a></li> 
+                          </ol>
                         </fieldset>
+                        <!--
                         <fieldset>
                           <legend>Size</legend>
                           <input type="range" min="0.1" max="2" value="1" step="0.01" id="myRange" style="background-color: transparent;">
                         </fieldset>
                         <button>hello <span id="myvalue"></span></button>
+                        -->
                       </div>`,
 
     css:     (me) => `.htmlform { padding:11px; }`
@@ -38,13 +48,16 @@ AFRAME.registerComponent('helloworld-htmlform', {
   events:{
 
     // component events
-    html:     function( ){ console.log("html-mesh requirement mounted") },
+    window:     function( ){ console.log("window component mounted") },
 
     // combined AFRAME+DOM reactive events
-    click: function(e){ }, // 
+    click: function(e){ console.dir(e) }, // 
     input: function(e){
       if( !e.detail.target                 ) return
       if(  e.detail.target.id == 'myRange' ) this.data.myvalue = e.detail.target.value // reactive demonstration
+      if(  e.detail.target.name == 'theme' ) document.body.style.filter = `invert(${e.detail.target.value})`
+      if(  e.detail.target.name == 'cmenu' ) document.querySelector(".iconmenu").style.display = e.detail.target.value == 'on' ? '' : 'none';
+      console.dir(e.detail)
     },
 
     // reactive events for this.data updates 
@@ -54,51 +67,23 @@ AFRAME.registerComponent('helloworld-htmlform', {
       let s = await AFRAME.utils.require(this.requires)
 
       // instance this component
-      const instance = this.el.cloneNode(false)
-      this.el.sceneEl.appendChild( instance )
-      instance.setAttribute("dom",      "")
-      instance.setAttribute("show-texture-in-xr", "")  // only show aframe-html in xr 
-      instance.setAttribute("grabbable","")
-      instance.object3D.quaternion.copy( AFRAME.scenes[0].camera.quaternion ) // face towards camera
-
-      const setupWindow = () => {
-        const com = instance.components['helloworld-htmlform']
-        instance.dom.style.display = 'none'
-        new WinBox("Hello World",{ 
-          width: 250,
-          height: 340,
-          x:"center",
-          y:"center",
-          id:  instance.uid, // important hint for html-mesh  
-          root: document.querySelector("#overlay"),
-          mount: instance.dom,
-          onclose: () => { instance.dom.style.display = 'none'; return false; },
-          oncreate: () => {
-            instance.setAttribute("position", AFRAME.utils.XD.getPositionInFrontOfCamera(0.5) )
-            instance.setAttribute("html",`html:#${instance.uid}; cursor:#cursor`)
-            instance.setAttribute("show-texture-in-xr","") // only show aframe-html texture in xr mode
-          }
-        });
-        instance.dom.style.display = AFRAME.utils.XD() == '3D' ? 'none' : '' // show/hide
-
-        // hint grabbable's obb-collider to track the window-object 
-        instance.components['obb-collider'].data.trackedObject3D = 'components.html.el.object3D.children.0'
-        instance.components['obb-collider'].update() 
-
-        // data2event demo
-        instance.setAttribute("data2event","")
-        com.data.myvalue = 1
-        com.data.foo     = `instance ${instance.uid}: `
-        setInterval( () => com.data.myvalue++, 500 )
-      }
-
-      setTimeout( () => setupWindow(), 10 ) // give new components time to init
+      this.el.setAttribute("dom", "")
+      this.el.object3D.quaternion.copy( AFRAME.scenes[0].camera.quaternion ) // face towards camera
     },
 
-    ready: function( ){ 
-      this.el.dom.style.display = 'none'
-      console.log("this.el.dom has been added to DOM")
-      this.data.myvalue = 1
+    DOMready: function(){
+      this.el.setAttribute("window", `title: Welcome; uid: ${this.el.uid}; attach: #overlay; dom: #${this.el.dom.id}; width:250; height: 360`)
+
+      // data2event demo
+      this.el.setAttribute("data2event","")
+      this.data.myvalue = 1001
+      this.data.foo     = `this.el ${this.el.uid}: `
+      setInterval( () => this.data.myvalue++, 500 )
+
+    },
+
+    "window.oncreate": function(){
+      this.el.setAttribute("html-as-texture-in-xr", `domid: .winbox#${this.el.uid}; faceuser: true`)
     }
 
   },

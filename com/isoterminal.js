@@ -140,7 +140,7 @@ if( typeof AFRAME != 'undefined '){
       css:     (me) => `
 
                         .isoterminal{
-                          padding: ${me.com.data.padding}px;
+                          padding: ${me.com.data.padding}px 0px 0px ${me.com.data.padding}px;
                           width:100%;
                           height:99%;
                           resize: both;
@@ -252,6 +252,8 @@ if( typeof AFRAME != 'undefined '){
                           background: transparent;
                         }
 
+                        .wb-control { margin-right:10px }
+
                         .XR .isoterminal{
                           background: #000;
                         }
@@ -336,7 +338,7 @@ if( typeof AFRAME != 'undefined '){
         this.term.emit('term_init', {instance, aEntity:this})
         //instance.winbox.resize(720,380)
         let size = `width: ${this.data.width}; height: ${this.data.height}`
-        instance.setAttribute("window", `title: xrsh.iso; uid: ${instance.uid}; attach: #overlay; dom: #${instance.dom.id}; ${size}; min: ${this.data.minimized}; max: ${this.data.maximized}; class: no-full, no-max, no-resize`)
+        instance.setAttribute("window", `title: xrsh; uid: ${instance.uid}; attach: #overlay; dom: #${instance.dom.id}; ${size}; min: ${this.data.minimized}; max: ${this.data.maximized}; class: no-full, no-max, no-resize, no-close; `)
       })
 
       instance.addEventListener('window.oncreate', (e) => {
@@ -372,7 +374,7 @@ if( typeof AFRAME != 'undefined '){
         const w = instance.winbox
         if(!w) return
         w.titleBak = w.titleBak || w.title
-        w.setTitle( `${w.titleBak} [${msg}]` )
+        w.setTitle( `${w.titleBak} ${msg ? "["+msg+"]" : ""}` )
       })
 
       instance.addEventListener('window.onclose', (e) => {
@@ -383,18 +385,13 @@ if( typeof AFRAME != 'undefined '){
       instance.addEventListener('window.onresize', resize )
       instance.addEventListener('window.onmaximize', resize )
 
-      const focus = (showdom) => (e) => {
+      const focus = (e) => {
         this.el.emit('focus',e.detail)
-        if( this.el.components.window && this.data.renderer == 'canvas'){
-          this.el.components.window.show( showdom )
-        }
       }
 
-      this.el.addEventListener('obbcollisionstarted', focus(false) )
-      this.el.sceneEl.addEventListener('enter-vr', focus(false) )
-      this.el.sceneEl.addEventListener('enter-ar', focus(false) )
-      this.el.sceneEl.addEventListener('exit-vr', focus(true) )
-      this.el.sceneEl.addEventListener('exit-ar', focus(true) )
+      this.el.addEventListener('obbcollisionstarted', focus )
+      this.el.sceneEl.addEventListener('exit-vr', focus )
+      this.el.sceneEl.addEventListener('exit-ar', focus )
 
       instance.object3D.quaternion.copy( AFRAME.scenes[0].camera.quaternion ) // face towards camera
     },
@@ -444,7 +441,12 @@ if( typeof AFRAME != 'undefined '){
       myvalue: function(e){ this.el.dom.querySelector('b').innerText = this.data.myvalue },
 
       launcher: async function(){
-        this.initTerminal()
+        if( !this.term.instance ){
+          this.initTerminal()
+        }else{
+          // toggle visibility
+          this.el.winbox[ this.el.winbox.min ? 'restore' : 'minimize' ]()
+        }
       }
 
     },

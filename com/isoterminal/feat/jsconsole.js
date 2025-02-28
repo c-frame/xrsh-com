@@ -96,10 +96,10 @@ ISOTerminal.addEventListener('init', function(){
       },
       keyHandler: function(ch){
         let erase = false
-        if( ch == '\x7F' ){
-          ch = "\b \b" // why does write() not just support \x7F ?
-          erase = true
-        }
+//        if( ch == '\x7F' ){
+//          ch = "\b \b" // why does write() not just support \x7F ?
+//          erase = true
+//        }
         this.send(ch)
         const reset = () => {
           this.console = ""
