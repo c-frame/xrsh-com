@@ -2,7 +2,7 @@
 
 AFRAME.registerComponent('pressable', {
     schema: {
-      pressDistance: { default: 0.005 },
+      pressDistance: { default: 0.008 },
       pressDuration: { default: 300 },
       immersiveOnly: { default: true } 
     },
@@ -32,50 +32,53 @@ AFRAME.registerComponent('pressable', {
              }, y )
            }
         }
-    },
-    detectPress: function(){
-        if( this.handEls.length == 0 ){
-            this.handEls = document.querySelectorAll('[hand-tracking-controls]');
+  },
+  detectPress: function(){
+    if( !this.el.sceneEl.renderer.xr.isPresenting ) return // ignore events in desktop mode 
+
+    if( this.handEls.length == 0 ){
+      this.handEls = document.querySelectorAll('[hand-tracking-controls]');
+    }
+    var handEls = this.handEls;
+    var handEl;
+    let minDistance = 5
+
+    // compensate for an object inside a group 
+    let object3D = this.el.object3D.type == "Group" ? this.el.object3D.children[0] : this.el.object3D
+    if( !object3D ) return
+
+    for (var i = 0; i < handEls.length; i++) {
+      handEl = handEls[i];
+      let indexTip  = handEl.components['hand-tracking-controls'] ?
+        handEl.components['hand-tracking-controls'].indexTipPosition :
+        false 
+      if( ! indexTip ) return // nothing to do here 
+
+      this.raycaster.far = this.data.pressDistance
+
+      // Create a direction vector to negative Z
+      const direction = new THREE.Vector3(0,0,-1.0);
+      direction.normalize()
+      this.raycaster.set(indexTip, direction)
+      intersects = this.raycaster.intersectObjects([object3D],true)
+
+      object3D.getWorldPosition(this.worldPosition)
+      distance    = indexTip.distanceTo(this.worldPosition)
+      minDistance = distance < minDistance ? distance : minDistance 
+
+      if (intersects.length ){
+        this.i = this.i || 0;
+        if( !this.pressed ){
+          this.el.emit('pressedstarted', intersects);
+          this.el.emit('click', {intersection: intersects[0]});
+          this.pressed = setTimeout( () => {
+            this.el.emit('pressedended', intersects);
+            this.pressed = null 
+          }, this.data.pressDuration )
         }
-        var handEls = this.handEls;
-        var handEl;
-        let minDistance = 5
-
-        // compensate for an object inside a group 
-        let object3D = this.el.object3D.type == "Group" ? this.el.object3D.children[0] : this.el.object3D
-        if( !object3D ) return
-
-        for (var i = 0; i < handEls.length; i++) {
-            handEl = handEls[i];
-            let indexTip  = handEl.object3D.getObjectByName('index-finger-tip')
-            if( ! indexTip ) return // nothing to do here 
-
-            this.raycaster.far = this.data.pressDistance
-
-            // Create a direction vector to negative Z
-            const direction = new THREE.Vector3(0,0,-1.0);
-            direction.normalize()
-            this.raycaster.set(indexTip.position, direction)
-            intersects = this.raycaster.intersectObjects([object3D],true)
-
-            object3D.getWorldPosition(this.worldPosition)
-      
-            distance    = indexTip.position.distanceTo(this.worldPosition)
-            minDistance = distance < minDistance ? distance : minDistance 
-
-            if (intersects.length ){
-              this.i = this.i || 0;
-              if( !this.pressed ){
-                this.el.emit('pressedstarted', intersects);
-                this.el.emit('click', intersects);
-                this.pressed = setTimeout( () => {
-                  this.el.emit('pressedended', intersects);
-                  this.pressed = null 
-                }, this.data.pressDuration )
-              }
-            }
-        }
-        this.distance = minDistance
-    },
+      }
+    }
+    this.distance = minDistance
+  },
 
 });

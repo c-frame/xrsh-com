@@ -17,12 +17,6 @@ AFRAME.registerComponent('helloworld-window', {
     events:  ['click','input'],
     html:    (me) => `<div class="htmlform">
                         <fieldset>
-                          <legend>Theme</legend>
-                          <input type="radio" id="theme" name="theme" value="0" checked style=""><label for="theme" style="margin-right:15px;">Normal</label>
-                          <input type="radio" id="themei" name="theme" value="1"><label for="themei">Invert</label><br>
-                        </fieldset>
-                        <br>
-                        <fieldset>
                           <legend>Welcome to XR Shell</legend>
                           A free offline-first morphable<br>
                           environment which provides <br>
@@ -31,6 +25,12 @@ AFRAME.registerComponent('helloworld-window', {
                             <li>check the <a href="/" target="_blank">website</a></li> 
                             <li>check the <a href="https://forgejo.isvery.ninja/xrsh/xrsh-buildroot/src/branch/main/buildroot-v86/board/v86/rootfs_overlay/root/manual.md" target="_blank">manual</a></li> 
                           </ol>
+                        </fieldset>
+                        <br>
+                        <fieldset>
+                          <legend>Icons</legend>
+                          <input type="radio" id="small" name="icons" value="0.8" checked style=""><label for="small" style="margin-right:15px;">Small</label>
+                          <input type="radio" id="big"   name="icons" value="1.5"><label for="big">Big</label><br>
                         </fieldset>
                         <!--
                         <fieldset>
@@ -55,7 +55,7 @@ AFRAME.registerComponent('helloworld-window', {
     input: function(e){
       if( !e.detail.target                 ) return
       if(  e.detail.target.id == 'myRange' ) this.data.myvalue = e.detail.target.value // reactive demonstration
-      if(  e.detail.target.name == 'theme' ) document.body.style.filter = `invert(${e.detail.target.value})`
+      if(  e.detail.target.name == 'icons' ) document.querySelector('[launcher]').object3D.getObjectByProperty("HTMLMesh").scale.setScalar( e.detail.target.value )
       if(  e.detail.target.name == 'cmenu' ) document.querySelector(".iconmenu").style.display = e.detail.target.value == 'on' ? '' : 'none';
       console.dir(e.detail)
     },
@@ -72,7 +72,7 @@ AFRAME.registerComponent('helloworld-window', {
     },
 
     DOMready: function(){
-      this.el.setAttribute("window", `title: Welcome; uid: ${this.el.uid}; attach: #overlay; dom: #${this.el.dom.id}; width:250; height: 360`)
+      this.el.setAttribute("window", `title: XRSH; uid: ${this.el.uid}; attach: #overlay; dom: #${this.el.dom.id}; width:250; height: 360`)
 
       // data2event demo
       this.el.setAttribute("data2event","")

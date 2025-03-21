@@ -31,6 +31,7 @@ AFRAME.registerComponent('window', {
     height:    {type:'string',"default":'260px'},
     uid:       {type:'string'},
     attach:    {type:'selector'},
+    grabbable: {type:'string', "default":"components.html.el.object3D.children.0"},
     dom:       {type:'selector'},
     max:       {type:'boolean',"default":false},
     min:       {type:'boolean',"default":false},
@@ -87,7 +88,7 @@ AFRAME.registerComponent('window', {
         setTimeout( () => {
           if( !this.data.max && this.data.autoresize ) winbox.resize( this.el.dom.offsetWidth+'px', this.el.dom.offsetHeight+'px' )
           // hint grabbable's obb-collider to track the window-object
-          this.el.components['obb-collider'].data.trackedObject3D = 'components.html.el.object3D.children.0'
+          this.el.components['obb-collider'].data.trackedObject3D = this.data.grabbable
           this.el.components['obb-collider'].update()
         },1000)
       },

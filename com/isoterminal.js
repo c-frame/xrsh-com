@@ -120,7 +120,7 @@ if( typeof AFRAME != 'undefined '){
       v86:           "com/isoterminal/libv86.js",
       // allow xrsh to selfcontain scene + itself
       xhook:         "com/lib/xhook.min.js",
-      selfcontain:   "com/selfcontainer.js",
+      //selfcontain:   "com/selfcontainer.js",
       // html to texture
       htmlinxr:      "com/html-as-texture-in-xr.js",
       // isoterminal global features
@@ -140,7 +140,7 @@ if( typeof AFRAME != 'undefined '){
       css:     (me) => `
 
                         .isoterminal{
-                          padding: ${me.com.data.padding}px 0px 0px ${me.com.data.padding}px;
+                          padding: ${me.com.data.padding}px;
                           width:100%;
                           height:99%;
                           resize: both;
@@ -252,8 +252,6 @@ if( typeof AFRAME != 'undefined '){
                           background: transparent;
                         }
 
-                        .wb-control { margin-right:10px }
-
                         .XR .isoterminal{
                           background: #000;
                         }
@@ -338,7 +336,7 @@ if( typeof AFRAME != 'undefined '){
         this.term.emit('term_init', {instance, aEntity:this})
         //instance.winbox.resize(720,380)
         let size = `width: ${this.data.width}; height: ${this.data.height}`
-        instance.setAttribute("window", `title: xrsh; uid: ${instance.uid}; attach: #overlay; dom: #${instance.dom.id}; ${size}; min: ${this.data.minimized}; max: ${this.data.maximized}; class: no-full, no-max, no-resize, no-close; `)
+        instance.setAttribute("window", `title: xrsh.iso; uid: ${instance.uid}; attach: #overlay; dom: #${instance.dom.id}; ${size}; min: ${this.data.minimized}; max: ${this.data.maximized}; class: no-full, no-max, no-resize; grabbable: components.html.el.object3D.children.${this.el.children.length}`)
       })
 
       instance.addEventListener('window.oncreate', (e) => {
@@ -374,7 +372,7 @@ if( typeof AFRAME != 'undefined '){
         const w = instance.winbox
         if(!w) return
         w.titleBak = w.titleBak || w.title
-        w.setTitle( `${w.titleBak} ${msg ? "["+msg+"]" : ""}` )
+        w.setTitle( `${w.titleBak} [${msg}]` )
       })
 
       instance.addEventListener('window.onclose', (e) => {
