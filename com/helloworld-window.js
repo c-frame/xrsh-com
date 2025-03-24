@@ -55,8 +55,11 @@ AFRAME.registerComponent('helloworld-window', {
     input: function(e){
       if( !e.detail.target                 ) return
       if(  e.detail.target.id == 'myRange' ) this.data.myvalue = e.detail.target.value // reactive demonstration
-      if(  e.detail.target.name == 'icons' ) document.querySelector('[launcher]').object3D.getObjectByProperty("HTMLMesh").scale.setScalar( e.detail.target.value )
       if(  e.detail.target.name == 'cmenu' ) document.querySelector(".iconmenu").style.display = e.detail.target.value == 'on' ? '' : 'none';
+      if(  e.detail.target.name == 'icons' ){ 
+        document.querySelector('[launcher]').object3D.getObjectByProperty("HTMLMesh").scale.setScalar( e.detail.target.value )
+        document.querySelector('.iconmenu').style.transform = e.detail.target.value == '0.8' ? 'scale(1)' : 'scale(1.33)' 
+      }
       console.dir(e.detail)
     },
 
