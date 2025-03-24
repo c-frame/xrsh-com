@@ -78,15 +78,18 @@ ISOTerminal.prototype.TermInit = function(){
         erase = true
       }
       if( this.boot.menu.selected ){
+        this.boot.menu.selected.keyHandler.call(this,ch) 
         if( isEnter ){ 
-          this.boot.menu.selected.cmdHandler.call(this,this.lastCmd)
+          if( this.boot.menu.selected.cmdHandler ){
+            this.boot.menu.selected.cmdHandler.call(this,this.lastCmd)
+          }
           this.lastCmd = ""
         }
-        else this.boot.menu.selected.keyHandler.call(this,ch) 
       }else if( isEnter ){ 
         let menuitem = this.boot.menu.find( (m) => m.key == this.lastChar )
         if( menuitem ){
           this.boot.menu.selected = menuitem
+          this.lastCmd = ""
           menuitem.init.call(this, () => {
             this.term.write("\n\r")
             this.bootMenu() 

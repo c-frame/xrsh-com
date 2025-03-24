@@ -94,35 +94,13 @@ ISOTerminal.addEventListener('init', function(){
           this.send(this.prompt)
         }, 100 )
       },
-      keyHandler: function(ch){
-        let erase = false
-//        if( ch == '\x7F' ){
-//          ch = "\b \b" // why does write() not just support \x7F ?
-//          erase = true
-//        }
+      keyHandler: function(ch){ 
         this.send(ch)
-        const reset = () => {
-          this.console = ""
-          setTimeout( () => {
-            if( this.boot.menu.selected ) this.send(this.prompt)
-          },100)
-        }
-        if( (ch == "\n" || ch == "\r") ){
-          try{
-            this.send("\n\r")
-            if( this.console ) eval(this.console)
-            reset()
-          }catch(e){ 
-            reset()
-            throw e // re throw
-          }
-        }else{
-          if( erase ){
-            this.console = this.console.split('').slice(0,-1).join('')
-          }else{
-            this.console += ch
-          }
-        }
+      },
+      cmdHandler: function(cmd){
+        this.send("\n\r")
+        eval(cmd)
+        setTimeout( () => this.send(this.prompt) ,10)  // because worker vs terminal
       }
     }
   )

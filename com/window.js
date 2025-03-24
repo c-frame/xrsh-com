@@ -116,9 +116,11 @@ AFRAME.registerComponent('window', {
 })
 
 AFRAME.utils.positionObjectNextToNeighbor = function positionObjectNextToNeighbor(object, lastNeighbor = null, margin ){
+  if( lastNeighbor == null || object == null) return
   // *FIXME* this could be more sophisticated :)
   object.position.x = lastNeighbor.position.x + margin 
   object.position.y = lastNeighbor.position.y - margin 
   object.position.z = lastNeighbor.position.z + margin
-
 }
+
+

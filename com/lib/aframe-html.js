@@ -1,3 +1,5 @@
+
+;
 (function (three) {
 	'use strict';
 
@@ -676,4 +678,5 @@
 	});
 
 })(THREE);
-//# sourceMappingURL=aframe-html.js.map
+
+
