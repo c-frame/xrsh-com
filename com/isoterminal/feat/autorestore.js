@@ -43,7 +43,15 @@ if( typeof emulator != 'undefined' ){
     ]).then( () => {
 
       localforage.getItem("state", async (err,stateBase64) => {
-        if( stateBase64 && !err && confirm('continue last session?') ){
+        const askConfirm = () => {
+          try{
+            const scene = document.querySelector('a-scene');
+            if( scene.is('ar-mode') ) scene.exitAR()
+            if( scene.is('vr-mode') ) scene.exitVR()
+          }catch(e){}
+          return confirm('continue last session?')
+        }
+        if( stateBase64 && !err && askConfirm() ){
           this.noboot = true // see feat/boot.js
           try{
             await this.worker.restore_state()

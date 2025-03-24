@@ -100,6 +100,7 @@ if( typeof AFRAME != 'undefined '){
       this.calculateDimension()
       this.initHud()
       this.setupPasteDrop()
+      this.setupEvents()
 
       fetch(this.data.iso,{method: 'HEAD'})
       .then( (res) => {
@@ -427,6 +428,21 @@ if( typeof AFRAME != 'undefined '){
       this.data.height -= this.data.padding*2
       this.cols = Math.floor(this.data.width/this.data.lineHeight*2)-1
       this.rows = Math.floor( (this.data.height*0.93)/this.data.lineHeight)-1
+    },
+
+    setupEvents: function(){
+      this.el.addEventListener('exec', (e) => this.term.exec( e.detail ) )
+      this.el.addEventListener('hook', (e) => this.term.hook( e.detail[0], e.detail[1] ) )
+      this.el.addEventListener('send', (e) => this.term.send( e.detail[0], e.detail[1] || 0 ) )
+      this.el.addEventListener('create_file', async (e) => await this.term.worker.create_file( e.detail[0], this.term.convert.toUint8Array(e.detail[1]) ) )
+      this.el.addEventListener('update_file', async (e) => await this.term.worker.update_file( e.detail[0], this.term.convert.toUint8Array(e.detail[1]) ) )
+      this.el.addEventListener('append_file', async (e) => await this.term.worker.append_file( e.detail[0], this.term.convert.toUint8Array(e.detail[1]) ) )
+      this.el.addEventListener('read_file',   async (e) => { 
+        const buf = await this.term.worker.read_file( e.detail[0] )
+        const str = new TextDecoder().decode(buf)
+        if( typeof e.detail[1] == 'function' ) e.detail[1](str)
+        else console.log(str)
+      })
     },
 
     events:{

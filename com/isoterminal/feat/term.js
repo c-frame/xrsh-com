@@ -71,14 +71,19 @@ ISOTerminal.prototype.TermInit = function(){
     // but instead extend/override ISOTerminal.prototype.boot.menu
     // as demonstrated in index.html
     this.term.setKeyHandler( (ch) => {
-      let erase = false
+      let erase     = false
+      const isEnter = ch == '\n' || ch == '\r'
       if( ch == '\x7F' ){
         ch = "\b \b" // why does write() not just support \x7F ?
         erase = true
       }
       if( this.boot.menu.selected ){
-        this.boot.menu.selected.keyHandler.call(this,ch) 
-      }else if( (ch == "\n" || ch == "\r") ){ 
+        if( isEnter ){ 
+          this.boot.menu.selected.cmdHandler.call(this,this.lastCmd)
+          this.lastCmd = ""
+        }
+        else this.boot.menu.selected.keyHandler.call(this,ch) 
+      }else if( isEnter ){ 
         let menuitem = this.boot.menu.find( (m) => m.key == this.lastChar )
         if( menuitem ){
           this.boot.menu.selected = menuitem
@@ -88,10 +93,14 @@ ISOTerminal.prototype.TermInit = function(){
           })
         }
       }else{
-        this.term.write( ch )
+        ch.split("").map( (ch) => this.term.write( ch ) )
       }
-      if( !erase ) this.lastChar = ch
+      if( !erase ){
+        this.lastChar = ch
+        this.lastCmd  = this.lastCmd ? this.lastCmd + ch : ch
+      }else this.lastCmd = this.lastCmd ? this.lastCmd.substr(0, this.lastCmd.length-1) : ""
     })
+
     aEntity.el.addEventListener('focus', () => {
       let textarea = el.querySelector("textarea")
       textarea.focus()
