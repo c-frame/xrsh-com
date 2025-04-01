@@ -20,8 +20,8 @@
  * | `depth`           | `number`  |  0.03  ||
  * | `lineHeight`      | `number`  |  18    ||
  * | `bootMenu`        | `string`  |  ""    | character to auto-enter in bootMenu  |
- * | `bootMenuURL`     | `string`  |  ""    | character to auto-enter in bootmeun when URL has fragment (#foo.zip e.g.) |
- * | `padding`         | `number`` |  18    | |
+ * | `bootMenuURL`     | `string`  |  ""    | character to auto-enter in bootMenu when URL has fragment (#foo.zip e.g.) |
+ * | `padding`         | `number`  |  18    | |
  * | `maximized`       | `boolean` | false  | |
  * | `minimized`       | `boolean` | false  | |
  * | `muteUntilPrompt` | `boolean` | true   | mute stdout until a prompt is detected in ISO |

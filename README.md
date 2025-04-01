@@ -93,25 +93,26 @@ a Linux ISO image (via WASM).
 
 > depends on [AFRAME.utils.require](com/require.js)
 
-| property         | type      | default                | info |
-|------------------|-----------|------------------------|------|
-| `iso`            | `string`  | https`//forgejo.isvery.ninja/assets/xrsh-buildroot/main/xrsh.iso" | |
-| `overlayfs`      | `string`  | *WORK-IN-PROGRESS* | |
-| `width`          | `number`  |  800   ||
-| `height`         | `number`  |  600   ||
-| `depth`          | `number`  |  0.03  ||
-| `lineHeight`     | `number`  |  18    ||
-| `bootmenu`       | `boolean` |  true  | give user choice [or boot straight into ISO ] |
-| `padding`        | `number`` |  18    | |
-| `maximized`      | `boolean` | false  | |
-| `minimized`      | `boolean` | false  | |
-| `muteUntilPrompt`| `boolean` | true   | mute stdout until a prompt is detected in ISO |
-| `HUD`            | `boolean` | false  | link to camera movement |
-| `transparent`    | `boolean` | false  | heavy, needs good gpu |
-| `memory`         | `number`  | 60     | VM memory (in MB) [NOTE` quest or smartphone webworker might crash > 40mb ] |
-| `bufferLatency`  | `number`  | 1      | in ms` bufferlatency from webworker to term (batch-update every char to texture) |
-| `debug`          | `boolean` | false  | |
-| `emulator`       | `string`  | fbterm | terminal emulator |
+| property          | type      | default                | info |
+|-------------------|-----------|------------------------|------|
+| `iso`             | `string`  | https`//forgejo.isvery.ninja/assets/xrsh-buildroot/main/xrsh.iso" | |
+| `overlayfs`       | `string`  | ''     | zip URL/file to autoextract on top of filesystem |
+| `width`           | `number`  |  800   ||
+| `height`          | `number`  |  600   ||
+| `depth`           | `number`  |  0.03  ||
+| `lineHeight`      | `number`  |  18    ||
+| `bootMenu`        | `string`  |  ""    | character to auto-enter in bootMenu  |
+| `bootMenuURL`     | `string`  |  ""    | character to auto-enter in bootMenu when URL has fragment (#foo.zip e.g.) |
+| `padding`         | `number`  |  18    | |
+| `maximized`       | `boolean` | false  | |
+| `minimized`       | `boolean` | false  | |
+| `muteUntilPrompt` | `boolean` | true   | mute stdout until a prompt is detected in ISO |
+| `HUD`             | `boolean` | false  | link to camera movement |
+| `transparent`     | `boolean` | false  | heavy, needs good gpu |
+| `memory`          | `number`  | 60     | VM memory (in MB) [NOTE` quest or smartphone webworker might crash > 40mb ] |
+| `bufferLatency`   | `number`  | 1      | in ms` bufferlatency from webworker to term (batch-update every char to texture) |
+| `debug`           | `boolean` | false  | |
+| `emulator`        | `string`  | fbterm | terminal emulator |
 
 > for more info see [xrsh.isvery.ninja](https://xrsh.isvery.ninja)
 
@@ -149,14 +150,18 @@ NOTE: For convenience reasons, events are forwarded between com/isoterminal.js, 
 
 ## [launcher](com/launcher.js)
 
-displays app (icons) for enduser to launch
+displays app (icons) in 2D and 3D handmenu (enduser can launch desktop-like 'apps')
 
-```javascript
- <a-scene launcher/>
+```html
+<a-entity launcher>
+  <a-entity launch="component: helloworld; foo: bar"><a-entity>
+</a-entity>
+ 
 ```
 
 | property     | type               | example                                                                                |
 |--------------|--------------------|----------------------------------------------------------------------------------------|
+| `attach`     | `selector`         | hand or object to attach menu to                                                       |
 | `registries` | `array` of strings | `<a-entity launcher="registers: https://foo.com/index.json, ./index.json"/>`           |
 
 | event        | target | info                                                                                               |
