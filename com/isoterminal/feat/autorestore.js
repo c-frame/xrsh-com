@@ -51,7 +51,7 @@ if( typeof emulator != 'undefined' ){
           }catch(e){}
           return confirm('continue last session?')
         }
-        if( stateBase64 && !err && askConfirm() ){
+        if( stateBase64 && !err && document.location.hash.length < 2 && askConfirm() ){
           this.noboot = true // see feat/boot.js
           try{
             await this.worker.restore_state()
