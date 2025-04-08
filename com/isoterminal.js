@@ -440,7 +440,7 @@ if( typeof AFRAME != 'undefined '){
       this.el.addEventListener('read_file',   async (e) => { 
         const buf = await this.term.worker.read_file( e.detail[0] )
         const str = new TextDecoder().decode(buf)
-        if( typeof e.detail[1] == 'function' ) e.detail[1](str)
+        if( typeof e.detail[1] == 'function' ) e.detail[1](str,buf)
         else console.log(str)
       })
     },
