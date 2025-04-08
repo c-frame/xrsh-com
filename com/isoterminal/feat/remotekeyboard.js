@@ -17,7 +17,7 @@ ISOTerminal.prototype.enableRemoteKeyboard = function(opts){
           this.send(clearScreen);
           this.send(`\n\rfor instructions\n\rsee ${document.location.origin}/index.html#Remote%20keyboard\n\n\r`)
           this.send("enter 'm' for mainmenu\n\n\r")
-          this.send("[36mkeyboard ip-adress> [0m")
+          this.send("[36mkeyboard ip-address> [0m")
           // autofill ip
           if( service.ip ){
             for( let i = 0; i < service.ip.length; i++ ) this.send(service.ip.charAt(i))
@@ -26,11 +26,12 @@ ISOTerminal.prototype.enableRemoteKeyboard = function(opts){
       },
       server: (term) => {
         try{
-          service.addr = `ws://${service.ip}:9090/`;
+          service.addr = `wss://${service.ip}:9090/`;
           service.ws = new WebSocket(service.addr)
-          service.ws.addEventListener("open", () => {
+          service.ws.addEventListener("error", console.error )
+          service.ws.addEventListener("open", (e) => {
             if( service.state == 'listening' ){
-              this.send(`\n\rconnected to ${service.addr}! \\o/\n\r`)
+              this.send(`\n\rconnected! \\o/\n\r`)
               this.bootMenu() 
             }
             service.state = 'receiving'
@@ -76,9 +77,9 @@ ISOTerminal.prototype.enableRemoteKeyboard = function(opts){
             this.send("\n\r")
             this.bootMenu()
           }else if( ch == '\n' || ch == '\r'){
-            this.send("\n\rwaiting for connection..")
             service.server(this)
             service.state = 'listening'
+            this.send("\n\rconnecting to "+service.addr)
           }else{
             service.ip = ch == '\b' ? service.ip.substr(0,this.service.ip.length-1) 
                                     : service.ip + ch 

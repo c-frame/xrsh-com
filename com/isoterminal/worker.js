@@ -106,7 +106,8 @@ this.addOverlayFS = async function(opts){
       fetch(opts.overlayfs)
       .then( (f) => {
         f.arrayBuffer().then( (buf) => {
-          this.emulator.create_file('overlayfs.zip', new Uint8Array(buf) )
+          let filename = opts.overlayfs.match(/\.zip$/) ? 'overlayfs.zip' : '.env' 
+          this.emulator.create_file( filename, new Uint8Array(buf) )
         })
       })
     }
