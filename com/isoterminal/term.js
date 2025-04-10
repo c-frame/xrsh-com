@@ -31,6 +31,7 @@ function Term(options)
     {
     }
 
+    this.options = options
     width = options.cols ? options.cols : 80;
     height = options.rows ? options.rows : 25;
     scrollback = options.scrollback ? options.scrollback : 0;
@@ -101,6 +102,9 @@ function Term(options)
     this.linux_console = true;
 
     this.textarea_has_focus = false;
+
+    // remember last data (to help WebXRKeyboard decide whether onblur should imply 'enter')
+    this.last = { keydown: '', input: '', inputValue: ''}
 }
 
 Term.prototype.setKeyHandler = function(handler)
@@ -1154,6 +1158,7 @@ Term.prototype.keyDownHandler = function (ev)
         }
         break;
     }
+    this.last.keydown = str
     //    console.log("keydown: keycode=" + ev.keyCode + " charcode=" + ev.charCode + " str=" + str + " ctrl=" + ev.ctrlKey + " alt=" + ev.altKey + " meta=" + ev.metaKey);
     if (str) {
         if (ev.stopPropagation)
@@ -1204,7 +1209,13 @@ Term.prototype.to_utf8 = function(s)
 Term.prototype.inputHandler = function (ev)
 {
     var str;
-    str = this.textarea_el.value;
+    // edge-case: Meta's WebXRKeyboard implementation requires us to use .value
+    str = this.last.input = this.textarea_el.value.split("").pop(); 
+    // edge-case: detect backspace based on length-change [Meta's WebXRKeyboard]
+    if( (this.textarea_el.value.length + 1) == this.last.inputValue.length ){
+      str = '\b'
+    }
+    this.last.inputValue = this.textarea_el.value
     if (str) {
         this.textarea_el.value = "";
         this.show_cursor();
@@ -1243,6 +1254,7 @@ Term.prototype.blurHandler = function (ev)
     /* allow unloading the page */
     window.onbeforeunload = null;
     this.textarea_has_focus = false;
+    if( this.last.keydown != "\n" && this.last.input && this.options.isWebXRKeyboard() ) this.handler("\n")
 };
 
 Term.prototype.pasteHandler = function (ev)

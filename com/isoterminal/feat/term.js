@@ -13,9 +13,9 @@ ISOTerminal.prototype.TermInit = function(){
       rows: aEntity.rows,
       el_or_id: el,
       scrollback: aEntity.rows*3, 
-      fontSize: null // 
+      fontSize: null,
       //rainbow: [Term.COLOR_MAGENTA, Term.COLOR_CYAN ],
-      //xr: AFRAME.scenes[0].renderer.xr,
+      isWebXRKeyboard: () => AFRAME.scenes[0].renderer.xr.isPresenting  && AFRAME.scenes[0].renderer.xr.getSession().isSystemKeyboardSupported, // naive way
       //map: {
       //  'ArrowRight': { ch: false, ctrl: '\x1b\x66' },  // this triggers ash-shell forward-word
       //  'ArrowLeft':  { ch: false, ctrl: '\x1b\x62' }   //                         backward-word
