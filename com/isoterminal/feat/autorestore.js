@@ -44,6 +44,7 @@ if( typeof emulator != 'undefined' ){
 
       localforage.getItem("state", async (err,stateBase64) => {
         const askConfirm = () => {
+          if( window.localStorage.getItem("restorestate") == "true" ) return true
           try{
             const scene = document.querySelector('a-scene');
             if( scene.is('ar-mode') ) scene.exitAR()
