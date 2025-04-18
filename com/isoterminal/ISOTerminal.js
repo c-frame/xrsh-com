@@ -37,15 +37,12 @@ ISOTerminal.addEventListener = (event,cb) => {
 ISOTerminal.prototype.exec = function(opts){
   const shellscript = opts[0];
   const cb = opts[1];
+  let cmd = `printf "\n\r"; { sh<<EOF\n ${shellscript}; \nEOF\n} &> /mnt/exec;\n` 
   if( cb ){
     window.cb = cb
-    this.send(`printf "\n\r"; ${shellscript} &> /mnt/exec; js '
-      document.querySelector("[isoterminal]").emit("read_file", ["exec", window.cb ])  
-    ';
-     \n`,1)
-  }else{
-    this.send(`printf "\n\r"; ${shellscript} \n`,1)
+    cmd += `js 'document.querySelector("[isoterminal]").emit("read_file", ["exec", window.cb ])';\n`
   }
+  this.send( cmd, 1 )
 }
 
 ISOTerminal.prototype.hook = function(hookname,args){
