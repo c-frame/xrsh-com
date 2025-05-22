@@ -304,15 +304,17 @@ if( typeof AFRAME != 'undefined '){
         remotekeyboard: "com/isoterminal/feat/remotekeyboard.js",
         indexhtml:      "com/isoterminal/feat/index.html.js",
         indexjs:        "com/isoterminal/feat/index.js.js",
-        autorestore:    "com/isoterminal/feat/autorestore.js",
         pastedropFeat:  "com/isoterminal/feat/pastedrop.js",
         httpfs:         "com/isoterminal/feat/httpfs.js",
+        autorestore:    "com/isoterminal/feat/autorestore.js",
       }
       if( this.data.emulator == 'fbterm' ){
         features['fbtermjs'] = "com/isoterminal/term.js"
         features['fbterm']   = "com/isoterminal/feat/term.js"
       }
       await AFRAME.utils.require(features)
+      // this one extends autorestore.js
+      await AFRAME.utils.require({remotestorage:  "com/isoterminal/feat/remotestorage.js"})
 
       this.el.setAttribute("selfcontainer","")
 

@@ -40,6 +40,7 @@ this.runISO = async function(opts){
   emulator.add_listener("emulator-started", function(){
     importScripts("feat/9pfs_utils.js")
     this.postMessage({event:"emulator-started",data:false});
+    if( opts.img ) this.restoreImage(opts)
   }.bind(this));
 
   /* 
@@ -66,13 +67,12 @@ this.runISO = async function(opts){
     })
   }
 
-  
-
   importScripts("feat/javascript.js")
   importScripts("feat/index.html.js")
   importScripts("feat/autorestore.js")
 
   if( opts.overlayfs ) await this.addOverlayFS(opts)
+
 }
 /* 
  * forward events/functions so non-worker world can reach them
@@ -112,4 +112,22 @@ this.addOverlayFS = async function(opts){
       })
     }
   })
+}
+
+this.restoreImage = function(opts){
+
+  this.postMessage({event:"serial0-output-string",data:`\n\r[!] loading session image:\n\r[!] ${opts.img}\n\r[!] please wait...internet speed matters here..\n`})
+
+  fetch( opts.img )
+  .then( (res) => {
+    this.postMessage({event:"serial0-output-string",data:`\r[v] image downloaded..restoring..\n\r`})
+    return res
+  })
+  .then( (res) => res.arrayBuffer() )
+  .then( async (buf) => {
+    await this.emulator.restore_state(buf) 
+    this.postMessage({event:"serial0-output-string",data:`[v] restored\n\r`})
+
+  })
+  .catch( console.error )
 }

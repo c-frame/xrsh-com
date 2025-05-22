@@ -256,6 +256,7 @@ ISOTerminal.prototype.startVM = function(opts){
   this.v86opts = opts
 
   this.addEventListener('emulator-started', async (e) => {
+    if( this.boot.fromImage ) return this.emit('serial-output-string', "\r[!] downloading session...please wait\n\r[!] this could take a while depending on your connection..\n\r")
 
     let line = ''
     this.ready = false
@@ -278,12 +279,17 @@ ISOTerminal.prototype.startVM = function(opts){
 }
 
 ISOTerminal.prototype.bootISO = function(){
+  const getImage = (str) => decodeURIComponent( 
+    str.match(/\&img=/) ? str.replace(/.*img=/,'').replace(/\&.*/,'') : '' 
+  )
   let msglib = this.getLoaderMsg()
   this.emit('status',msglib.loadmsg)
   let msg = "\n\r" + msglib.empowermsg + msglib.text_color + msglib.loadmsg + msglib.text_reset
   this.emit('serial-output-string', msg)
-  this.emit('runISO',{...this.v86opts, bufferLatency: this.opts.bufferLatency })
-
+  if( getImage(this.boot.hash) ){
+    this.boot.fromImage = true 
+  }
+  this.emit('runISO',{...this.v86opts, bufferLatency: this.opts.bufferLatency, img: getImage(this.boot.hash) })
 }
 
 

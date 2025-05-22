@@ -1,5 +1,5 @@
 ISOTerminal.addEventListener('ready', function(e){
-  setTimeout( () => this.boot(), 50 ) // because of autorestore.js
+  setTimeout( () => this.boot(), 50 ) // allow other features/plugins to settle first (autorestore.js e.g.)
 })
 
 ISOTerminal.prototype.bootMenu = function(e){
@@ -17,7 +17,7 @@ ISOTerminal.prototype.bootMenu = function(e){
 
   }else{ // autoboot
     if( this.term ){
-      this.term.handler( e.detail.bootMenu || e.detail.bootMenuURL )
+      this.term.handler( String(e.detail.bootMenu || e.detail.bootMenuURL).charAt(0) )
       this.term.handler("\n")
     }
   }
@@ -33,10 +33,17 @@ ISOTerminal.prototype.boot = async function(e){
     'export BROWSER=1',
   ]
   for ( let i in document.location ){
-    if( typeof document.location[i] == 'string' ){
+    if( typeof document.location[i] == 'string' && !String(i).match(/(hash|search)/) ){
       env.push( 'export '+String(i).toUpperCase()+'="'+decodeURIComponent( document.location[i]+'"') )
     }
   }
+
+  // we export the cached hash/query (because they might be gone due to remotestorage plugin)
+  if( this.boot.hash.charAt(2) == '&' ){ // strip bootoption
+    this.boot.hashExBoot = `#` + this.boot.hash.substr(3)
+  }
+  env.push( 'export HASH="'+decodeURIComponent( this.boot.hashExBoot || this.boot.hash )   +'"' )
+  env.push( 'export QUERY="'+decodeURIComponent( this.boot.query ) +'"' )
   await this.worker.create_file("profile.browser", this.convert.toUint8Array( env.join('\n') ) )
 
   if( this.serial_input == 0 ){
@@ -47,8 +54,12 @@ ISOTerminal.prototype.boot = async function(e){
 
 }
 
-// here REPL's can be defined
+ISOTerminal.prototype.boot.fromImage = false 
 ISOTerminal.prototype.boot.menu = []
+ISOTerminal.prototype.boot.hash = document.location.hash
+ISOTerminal.prototype.boot.query = document.location.search
+
+// here REPL's can be defined
 
 // REPL: iso
 if( typeof window.PromiseWorker != 'undefined' ){ // if xrsh v86 is able to run in  in worker 

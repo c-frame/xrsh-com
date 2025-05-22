@@ -99,6 +99,7 @@ AFRAME.registerComponent('launcher', {
                 flex-direction: row;
                 align-items: flex-start;
                 height: 50px;
+                width:764px;
                 overflow:hidden;
                 position: fixed;
                 bottom: 10px;
@@ -307,6 +308,8 @@ AFRAME.registerSystem('launcher',{
   register: function(launchable){
     try{
       let {name, description, cb} = launchable
+      const exist = this.registered.find( (r) => r.manifest.name == name )
+      if( exist ) return // already registered
       this.registered.push({ 
         manifest: {name, description, icons: launchable.icon ? [{src:launchable.icon}] : [] },
         launcher: cb 
