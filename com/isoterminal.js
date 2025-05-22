@@ -387,6 +387,15 @@ if( typeof AFRAME != 'undefined '){
       instance.addEventListener('window.onmaximize', resize )
 
       const focus = (e) => {
+
+        // calculate distance between thumb and indexfinger to detect pinch
+        // which should prevent focus-event (annoying to have keyboard popping up during pinch)
+        if( e.detail?.withEl?.components['hand-tracking-controls'] ){
+          const hand = e.detail.withEl.components['hand-tracking-controls']
+          const thumb = hand.bones.find( (b) => b.name == 'thumb-tip' )
+          const diff  = thumb.position.distanceTo(hand.indexTipPosition)
+          if( diff < 0.02) return // pinching! don't trigger keyboard (focus)
+        }
         this.el.emit('focus',e.detail)
       }
 
