@@ -34,6 +34,7 @@ ISOTerminal.prototype.TermInit = function(){
     Term.prototype.keyDownHandler = function(original){
       return function (e){
         if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+          debugger
           return true; // bubble up to pasteHandler (see pastedrop.js)
         }
         original.apply(this,[e])

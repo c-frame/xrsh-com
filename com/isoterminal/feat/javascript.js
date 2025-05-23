@@ -19,16 +19,39 @@ if( typeof emulator != 'undefined' ){
 
 }else{
   // inside browser-thread
-  
+ 
+
+  /* 
+   * here we're going to execute javascript in the browser,
+   * both a terrible and great idea depending on a corporate vs personal computing angle.
+   *
+   * if a function-string gets evaluated, and it returns a promise..then we assume async.
+   */
   ISOTerminal.addEventListener('javascript-eval', async function(e){
     const {script,PID} = e.detail
     let res;
+    let error = false;
+
+    const output = (res,PID) => {
+      if( res && typeof res != 'string' ) res = JSON.stringify(res,null,2)
+      // update output to 9p with PID as filename (in /mnt/run)
+      if( PID ){
+        this.worker.update_file(`run/${PID}.exit`, error ? "1" : "0")
+        this.worker.update_file(`run/${PID}`, this.convert.toUint8Array(res) )
+      }
+    }
 
     try{
       let f = new Function(`${script}`);
       res = f();
-      if( res && typeof res != 'string' ) res = JSON.stringify(res,null,2)
+      if( res && typeof res.then == 'function' ){ // if we got a promise
+        res.then( (res) => output(res,PID) )
+        res.catch( (e)  => output(e,PID) )
+      }else{ // normal sync function
+        output(res,PID)
+      }
     }catch(err){
+      error = true
       console.error(err)
       console.dir(err)
       res = "error: "+err.toString()
@@ -41,10 +64,7 @@ if( typeof emulator != 'undefined' ){
         res += script.split("\n")[lnr-1]
       }else console.dir(script)
       console.error(res)
-    }
-    // update output to 9p with PID as filename (in /mnt/run)
-    if( PID ){
-      this.worker.update_file(`run/${PID}`, this.convert.toUint8Array(res) )
+      output(res,PID)
     }
   })
 

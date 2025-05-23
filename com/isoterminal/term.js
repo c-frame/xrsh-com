@@ -1259,6 +1259,7 @@ Term.prototype.blurHandler = function (ev)
 
 Term.prototype.pasteHandler = function (ev)
 {
+  debugger
     var c, str;
     if (!this.textarea_has_focus) {
         c = ev.clipboardData;
