@@ -139,8 +139,8 @@ ISOTerminal.prototype.start = function(opts){
     cmdline: "rw root=host9p rootfstype=9p rootflags=trans=virtio,cache=loose modules=virtio_pci tsc=reliable init_on_freg|=on vga=ask", //vga=0x122",
     net_device:{
       //type:"ne2k",
-      //relay_url:"fetch" 
-      relay_url:"wss://relay.widgetry.org/"
+      relay_url:"fetch" 
+      //relay_url:"wss://relay.widgetry.org/"
 
       //local_http: true,
       //type:"virtio",
