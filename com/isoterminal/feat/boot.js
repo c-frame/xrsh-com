@@ -23,7 +23,7 @@ ISOTerminal.prototype.bootMenu = function(e){
   }
 }
 
-ISOTerminal.addEventListener('bootMenu', function(e){ this.bootMenu(e) } )
+ISOTerminal.addEventListener('bootMenu', function(e){this.bootMenu(e) })
 
 ISOTerminal.prototype.boot = async function(e){
   // set environment

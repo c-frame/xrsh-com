@@ -367,7 +367,6 @@ if( typeof AFRAME != 'undefined '){
       this.term.addEventListener('ready', (e) => {
         instance.dom.classList.remove('blink')
         this.term.emit('status',"running")
-        if( this.data.debug ) this.runTests()
       })
 
       this.term.addEventListener('status', function(e){
@@ -412,14 +411,6 @@ if( typeof AFRAME != 'undefined '){
         document.querySelector('[camera]').appendChild( this.el )
         this.el.setAttribute("position","0 -0.03 -0.4")
       }
-    },
-
-    runTests: async function(){
-      await AFRAME.utils.require({
-        "test_util":       "tests/util.js",
-        "test_isoterminal":"tests/ISOTerminal.js"
-      })
-      console.test.run()
     },
 
     setupPasteDrop: function(){
