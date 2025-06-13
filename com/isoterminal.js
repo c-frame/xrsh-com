@@ -308,6 +308,9 @@ if( typeof AFRAME != 'undefined '){
         httpfs:         "com/isoterminal/feat/httpfs.js",
         autorestore:    "com/isoterminal/feat/autorestore.js",
       }
+      if( document.location.hash.match(/#test/) || this.data.debug ){
+        features['tests'] = "tests/index.js"
+      }
       if( this.data.emulator == 'fbterm' ){
         features['fbtermjs'] = "com/isoterminal/term.js"
         features['fbterm']   = "com/isoterminal/feat/term.js"
