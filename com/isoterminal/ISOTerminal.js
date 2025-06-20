@@ -38,6 +38,7 @@ ISOTerminal.prototype.exec = function(opts){
   const shellscript = opts[0];
   const cb = opts[1];
   let cmd = `printf "\n\r"; { sh<<EOF\n ${shellscript}; \nEOF\n} &> /mnt/exec;\n` 
+  console.log(cmd)
   if( cb ){
     window.cb = cb
     cmd += `js 'document.querySelector("[isoterminal]").emit("read_file", ["exec", window.cb ])';\n`
@@ -47,7 +48,7 @@ ISOTerminal.prototype.exec = function(opts){
 
 ISOTerminal.prototype.hook = function(hookname,args){
   let cmd = `{ type hook || source /etc/profile.sh; }; hook ${hookname} "${args.join('" "')}"`
-  this.exec(cmd)
+  this.exec([cmd])
 }
 
 ISOTerminal.prototype.serial_input = 0; // can be set to 0,1,2,3 to define stdinput tty (xterm plugin)
