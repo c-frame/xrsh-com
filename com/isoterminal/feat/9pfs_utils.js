@@ -28,6 +28,17 @@ emulator.fs9p.update_file = async function(file,data){
     }
 }
 
+emulator.fs9p.create_file_from_url = async function(file,url){
+  const convert = ISOTerminal.prototype.convert
+  return fetch(url)
+  .then( (res) => res.arrayBuffer() )
+  .then( (buf) => {
+    let arr = new Uint8Array(buf)
+    return emulator.create_file(file, arr )
+  })
+  .catch( console.error )
+}
+
 emulator.fs9p.append_file = async function(file,data){
     const convert = ISOTerminal.prototype.convert
 

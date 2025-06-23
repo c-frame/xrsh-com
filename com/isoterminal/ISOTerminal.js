@@ -17,15 +17,14 @@ function ISOTerminal(instance,opts){
 
 ISOTerminal.prototype.emit = function(event,data,sender){
   data = data || false 
+  // *TODO* wrap certain events into this.preventFrameDrop( () => { .. }) to boost performance
   const evObj = new CustomEvent(event, {detail: data} )
-  this.preventFrameDrop( () => {
-    // forward event to worker/instance/AFRAME element or component-function
-    // this feels complex, but actually keeps event- and function-names more concise in codebase
-    this.dispatchEvent( evObj )
-    if( sender !=  "instance" && this.instance                    ) this.instance.dispatchEvent(evObj)
-    if( sender !=  "worker"   && this.worker                      ) this.worker.postMessage({event,data}, PromiseWorker.prototype.getTransferable(data) )
-    if( sender !== undefined  && typeof this[event] == 'function' ) this[event].apply(this, data && data.push ? data : [data] )
-  })
+  // forward event to worker/instance/AFRAME element or component-function
+  // this feels complex, but actually keeps event- and function-names more concise in codebase
+  this.dispatchEvent( evObj )
+  if( sender !=  "instance" && this.instance                    ) this.instance.dispatchEvent(evObj)
+  if( sender !=  "worker"   && this.worker                      ) this.worker.postMessage({event,data}, PromiseWorker.prototype.getTransferable(data) )
+  if( sender !== undefined  && typeof this[event] == 'function' ) this[event].apply(this, data && data.push ? data : [data] )
 }
 
 ISOTerminal.addEventListener = (event,cb) => {

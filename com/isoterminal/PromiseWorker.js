@@ -44,7 +44,8 @@ function PromiseWorker(file, onmessage){
       this.resolvers = this.resolvers || {last:1,pending:{}}
       msg.data.promiseId = this.resolvers.last++
       // Send id and task to WebWorker
-      worker.postMessage(msg, PromiseWorker.prototype.getTransferable(msg.data) )
+      let dataTransferable = PromiseWorker.prototype.getTransferable(msg.data)
+      worker.postMessage(msg, dataTransferable )
       return new Promise( resolve => this.resolvers.pending[ msg.data.promiseId ] = resolve );
     },
 
@@ -72,6 +73,5 @@ PromiseWorker.prototype.getTransferable = function(data){
   for( var i in data ){
     if( isTransferable(data[i]) ) objs.push(data[i])
   }
-  if( objs.length ) debugger
   return objs.length ? objs : undefined
 }

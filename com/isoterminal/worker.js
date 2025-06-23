@@ -3,7 +3,7 @@ importScripts("ISOTerminal.js")  // we don't instance it again here (just use it
 
 this.runISO = async function(opts){
   this.opts = opts
-  if( opts.debug ) console.dir(opts)
+ if( opts.debug ) console.dir(opts)
 
   if( opts.cdrom   && !opts.cdrom.url.match(/^http/) ) opts.cdrom.url   = "../../"+opts.cdrom.url 
   if( opts.bzimage && !opts.cdrom.url.match(/^http/) ) opts.bzimage.url = "../../"+opts.bzimage.url 
@@ -52,11 +52,12 @@ this.runISO = async function(opts){
     arr[0] = String(arr[0]).replace(/^\/mnt/,'')
     return arr
   }
-  this.create_file     = async function(){ return emulator.create_file.apply(emulator, stripMountDir(arguments[0]) ) }
-  this.read_file       = async function(){ return emulator.read_file.apply(emulator, stripMountDir(arguments[0]) )   }
-  this.read_file_world = async function(){ return emulator.fs9p.read_file_world.apply(emulator.fs9p, stripMountDir(arguments[0]) )   }
-  this.append_file     = async function(){ emulator.fs9p.append_file.apply(emulator.fs9p, stripMountDir(arguments[0])) }
-  this.update_file     = async function(){ emulator.fs9p.update_file.apply(emulator.fs9p, stripMountDir(arguments[0])) }
+  this.create_file          = async function(){ return emulator.create_file.apply(emulator, stripMountDir(arguments[0]) ) }
+  this.create_file_from_url = async function(){ return emulator.fs9p.create_file_from_url.apply(emulator, stripMountDir(arguments[0]) ) }
+  this.read_file            = async function(){ return emulator.read_file.apply(emulator, stripMountDir(arguments[0]) )   }
+  this.read_file_world      = async function(){ return emulator.fs9p.read_file_world.apply(emulator.fs9p, stripMountDir(arguments[0]) )   }
+  this.append_file          = async function(){ emulator.fs9p.append_file.apply(emulator.fs9p, stripMountDir(arguments[0])) }
+  this.update_file          = async function(){ emulator.fs9p.update_file.apply(emulator.fs9p, stripMountDir(arguments[0])) }
 
   // filename will be read from 9pfs: "/mnt/"+filename
   emulator.readFromPipe = function(filename,cb){
