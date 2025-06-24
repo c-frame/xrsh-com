@@ -36,7 +36,10 @@ emulator.fs9p.create_file_from_url = async function(file,url){
     let arr = new Uint8Array(buf)
     return emulator.create_file(file, arr )
   })
-  .catch( console.error )
+  .catch( (e) => {
+    emulator.create_file(file, new Uint8Array()  ) // empty file so at least other processes can check for error (v86 has no retcodes for fs9p)
+    console.error(e)
+  })
 }
 
 emulator.fs9p.append_file = async function(file,data){

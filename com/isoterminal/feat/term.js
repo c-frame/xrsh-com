@@ -25,16 +25,9 @@ ISOTerminal.prototype.TermInit = function(){
     // patch Term-class
     Term.prototype.move_textarea = function(){} /* *TODO* *FIXME* does not work in winbox */
 
-    Term.prototype.pasteHandler = function(original){
-      return function (ev){
-        original.apply(this,[ev])
-      }
-    }( Term.prototype.pasteHandler )
-
     Term.prototype.keyDownHandler = function(original){
       return function (e){
         if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
-          debugger
           return true; // bubble up to pasteHandler (see pastedrop.js)
         }
         original.apply(this,[e])
