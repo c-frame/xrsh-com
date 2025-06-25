@@ -390,6 +390,14 @@ if( typeof AFRAME != 'undefined '){
 
       const focus = (e) => {
 
+        if( event.target == document.activeElement ){
+          // if we're already focused, the keyboard is already triggerend
+          // therefore we blur() the element for correctness 
+          // which allows the WebXR keyboard dissappear if implemented at all
+          // [Meta Quest 2 does not do this]
+          event.target.blur()
+        }
+
         // calculate distance between thumb and indexfinger to detect pinch
         // which should prevent focus-event (annoying to have keyboard popping up during pinch)
         if( e.detail?.withEl?.components['hand-tracking-controls'] ){
