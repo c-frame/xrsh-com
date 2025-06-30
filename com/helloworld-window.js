@@ -41,7 +41,8 @@ AFRAME.registerComponent('helloworld-window', {
                         -->
                       </div>`,
 
-    css:     (me) => `.htmlform { padding:11px; }`
+    css:     (me) => `.htmlform { padding:11px; }
+                      `
 
   },
 
@@ -67,11 +68,16 @@ AFRAME.registerComponent('helloworld-window', {
     myvalue: function(e){ this.el.dom.querySelector('#myvalue').innerText = this.data.myvalue },
 
     launcher: async function(){
-      let s = await AFRAME.utils.require(this.requires)
+      if( !this.el.getAttribute("dom") ){
+        let s = await AFRAME.utils.require(this.requires)
 
-      // instance this component
-      this.el.setAttribute("dom", "")
-      this.el.object3D.quaternion.copy( AFRAME.scenes[0].camera.quaternion ) // face towards camera
+        // instance this component
+        this.el.setAttribute("dom", "")
+        this.el.object3D.quaternion.copy( AFRAME.scenes[0].camera.quaternion ) // face towards camera
+      }else{
+        // toggle visibility
+        this.el.winbox[ this.el.winbox.min ? 'restore' : 'minimize' ]()
+      }
     },
 
     DOMready: function(){

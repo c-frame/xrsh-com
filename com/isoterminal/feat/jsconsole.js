@@ -1,8 +1,8 @@
 ISOTerminal.prototype.redirectConsole = function(handler){
-   const log = console.log;
-   const dir = console.dir;
-   const err = console.error;
-   const warn = console.warn;
+   const log  = console._log = console.log;
+   const dir  = console._dir = console.dir;
+   const err  = console._error = console.error;
+   const warn = console._warn = console.warn;
    const addLineFeeds = (str) => typeof str == 'string' ? str.replace(/\n/g,"\r\n") : str
 
    console.log = (...args)=>{
@@ -37,12 +37,13 @@ ISOTerminal.prototype.enableConsole = function(opts){
     let _str = typeof str == 'string' ? str : JSON.stringify(str)
     let finalStr = "";
     prefix = prefix ? prefix+' ' : ''
-    _str.trim().split("\n").map( (line) => {
+    String(_str).trim().split("\n").map( (line) => {
       finalStr += `${opts.stdout ? '' : "\x1b[38;5;165m/dev/browser: \x1b[0m"}`+prefix+line+'\n'
     })
     if( opts.stdout ){
-      this.emit('serial-output-string', finalStr)
+      this.emit('serial-output-string', finalStr, "worker")
     }else this.emit('append_file', ["/dev/browser/console",finalStr])
+    this.lastStr = finalStr
   })
 
   window.addEventListener('error', function(event) {

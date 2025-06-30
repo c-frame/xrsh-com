@@ -13,6 +13,7 @@
  *
  * | property          | type      | default                | info |
  * |-------------------|-----------|------------------------|------|
+ * | `title`           | `string`  | 'xrsh.iso' | window title |
  * | `iso`             | `string`  | https`//forgejo.isvery.ninja/assets/xrsh-buildroot/main/xrsh.iso" | |
  * | `overlayfs`       | `string`  | ''     | zip URL/file to autoextract on top of filesystem |
  * | `width`           | `number`  |  800   ||
@@ -72,6 +73,7 @@ if( typeof AFRAME != 'undefined '){
     schema: {
       iso:            { type:"string", "default":"https://forgejo.isvery.ninja/assets/xrsh-buildroot/main/xrsh.iso" },
       overlayfs:      { type:"string"},
+      title:          { type:"string", "default":"xrsh.iso"},
       width:          { type: 'number',"default": 800 },
       height:         { type: 'number',"default": 600 },
       depth:          { type: 'number',"default": 0.03 },
@@ -142,6 +144,7 @@ if( typeof AFRAME != 'undefined '){
 
                         .isoterminal{
                           padding: ${me.com.data.padding}px;
+                          margin-top:-60px;
                           width:100%;
                           height:99%;
                           resize: both;
@@ -244,18 +247,19 @@ if( typeof AFRAME != 'undefined '){
                           -webkit-animation:none;
                         }
 
-                        .wb-body:has(> .isoterminal){ 
-                          background: #000C;
+                        .winbox#${me.el.uid} .wb-header{
+                          background: var(--xrsh-black) !important;
+                        }
+
+                        .wb-body:has(> .isoterminal){
+                          background: var(--xrsh-black);
                           overflow:hidden;
                         }
 
-                        .XR .wb-body:has(> .isoterminal){ 
+                        .XR .isoterminal{
                           background: transparent;
                         }
 
-                        .XR .isoterminal{
-                          background: #000;
-                        }
                         .isoterminal *{
                           font-size: 14px;
                           font-family: "Cousine",Liberation Mono,DejaVu Sans Mono,Courier New,monospace;
@@ -342,7 +346,7 @@ if( typeof AFRAME != 'undefined '){
         this.term.emit('term_init', {instance, aEntity:this})
         //instance.winbox.resize(720,380)
         let size = `width: ${this.data.width}; height: ${this.data.height}`
-        instance.setAttribute("window", `title: xrsh.iso; uid: ${instance.uid}; attach: #overlay; dom: #${instance.dom.id}; ${size}; min: ${this.data.minimized}; max: ${this.data.maximized}; class: no-full, no-max, no-resize; grabbable: components.html.el.object3D.children.${this.el.children.length}`)
+        instance.setAttribute("window", `title: ${this.data.title}; uid: ${instance.uid}; attach: #overlay; dom: #${instance.dom.id}; ${size}; min: ${this.data.minimized}; max: ${this.data.maximized}; class: no-full, no-close, no-max, no-resize; grabbable: components.html.el.object3D.children.${this.el.children.length}`)
       })
 
       instance.addEventListener('window.oncreate', (e) => {

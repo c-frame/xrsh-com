@@ -91,6 +91,8 @@ AFRAME.registerComponent('window', {
           this.el.components['obb-collider'].data.trackedObject3D = this.data.grabbable
           this.el.components['obb-collider'].update()
         },1000)
+
+        this.patchButtons(e)
       },
       onclose: close
        
@@ -112,7 +114,23 @@ AFRAME.registerComponent('window', {
 
   show: function(state){
     this.el.dom.closest('.winbox').style.display = state ? '' : 'none'
+  },
+
+  // the buttons don't work in XR because HTMLMesh does not understand onclick on divs
+  patchButtons: function(e){
+    let wEl = e.mount;
+    let controls = [...wEl.closest(".winbox").querySelectorAll(".wb-control span")]
+    controls.map( (c) => {
+      if( c.className == "wb-close"){
+        let btn = document.createElement("button")
+        btn.className = "xr-close"
+        btn.innerText = "x"
+        btn.addEventListener("click", (e) => {  } )// this will bubble up (to click ancestor in XR)
+        c.appendChild(btn)
+      }
+    })
   }
+
 })
 
 AFRAME.utils.positionObjectNextToNeighbor = function positionObjectNextToNeighbor(object, lastNeighbor = null, margin ){

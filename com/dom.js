@@ -50,9 +50,9 @@ if( !AFRAME.components.dom ){
 
       this
       .ensureOverlay()
-      .addCSS()
       .createReactiveDOMElement()
       .assignUniqueID()
+      .addCSS()
       .scaleDOMvsXR()
       .triggerKeyboardForInputs()
 
