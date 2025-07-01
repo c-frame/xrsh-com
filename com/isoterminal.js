@@ -145,6 +145,7 @@ if( typeof AFRAME != 'undefined '){
                         .isoterminal{
                           padding: ${me.com.data.padding}px;
                           margin-top:-60px;
+                          padding-bottom:60px;
                           width:100%;
                           height:99%;
                           resize: both;
@@ -257,7 +258,7 @@ if( typeof AFRAME != 'undefined '){
                         }
 
                         .XR .isoterminal{
-                          background: transparent;
+                          background: #000 !important;
                         }
 
                         .isoterminal *{
@@ -346,7 +347,7 @@ if( typeof AFRAME != 'undefined '){
         this.term.emit('term_init', {instance, aEntity:this})
         //instance.winbox.resize(720,380)
         let size = `width: ${this.data.width}; height: ${this.data.height}`
-        instance.setAttribute("window", `title: ${this.data.title}; uid: ${instance.uid}; attach: #overlay; dom: #${instance.dom.id}; ${size}; min: ${this.data.minimized}; max: ${this.data.maximized}; class: no-full, no-close, no-max, no-resize; grabbable: components.html.el.object3D.children.${this.el.children.length}`)
+        instance.setAttribute("window", `title: ${this.data.title}; uid: ${instance.uid}; attach: #overlay; dom: #${instance.dom.id}; ${size}; min: ${this.data.minimized}; max: ${this.data.maximized}; class: no-full, no-min, no-close, no-max, no-resize; grabbable: components.html.el.object3D.children.${this.el.children.length}`)
       })
 
       instance.addEventListener('window.oncreate', (e) => {
@@ -502,6 +503,7 @@ if( typeof AFRAME != 'undefined '){
       "scope": "/",
       "theme_color": "#3367D6",
       "shortcuts": [
+        /*
         {
           "name": "What is the latest news?",
           "cli":{
@@ -516,8 +518,9 @@ if( typeof AFRAME != 'undefined '){
           "url": "/today?source=pwa",
           "icons": [{ "src": "/images/today.png", "sizes": "192x192" }]
         }
+        */
       ],
-      "description": "Hello world information",
+      "description": "Runs an .iso file",
       "screenshots": [
         {
           "src": "/images/screenshot1.png",
@@ -527,7 +530,7 @@ if( typeof AFRAME != 'undefined '){
         }
       ],
       "help":`
-  Helloworld application
+  XRSH application
 
   This is a help file which describes the application.
   It will be rendered thru troika text, and will contain

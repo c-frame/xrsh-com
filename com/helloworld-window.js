@@ -81,7 +81,7 @@ AFRAME.registerComponent('helloworld-window', {
     },
 
     DOMready: function(){
-      this.el.setAttribute("window", `title: XRSH; uid: ${this.el.uid}; attach: #overlay; dom: #${this.el.dom.id}; width:250; height: 360`)
+      this.el.setAttribute("window", `title: XRSH; uid: ${this.el.uid}; attach: #overlay; dom: #${this.el.dom.id}; class: no-min, no-max; width:250; height: 360`)
 
       // data2event demo
       this.el.setAttribute("data2event","")
@@ -89,6 +89,21 @@ AFRAME.registerComponent('helloworld-window', {
       this.data.foo     = `this.el ${this.el.uid}: `
       setInterval( () => this.data.myvalue++, 500 )
 
+      // if you want your launch-icon to stick around after 
+      // closing the window, then register it manually 
+      window.launcher.register({
+        component: "helloworld-window",
+        ...this.manifest,
+        icon: this.manifest.icons[0].src,
+        cb: () => {
+          const el = document.createElement("a-entity")
+          el.setAttribute("helloworld-window","")
+          el.setAttribute("pressable","")
+          el.setAttribute("position","0 1.6 0")
+          AFRAME.scenes[0].appendChild(el)
+          setTimeout( () => el.emit('launcher',null,false), 100 )
+        }
+      })
     },
 
     "window.oncreate": function(){

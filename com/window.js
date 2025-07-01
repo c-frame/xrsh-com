@@ -53,16 +53,6 @@ AFRAME.registerComponent('window', {
   setupWindow: async function(){
     await AFRAME.utils.require(this.dependencies)
     if( !this.el.dom ) return console.error('window element requires dom-component as dependency')
-
-    const close = () => {
-      let e = {halt:false}
-      this.el.emit('window.onclose',e)
-      if( e.halt ) return true 
-      this.data.dom.style.display = 'none';
-      if( this.el.parentNode ) this.el.remove() //parentElement.remove( this.el )
-      this.data.dom.parentElement.remove()
-      return false
-    }
     this.el.addEventListener('close', () => {
       close()
       this.el.winbox.close()
@@ -94,7 +84,9 @@ AFRAME.registerComponent('window', {
 
         this.patchButtons(e)
       },
-      onclose: close
+      onminimize: this.onminimize,
+      onrestore: this.onrestore,
+      onclose: this.onclose.bind(this),
        
     });
     this.data.dom.style.display = '' // show
@@ -116,15 +108,38 @@ AFRAME.registerComponent('window', {
     this.el.dom.closest('.winbox').style.display = state ? '' : 'none'
   },
 
+  onminimize: function(e){
+    if( AFRAME.scenes[0].renderer.xr.isPresenting ){
+      this.window.style.display = 'none'
+    }
+  },
+
+  onrestore: function(e){
+    if( AFRAME.scenes[0].renderer.xr.isPresenting ){
+      this.window.style.display = ''
+    }
+  },
+
+  onclose: function(){
+    let e = {halt:false}
+    this.el.emit('window.onclose',e)
+    if( e.halt ) return true 
+    this.data.dom.style.display = 'none';
+    if( this.el.parentNode ) this.el.remove() //parentElement.remove( this.el )
+    this.data.dom.parentElement.remove()
+    return false
+  },
+
+
   // the buttons don't work in XR because HTMLMesh does not understand onclick on divs
   patchButtons: function(e){
     let wEl = e.mount;
     let controls = [...wEl.closest(".winbox").querySelectorAll(".wb-control span")]
     controls.map( (c) => {
-      if( c.className == "wb-close"){
+      if( c.className.match(/wb-(close|min)/) ){
         let btn = document.createElement("button")
-        btn.className = "xr-close"
-        btn.innerText = "x"
+        btn.className = `xr xr-${c.className}`
+        btn.innerText = c.className == "wb-close" ? "x" : "_"
         btn.addEventListener("click", (e) => {  } )// this will bubble up (to click ancestor in XR)
         c.appendChild(btn)
       }

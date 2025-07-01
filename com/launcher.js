@@ -3,6 +3,9 @@
  *
  * displays app (icons) in 2D and 3D handmenu (enduser can launch desktop-like 'apps')
  *
+ * They can be temporary processes (icon disappears after component is removed) or permanent icons 
+ * when registered via .register({...})
+ *
  * ```html
  * <a-entity launcher>
  *   <a-entity launch="component: helloworld; foo: bar"><a-entity>
@@ -340,7 +343,10 @@ AFRAME.registerSystem('launcher',{
     ];
 
     // collect manually registered launchables
-    this.registered.map( (launchable) => this.launchables.push(launchable) )
+    this.registered.map( (launchable) => {
+      if( launchable.component ) seen[ launchable.component ] = true
+      this.launchables.push(launchable) 
+    })
 
     // collect launchables in aframe dom elements
     this.dom = els.filter( (el) => {
@@ -349,8 +355,11 @@ AFRAME.registerSystem('launcher',{
         for( let i in el.components ){
           if( el.components[i].events && el.components[i].events[searchEvent] && !seen[i] ){
             let com = hasEvent = seen[i] = el.components[i]
-            com.launcher = () => com.el.emit('launcher',null,false) // important: no bubble
-            this.launchables.push(com)
+            let alreadyAdded = this.launchables.find( (l) => l.manifest.name == com.manifest.name )
+            if( !alreadyAdded ){
+              com.launcher = () => com.el.emit('launcher',null,false) // important: no bubble
+              this.launchables.push({manifest: com.manifest, launcher: com.launcher})
+            }
           }
         } 
       }
